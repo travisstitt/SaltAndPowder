@@ -76,6 +76,13 @@ button.primary:hover:not(:disabled){background:#e6b963}
 .ledger li span{min-width:0} .ledger small{display:block;color:var(--bone-dim);font-size:13px}
 .ledger button{min-width:104px;font-variant-numeric:tabular-nums}
 .note{color:var(--bone-dim);font-size:14px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1}
+.seg button[aria-pressed="true"]{background:var(--brass);color:var(--ink);font-weight:700}
+.ledger .btns{display:flex;gap:6px}
+.ledger .btns button{min-width:66px}
+textarea{width:100%;box-sizing:border-box;background:var(--ink);color:var(--bone);border:1px solid rgba(214,165,78,.6);border-radius:4px;padding:8px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 .note2{color:var(--bone);font-size:12.5px;line-height:1.25}
 .ledger li.sec{display:block;font-family:var(--display);font-size:21px;color:var(--brass);padding:14px 0 4px;border-top:0}
 .ledger li.txt{display:block;color:var(--bone-dim);font-size:14px;border-top:0;padding:2px 0 8px}
@@ -102,10 +109,11 @@ button.primary:hover:not(:disabled){background:#e6b963}
     <div class="row"><button class="mini" id="paceBtn" type="button">Pace: Steady</button><button class="mini" id="chartBtn" type="button">Chart</button></div>
     <div class="row"><button class="mini" id="aimBtn" type="button" aria-pressed="true">Aim assist: on</button></div>
     <div class="row"><button class="mini" id="zoomOutBtn" type="button">Zoom out</button><button class="mini" id="zoomInBtn" type="button">Zoom in</button></div>
+    <div class="row"><button class="mini" id="menuBtn" type="button">Log book: save and load</button></div>
   </div>
   <div class="bottom">
     <button id="dock" class="primary" type="button" hidden>Drop anchor</button>
-    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>F</kbd> dock · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> pace</div>
+    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>F</kbd> dock · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> pace · <kbd>Esc</kbd> save and load</div>
     <div class="touch">
       <div><button type="button" data-hold="left" aria-label="Turn to port">◀</button><button type="button" data-hold="right" aria-label="Turn to starboard">▶</button></div>
       <div class="col"><button type="button" data-tap="sailUp">More sail</button><button type="button" data-tap="sailDown">Less sail</button></div>
@@ -127,7 +135,11 @@ button.primary:hover:not(:disabled){background:#e6b963}
       <dt>Nations</dt><dd>Attack a nation's ships and she turns hostile: her ports close and her navy hunts you. Her enemies warm to you. Governors offer paid commissions in port, and the Spanish treasure fleet, unarmed galleons under escort, is marked on the chart.</dd>
       <dt>Chart</dt><dd>Ports are the yellow marks on the small chart. Open the full chart, with every port named, from the panel at top left; the game pace is set there too.</dd>
     </dl>
-    <button class="primary" id="startBtn" type="button">Set sail</button>
+    <div class="seg" role="group" aria-label="Difficulty"><button type="button" data-diff="easy">Easy</button><button type="button" data-diff="normal">Normal</button><button type="button" data-diff="hard">Hard</button></div>
+    <p class="note diffNote"></p>
+    <button class="primary" id="startBtn" type="button">Set sail on a new voyage</button>
+    <button id="contBtn" type="button" hidden>Continue</button>
+    <button id="titleLoad" type="button">Load a saved voyage</button>
   </div>
 </div>
 
@@ -140,11 +152,28 @@ button.primary:hover:not(:disabled){background:#e6b963}
   </div>
 </div>
 
+<div class="sheet" id="menu" hidden>
+  <div class="card">
+    <h2>Log book</h2>
+    <p class="note" id="menuNote" role="status"></p>
+    <ul class="ledger" id="slots"></ul>
+    <ul class="ledger"><li class="sec">Difficulty</li></ul>
+    <div class="seg" role="group" aria-label="Difficulty"><button type="button" data-diff="easy">Easy</button><button type="button" data-diff="normal">Normal</button><button type="button" data-diff="hard">Hard</button></div>
+    <p class="note diffNote"></p>
+    <ul class="ledger"><li class="sec">Save code</li></ul>
+    <label class="note" for="saveCode">Saves live in this browser only. A save code lets you keep a voyage elsewhere or move it to another device: copy it out, or paste one in and load it.</label>
+    <textarea id="saveCode" rows="3" spellcheck="false" autocomplete="off"></textarea>
+    <div class="seg"><button type="button" id="copyCode">Copy this voyage's code</button><button type="button" id="loadCode">Load the pasted code</button></div>
+    <button class="primary" id="menuClose" type="button">Close the log book</button>
+  </div>
+</div>
+
 <div class="sheet" id="over" hidden>
   <div class="card">
     <h2>She goes down by the head</h2>
     <p id="overText"></p>
     <button class="primary" id="againBtn" type="button">Sail again</button>
+    <button id="overLoad" type="button" hidden>Load your last save</button>
   </div>
 </div>
 
@@ -153,6 +182,11 @@ button.primary:hover:not(:disabled){background:#e6b963}
 'use strict';
 const TAU = Math.PI * 2, DEG = 400, LON0 = -98, LAT1 = 28.2, W = 15800, H = 8160, RANGE = 300, BALL_V = 540, BOARD_R = 90;
 const PACES = [[.5, 'Slow'], [.7, 'Steady'], [1, 'Brisk']];
+const DIFFS = {
+  easy:   { name:'Easy',   dmg:.6,  spread:.17, reload:6,   hunt:1.4, maxH:2, loot:1.25, rep:.7,  purse:300, note:'Enemies shoot wide and reload slowly, you take less damage, prizes pay a quarter more, and you start with 300 gold.' },
+  normal: { name:'Normal', dmg:1,   spread:.12, reload:5,   hunt:1,   maxH:4, loot:1,    rep:1,   purse:0,   note:'The game as designed.' },
+  hard:   { name:'Hard',   dmg:1.4, spread:.08, reload:4.2, hunt:.7,  maxH:5, loot:.85,  rep:1.3, purse:0,   note:'Enemies shoot straight and reload fast, you take more damage, hunters come sooner and in greater number, prizes pay less, and nations anger quickly.' } };
+let diff = 'normal'; const D = () => DIFFS[diff];
 const C = { sea:'#11434f', bone:'#efe6cf', brass:'#d6a54e', blood:'#c4472f', ink:'#08191e', navy:'#4a7fbd' };
 const cv = document.getElementById('sea'), cx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
@@ -359,28 +393,35 @@ function repute(k, d){
   if (!was && hostile(k)) say(NAT[k].land.replace(/^t/, 'T') + ' now counts you an enemy. ' + NAT[k].adj + ' ports are closed to you and her warships will hunt you.');
   else if (was && !hostile(k)) say(NAT[k].land.replace(/^t/, 'T') + ' no longer hunts you. ' + NAT[k].adj + ' ports are open again.');
 }
-function offend(s, amt){ if (!s.nation) return; repute(s.nation, -amt); FOES[s.nation].forEach(k => repute(k, amt*.3)); }
+function offend(s, amt){ if (!s.nation) return; amt *= D().rep; repute(s.nation, -amt); FOES[s.nation].forEach(k => repute(k, amt*.3)); }
 function engage(s){ if (s && s !== p && !s.released && s.sinking == null) tracked = s; }
 function refit(){ const t = p.t, f = p.hull/p.maxHull; p.guns = t.guns + up.guns; p.maxHull = t.hull + 30*up.hull; p.hull = p.maxHull*f;
   p.speedMul = 1 + .07*up.sail; p.reload = 3.6*Math.pow(.9, up.drill); }
 
 function newGame(saved){
   ships = []; balls = []; pending = []; crates = []; parts = []; floaters = [];
-  gold = 0; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30; curPort = null;
+  if (saved && DIFFS[saved.diff]) diff = saved.diff;
+  gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
   mission = null; offers = []; tracked = null; fleet = null; standing = { en:10, es:-5, fr:0, nl:0 };
   const o = ports[0];
   p = makeShip('sloop', 'player', 'player', o.ox, o.oy, o.ang);
   wind.dir = wind.tDir = o.ang + .8; wind.timer = 20;
-  if (saved && saved.p && !isNear(saved.p.x, saved.p.y)){
-    gold = saved.gold|0; plunder = saved.plunder|0; Object.assign(up, saved.up); if (saved.standing) Object.assign(standing, saved.standing);
-    p = makeShip(CLASSES[saved.cls] && CLASSES[saved.cls].price != null ? saved.cls : 'sloop', 'player', 'player', saved.p.x, saved.p.y, saved.p.h || 0); refit();
-    p.hull = clamp(saved.p.hull || p.maxHull, 1, p.maxHull); p.sails = saved.p.sails == null ? 100 : saved.p.sails;
+  if (saved && saved.p){
+    gold = saved.gold|0; plunder = saved.plunder|0; if (saved.up) for (const k in up) up[k] = clamp(saved.up[k]|0, 0, UPG[k].max);
+    if (saved.standing) NKEYS.forEach(k => { standing[k] = clamp(+saved.standing[k] || 0, -100, 100); });
+    if (saved.shot === 'chain') shot = 'chain';
+    let x = +saved.p.x, y = +saved.p.y, h = +saved.p.h || 0;
+    if (!(x > 40 && y > 40 && x < W-40 && y < H-40) || isLand(x, y)){ x = o.ox; y = o.oy; h = o.ang; }
+    p = makeShip(CLASSES[saved.cls] && CLASSES[saved.cls].price != null ? saved.cls : 'sloop', 'player', 'player', x, y, h); refit();
+    p.hull = clamp(+saved.p.hull || p.maxHull, 1, p.maxHull); p.sails = saved.p.sails == null ? 100 : clamp(+saved.p.sails || 0, 0, 100);
+    if (saved.wind){ wind.dir = wind.tDir = +saved.wind.dir || 0; wind.str = wind.tStr = clamp(+saved.wind.str || 1, .7, 1.3); }
   }
   rankIdx = rankFor(plunder);
   for (let i = 0; i < 11; i++) spawnMerchant(true);
   NKEYS.forEach(k => { spawnPatrol(k, true); spawnPatrol(k, true); });
-  spawnFleet(true);
-  $('shotBtn').textContent = 'Round shot';
+  spawnFleet(true, saved && saved.fleetLeg != null ? ((saved.fleetLeg|0) + ROUTE.length - 1) % ROUTE.length : null);
+  if (saved && saved.mission) restoreMission(saved.mission);
+  $('shotBtn').textContent = shot === 'round' ? 'Round shot' : 'Chain shot';
 }
 const cargoRoll = () => Math.round(rand(120, 300) + Math.min(400, plunder*.04));
 function pickDest(from){ const c = ports.filter(q => q !== from).sort((a, b) => Math.hypot(a.ox-from.ox, a.oy-from.oy) - Math.hypot(b.ox-from.ox, b.oy-from.oy)).slice(0, 6);
@@ -414,8 +455,8 @@ function spawnHunter(){
 }
 /* the Spanish treasure fleet: unarmed galleons under escort, port to port */
 const ROUTE = ['Veracruz', 'Havana', 'Santo Domingo', 'Cartagena', 'Portobelo'].map(n => ports.find(q => q.name === n));
-function spawnFleet(first){
-  const leg = first ? Math.random()*ROUTE.length|0 : 0, a = ROUTE[leg];
+function spawnFleet(first, at){
+  const leg = at != null ? clamp(at|0, 0, ROUTE.length-1) : first ? Math.random()*ROUTE.length|0 : 0, a = ROUTE[leg];
   fleet = { leg: (leg+1) % ROUTE.length, wait: 0, alarm: false, respawn: 0, lead: null };
   const mk = (cls, role, off) => { const w = waterNear(a.ox, a.oy, 110), s = makeShip(cls, 'es', role, w[0], w[1], a.ang); s.fleet = true; s.off = off; ships.push(s); return s; };
   fleet.lead = mk('galleon', 'treasure', null); fleet.lead.cargo = Math.round(rand(1800, 2600));
@@ -449,13 +490,21 @@ function makeOffers(port){
   if (k !== 'es' && fleet && fleet.lead) o.push({ type:'treasure', nk:k, title:'Take a Spanish treasure galleon', text:'The treasure fleet is at sea under escort; the galleons carry no guns. Board one. Her cargo is yours and the crown pays a bounty besides.', reward:1500, rep:20 });
   offers = o;
 }
+function spawnQuarry(w){ const s = makeShip(mission.cls, 'pirate', 'quarry', w[0], w[1], Math.random()*TAU); s.home = w; s.t.name = 'Wanted pirate ' + s.t.cname; ships.push(s); mission.ship = s; }
 function accept(i){
   mission = offers[i]; offers = [];
   if (mission.type === 'pirate'){ let w = null;
     for (let n = 0; n < 60 && !w; n++){ const a = Math.random()*TAU, d = rand(1300, 2600), x = mission.from.ox + Math.cos(a)*d, y = mission.from.oy + Math.sin(a)*d;
       if (x > 100 && y > 100 && x < W-100 && y < H-100 && !isNear(x, y)) w = [x, y]; }
-    w = w || waterNear(mission.from.ox, mission.from.oy, 1500);
-    const s = makeShip(mission.cls, 'pirate', 'quarry', w[0], w[1], Math.random()*TAU); s.home = w; s.t.name = 'Wanted pirate ' + s.t.cname; ships.push(s); mission.ship = s; }
+    spawnQuarry(w || waterNear(mission.from.ox, mission.from.oy, 1500)); }
+}
+function restoreMission(m){
+  const nk = NAT[m.nk] ? m.nk : 'en', base = { type: m.type, nk, title: String(m.title || 'Commission').slice(0, 80), reward: clamp(m.reward|0, 0, 5000), rep: clamp(+m.rep || 0, 0, 30) };
+  if (m.type === 'deliver'){ const q = ports.find(q => q.name === m.port); if (q) mission = Object.assign(base, { port: q }); }
+  else if (m.type === 'raid' && NAT[m.foe]) mission = Object.assign(base, { foe: m.foe, need: (m.need|0) || 2, have: m.have|0 });
+  else if (m.type === 'pirate' && CLASSES[m.cls]){ mission = Object.assign(base, { cls: m.cls, from: ports[0] });
+    spawnQuarry(m.sx > 100 && m.sy > 100 && m.sx < W-100 && m.sy < H-100 && !isNear(m.sx, m.sy) ? [+m.sx, +m.sy] : waterNear(p.x, p.y, 1500)); }
+  else if (m.type === 'treasure') mission = base;
 }
 function missionText(){ const m = mission;
   return m.type === 'deliver' ? 'Dispatches for ' + m.port.name : m.type === 'raid' ? NAT[m.foe].adj + ' merchantmen taken: ' + m.have + ' of ' + m.need
@@ -499,7 +548,7 @@ function moveShip(s, turn, dt){
 function fire(s, side){
   const i = side > 0 ? 1 : 0;
   if (s.rl[i] > 0 || s.sinking != null || s.surrendered) return;
-  s.rl[i] = s.reload;
+  s.rl[i] = s === p ? s.reload : D().reload;
   for (let g = 0; g < s.guns; g++)
     pending.push({ o: s, off: (s.guns === 1 ? 0 : g/(s.guns-1) - .5)*s.t.len*.62, side, delay: Math.random()*.22, shot: s === p ? shot : 'round' });
 }
@@ -507,7 +556,7 @@ function launch(q){
   const s = q.o; if (s.sinking != null) return;
   const ch = Math.cos(s.h), sh = Math.sin(s.h), rx = -sh*q.side, ry = ch*q.side;
   const x = s.x + ch*q.off + rx*s.t.wid*.55, y = s.y + sh*q.off + ry*s.t.wid*.55;
-  const a = s.h + q.side*Math.PI/2 + rand(-1, 1)*(s === p ? .07 : .12);
+  const a = s.h + q.side*Math.PI/2 + rand(-1, 1)*(s === p ? .07 : D().spread);
   const chain = q.shot === 'chain', life = RANGE/BALL_V*(chain ? .78 : 1);
   balls.push({ x, y, vx: Math.cos(a)*BALL_V + ch*s.speed*.6, vy: Math.sin(a)*BALL_V + sh*s.speed*.6, life, life0: life, mine: s === p, o: s, chain, a });
   parts.push({ k:'flash', x: x + Math.cos(a)*5, y: y + Math.sin(a)*5, vx:0, vy:0, life:.11, max:.11, size:14 });
@@ -530,7 +579,7 @@ function sink(s){
   for (let k = 0; k < 7; k++) parts.push({ k:'splash', x: s.x + rand(-28,28), y: s.y + rand(-28,28), vx:0, vy:0, life: rand(.6,1.8), max:1.8, size: rand(4,9) });
   boom(clamp(1 - Math.hypot(s.x-p.x, s.y-p.y)/900, 0, 1)*.3, 200);
   if (s === p){ overT = 2.4; return; }
-  const mine = s.hitByPlayer, loot = !mine || s.released ? 0 : prize(s) ? Math.round(s.cargo*.4) : BOUNTY[s.cls] || 0;
+  const mine = s.hitByPlayer, loot = !mine || s.released ? 0 : Math.round((prize(s) ? s.cargo*.4 : BOUNTY[s.cls] || 0)*D().loot);
   if (loot > 0){ const n = 3; for (let k = 0; k < n; k++)
     crates.push({ x: s.x + rand(-34,34), y: s.y + rand(-34,34), amt: Math.max(1, Math.round(loot/n)), life: 70, ph: Math.random()*TAU }); }
   if (mine && prize(s) && s.cargo > 0) say('She sinks. Most of the cargo goes with her.');
@@ -580,7 +629,7 @@ function ai(s, dt){
   if (s.surrendered){
     s.sail = 0;
     if (d < BOARD_R && hot) s.board += dt/1.5; else s.board = Math.max(0, s.board - dt);
-    if (s.board >= 1){ const c = prize(s) ? s.cargo : Math.round((BOUNTY[s.cls] || 0)*1.5); s.cargo = 0; s.surrendered = false; s.released = true; s.sail = 1;
+    if (s.board >= 1){ const c = Math.round((prize(s) ? s.cargo : (BOUNTY[s.cls] || 0)*1.5)*D().loot); s.cargo = 0; s.surrendered = false; s.released = true; s.sail = 1;
       s.sails = Math.max(s.sails, 40); earn(c, s.x, s.y); chime(); say('Boarded the ' + nm(s) + ': ' + c + ' gold taken. You let her go.');
       onPrize(s, true); if (tracked === s) tracked = null; }
   } else if (s.released){
@@ -618,7 +667,7 @@ const held = { left:false, right:false };
 function sailStep(d){ if (state !== 'play' || !p.alive) return; p.sail = clamp(p.sail + d*.5, 0, 1); }
 function toggleShot(){ shot = shot === 'round' ? 'chain' : 'round'; $('shotBtn').textContent = shot === 'round' ? 'Round shot' : 'Chain shot'; }
 function act(name){
-  if (state !== 'play' || !p.alive || chartOpen) return;
+  if (state !== 'play' || !p.alive || chartOpen || menuOpen) return;
   if (name === 'sailUp') sailStep(1); else if (name === 'sailDown') sailStep(-1);
   else if (name === 'port') fire(p, -1); else if (name === 'star') fire(p, 1);
   else if (name === 'both'){ for (const sd of [-1, 1]) if (!aimSide(sd, true).hit) fire(p, sd); } // never rakes a struck ship by accident
@@ -631,6 +680,7 @@ const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' }
 const TAPS = { KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (menuOpen){ if (e.code === 'Escape') closeMenu(); return; }
   if (state === 'port'){ if (e.code === 'Escape') closePort(); return; }
   if (state !== 'play') return;
   if (chartOpen){ setChart(false); e.preventDefault(); return; }
@@ -640,6 +690,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyM' && !e.repeat) toggleMute();
   else if (e.code === 'KeyT' && !e.repeat) setAssist(!assist);
   else if (e.code === 'KeyC' && !e.repeat) setChart(true);
+  else if ((e.code === 'Escape' || e.code === 'KeyL') && !e.repeat) openMenu();
   else if (/^Digit[123]$/.test(e.code)) setPace(+e.code.slice(5) - 1);
   else if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(zoomMul/1.15);
   else if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(zoomMul*1.15);
@@ -674,7 +725,7 @@ $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTa
 cv.addEventListener('click', e => { if (chartOpen){ setChart(false); return; } const m = chartRect();
   if (state === 'play' && e.clientX >= m.x && e.clientX <= m.x + m.w && e.clientY >= m.y && e.clientY <= m.y + m.h) setChart(true); });
 $('dock').addEventListener('click', () => act('dock'));
-$('startBtn').addEventListener('click', () => { initAudio(); $('title').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur();
+$('startBtn').addEventListener('click', () => { initAudio(); newGame(); $('title').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur();
   say(coarse ? 'Tap More sail to get under way.' : 'Press W to make sail.'); });
 $('leaveBtn').addEventListener('click', closePort);
 $('againBtn').addEventListener('click', () => { $('over').hidden = true; newGame(); state = 'play'; document.activeElement && document.activeElement.blur(); });
@@ -704,9 +755,9 @@ const tradeIn = () => Math.round((CLASSES[p.cls].price || 0)*.5);
 function openPort(port){ setChart(false); state = 'port'; curPort = port; held.left = held.right = false;
   p.x = port.ox; p.y = port.oy; p.h = port.ang; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
-  makeOffers(port);
+  makeOffers(port); autosave();
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
-function closePort(){ $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
+function closePort(){ autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
 function renderPort(focusId){
   $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + ' port'; $('portGold').textContent = gold;
@@ -744,6 +795,61 @@ function renderPort(focusId){
   const f = focusId && $(focusId); (f && !f.disabled ? f : $('leaveBtn')).focus();
 }
 
+/* ---------- Saving and difficulty ---------- */
+let menuOpen = false;
+const SLOTS = [['auto', 'Autosave'], ['1', 'Slot 1'], ['2', 'Slot 2'], ['3', 'Slot 3']];
+function snapshot(){
+  const m = mission; let np = ports[0], nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
+  return { v:1, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1],
+    p: { x: Math.round(p.x), y: Math.round(p.y), h: +p.h.toFixed(3), hull: Math.round(p.hull), sails: Math.round(p.sails) },
+    wind: { dir: +wind.dir.toFixed(3), str: +wind.str.toFixed(2) }, fleetLeg: fleet ? fleet.leg : null,
+    mission: m ? { type: m.type, nk: m.nk, title: m.title, reward: m.reward, rep: m.rep, port: m.port && m.port.name, foe: m.foe, need: m.need, have: m.have, cls: m.cls,
+      sx: m.ship ? Math.round(m.ship.x) : 0, sy: m.ship ? Math.round(m.ship.y) : 0 } : null };
+}
+function readSlot(id){ try { const d = JSON.parse(recall('save.' + id)); return d && d.p ? d : null; } catch (_){ return null; } }
+function writeSlot(id){ const d = snapshot(); store('save.' + id, JSON.stringify(d)); const b = readSlot(id); return !!b && b.t === d.t; }
+function autosave(){ if (p && p.alive) writeSlot('auto'); }
+function latest(){ return SLOTS.map(v => readSlot(v[0])).filter(Boolean).sort((a, b) => b.t - a.t)[0] || null; }
+function canSave(){ return (state === 'play' || state === 'port') && p.alive &&
+  !(state === 'play' && (balls.length || ships.some(s => s.announced && !s.surrendered && !s.released && Math.hypot(s.x-p.x, s.y-p.y) < 900))); }
+function encode(d){ return btoa(unescape(encodeURIComponent(JSON.stringify(d)))); }
+function decode(t){ try { const d = JSON.parse(decodeURIComponent(escape(atob(String(t).replace(/\s+/g, ''))))); return d && d.p ? d : null; } catch (_){ return null; } }
+function summary(d){ const c = CLASSES[d.cls] ? CLASSES[d.cls].cname : 'sloop', when = new Date(d.t || 0);
+  return (d.rank || 'Swab') + ' · ' + c + ' · ' + (d.gold|0) + ' gold · near ' + (d.where || 'Port Royal') + ' · ' + (DIFFS[d.diff] ? DIFFS[d.diff].name : 'Normal') + ' · ' +
+    when.toLocaleDateString([], { month:'short', day:'numeric' }) + ' ' + when.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+function loadGame(d){ closeMenu(); $('title').hidden = true; $('over').hidden = true; $('port').hidden = true; initAudio(); newGame(d); setDiff(diff); state = 'play';
+  say('Voyage resumed near ' + (d.where || 'Port Royal') + '. Other ships have moved on since you saved.'); }
+function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
+  document.querySelectorAll('[data-diff]').forEach(b => b.setAttribute('aria-pressed', b.dataset.diff === diff));
+  document.querySelectorAll('.diffNote').forEach(e => { e.textContent = D().name + ': ' + D().note; }); }
+function refreshTitle(){ const l = latest(); $('contBtn').hidden = !l; if (l) $('contBtn').textContent = 'Continue: ' + summary(l); }
+function openMenu(){ setChart(false); menuOpen = true; held.left = held.right = false; $('menu').hidden = false; $('saveCode').value = ''; renderMenu(); $('menuClose').focus(); }
+function closeMenu(){ menuOpen = false; $('menu').hidden = true; refreshTitle(); document.activeElement && document.activeElement.blur(); }
+function renderMenu(focusId, note){
+  const ok = canSave(), live = state === 'play' || state === 'port';
+  $('menuNote').textContent = note || (!live ? 'Start or load a voyage to save it.' : ok ? 'The game also saves by itself each time you enter or leave a port.' : 'You cannot save with shot in the air or an enemy closing. Shake her off first.');
+  const ul = $('slots'); ul.textContent = '';
+  SLOTS.forEach(v => { const d = readSlot(v[0]), e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), bs = document.createElement('span');
+    sp.textContent = v[1]; sm.textContent = d ? summary(d) : 'Empty'; sp.appendChild(sm); bs.className = 'btns';
+    const btn = (id, label, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label; b.disabled = !on; b.addEventListener('click', fn); bs.appendChild(b); };
+    if (v[0] !== 'auto') btn('sv_' + v[0], 'Save', ok, () => { const w = writeSlot(v[0]); renderMenu('sv_' + v[0], w ? 'Saved to ' + v[1] + '.' : 'This browser would not keep the save. Use the save code below instead.'); });
+    btn('ld_' + v[0], 'Load', !!d, () => loadGame(d));
+    e.appendChild(sp); e.appendChild(bs); ul.appendChild(e); });
+  $('copyCode').disabled = !live;
+  const f = focusId && $(focusId); if (f && !f.disabled) f.focus();
+}
+document.querySelectorAll('[data-diff]').forEach(b => b.addEventListener('click', () => setDiff(b.dataset.diff)));
+$('menuBtn').addEventListener('click', e => { openMenu(); e.currentTarget.blur(); });
+$('menuClose').addEventListener('click', closeMenu);
+$('titleLoad').addEventListener('click', openMenu);
+$('contBtn').addEventListener('click', () => { const l = latest(); if (l) loadGame(l); });
+$('overLoad').addEventListener('click', () => { const l = latest(); if (l) loadGame(l); });
+$('copyCode').addEventListener('click', () => { const t = $('saveCode'); t.value = encode(snapshot()); t.focus(); t.select();
+  const done = m => renderMenu('copyCode', m);
+  try { navigator.clipboard.writeText(t.value).then(() => done('Save code copied. Keep it somewhere safe.'), () => done('Save code is in the box below. Select and copy it.')); }
+  catch (_){ done('Save code is in the box below. Select and copy it.'); } });
+$('loadCode').addEventListener('click', () => { const d = decode($('saveCode').value); if (d) loadGame(d); else renderMenu('loadCode', 'That is not a valid save code. Paste the whole code and try again.'); });
+
 /* ---------- Toast ---------- */
 let toastT = 0;
 function say(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = 3.6; }
@@ -780,13 +886,13 @@ function update(dt){
     if (t.sinking != null || t.gone || t.released || ships.indexOf(t) < 0) tracked = null;
     else if (Math.hypot(t.x-p.x, t.y-p.y) > TRACK_R){ tracked = null; if (sailing) say('The ' + nm(t) + ' is over the horizon. You have lost her.'); } }
   hunterT -= dt;
-  if (sailing && hunterT <= 0 && p.alive && hunters < 1 + Math.min(3, Math.floor(plunder/2000))){ spawnHunter(); hunterT = 22; }
+  if (sailing && hunterT <= 0 && p.alive && hunters < Math.min(D().maxH, 1 + Math.min(3, Math.floor(plunder/2000)))){ spawnHunter(); hunterT = 22*D().hunt; }
 
   for (let i = pending.length-1; i >= 0; i--){ const q = pending[i]; q.delay -= dt; if (q.delay <= 0){ launch(q); pending.splice(i, 1); } }
   for (let i = balls.length-1; i >= 0; i--){ const b = balls[i];
     b.x += b.vx*dt; b.y += b.vy*dt; b.life -= dt; let done = false;
     if (b.mine){ for (const s of ships){ if (s.sinking == null && hitShip(b, s)){ struck(s); damage(s, b.chain ? 2 : 8, b.chain ? 12 : 1); done = true; break; } } }
-    else if (sailing && p.sinking == null && hitShip(b, p)){ damage(p, 6, 2); done = true; if (!tracked) engage(b.o); }
+    else if (sailing && p.sinking == null && hitShip(b, p)){ damage(p, 6*D().dmg, 2*D().dmg); done = true; if (!tracked) engage(b.o); }
     if (done){ for (let k = 0; k < 7; k++) parts.push({ k:'bit', c:'175,125,72', x:b.x, y:b.y, vx:rand(-80,80), vy:rand(-80,80), life:rand(.3,.8), max:.8, size:rand(1,2.6) });
       parts.push({ k:'flash', x:b.x, y:b.y, vx:0, vy:0, life:.1, max:.1, size:10 }); parts.push({ k:'smoke', g:150, x:b.x, y:b.y, vx:0, vy:0, life:.7, max:.7, size:5 });
       boom(clamp(1 - Math.hypot(b.x-p.x, b.y-p.y)/700, 0, 1)*.16, 900); }
@@ -822,7 +928,7 @@ function hitShip(b, s){
 function gameOver(){
   state = 'over';
   $('overText').textContent = 'You took ' + plunder + ' gold in plunder and were known as ' + RANKS[rankIdx][1] + '. The sea keeps the rest.';
-  $('over').hidden = false; $('againBtn').focus();
+  $('overLoad').hidden = !latest(); $('over').hidden = false; $('againBtn').focus();
 }
 
 /* ---------- Render ---------- */
@@ -1316,18 +1422,17 @@ function hud(){
 
 /* ---------- Boot ---------- */
 let last = 0;
-function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0]; last = t; if (!chartOpen) update(dt); render(chartOpen ? 0 : dt); hud(); requestAnimationFrame(frame); }
+function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0]; last = t; const held2 = chartOpen || menuOpen; if (!held2) update(dt); render(held2 ? 0 : dt); hud(); requestAnimationFrame(frame); }
 function start(data){
   data = data || {};
   const sz = +recall('zoom'); if (sz) zoomMul = clamp(sz, .6, 2);
-  resize(); newGame(data.p ? data : null);
+  setDiff(recall('diff')); resize(); newGame(data.p ? data : null); setDiff(diff); refreshTitle();
   const sp = recall('pace'), sa = recall('aim'); setPace(sp == null ? 1 : +sp); setAssist(sa == null ? true : sa === '1');
   if (data.p){ $('title').hidden = true; state = 'play'; }
   requestAnimationFrame(frame);
 }
 const hot = window.claude && window.claude.hot;
-try { hot && hot.snapshot && hot.snapshot(() => state === 'title' || !p.alive ? {} : { gold, plunder, up, standing, cls: p.cls,
-  p: { x:p.x, y:p.y, h:p.h, hull:p.hull, sails:p.sails } }); } catch (_){ }
+try { hot && hot.snapshot && hot.snapshot(() => state === 'title' || !p.alive ? {} : snapshot()); } catch (_){ }
 if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
 })();
 </script>

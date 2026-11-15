@@ -20,6 +20,7 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Zoom in / out | `=` / `-`, mouse wheel, or pinch |
 | Aim assist on / off | `T` |
 | Game pace: slow / steady / brisk | `1` / `2` / `3` |
+| Log book: save, load, difficulty | `Esc` or `L` |
 | Mute | `M` |
 
 On a touch screen, on-screen buttons replace the keys.
@@ -39,4 +40,11 @@ On a touch screen, on-screen buttons replace the keys.
 - **In port** you ride at anchor with your bow to the open sea. Time does not stop: other ships sail on, and each repair or refit takes time.
 - **Hunters** come after you as your plunder grows: pirates at first, and the navy of any nation you have made an enemy.
 
-Progress is not saved between sessions. The pace and aim-assist choices are remembered in the browser.
+## Saving and difficulty
+
+- **Saves** are kept in the browser's local storage: an autosave written each time you enter or leave a port, plus three manual slots in the log book. You cannot save with shot in the air or an enemy closing.
+- **Save codes.** The log book can copy the current voyage as a text code and load a pasted one, to keep a voyage outside the browser or move it to another device.
+- **What is saved:** your ship, refits, gold, plunder, standing with each nation, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
+- **Difficulty** is Easy, Normal or Hard, chosen on the title screen and changeable in the log book. It scales enemy accuracy and reload, damage you take, how soon and how many hunters come, prize money, and how fast nations anger.
+
+The pace, zoom, aim-assist and difficulty choices are remembered in the browser.
