@@ -91,6 +91,18 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('brig', 0); const a = T.foe('merchant', 'nl', 'merchant', 60, 250), nl0 = g.standing.nl; T.run(15); const calm = a.hull === a.maxHull && g.standing.nl === nl0; return { calm }; });
   check('fleet: consorts leave neutral ships alone', r.calm, r);
 
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.repute('es', -100); const s = T.consort('brig', 0), m = T.foe('merchant', 'es', 'merchant', 500, 200); m.goods = { cocoa: 12 }; const g0 = g.gold;
+    g.setTask(s, { type: 'raid', at: [s.x, s.y], prey: null }); let t = 0; while (!m.released && m.sinking == null && t < 300){ T.run(5); t += 5; } return { t, released: m.released, sunk: m.sinking != null, gained: g.gold - g0, cocoa: g.hold.cocoa, word: g.taskWord(s), alive: g.squad().length }; });
+  check('orders: a consort sent hunting takes a prize on her own and pays you', r.released && r.gained > 150 && r.cocoa === 12 && r.alive === 1, r);
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('sloop', 0), q = g.ports.find(q => q.name === 'Santiago de Cuba'); g.setTask(s, { type: 'port', port: q }); let t = 0; while (!s.task.arrived && t < 1500){ T.run(5); t += 5; }
+    const arrived = !!s.task.arrived, word = g.taskWord(s), d = Math.round(Math.hypot(s.x - q.ox, s.y - q.oy)), hull = Math.round(s.hull); const snap = JSON.parse(JSON.stringify(g.snapshot())); g.loadGame(snap); const s2 = g.squad()[0];
+    const kept = s2 && s2.task && s2.task.type === 'port' && Math.hypot(s2.x - q.ox, s2.y - q.oy) < 400; g.p.x = q.ox + 60; g.p.y = q.oy + 60; T.run(2); return { arrived, word, d, hull, kept, rejoined: !s2.task || s2.task.type === 'fleet', t }; });
+  check('orders: a consort sails alone to a port and waits there', r.arrived && r.d < 200 && r.hull >= 95, r);
+  check('orders: an absent ship keeps her place and orders through a save, and rejoins when you arrive', r.kept && r.rejoined, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); g.wind.dir = g.p.h + .8; g.p.sail = 1; T.run(25); return Math.round(Math.hypot(s.x - g.p.x, s.y - g.p.y)); });
+  check('orders: a ship told to hold stays behind', r > 1200, r);
+  { const e1 = errCount(); await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); T.consort('brig', 1); }); await page.waitForTimeout(900); check('orders: drawing a fleet with one ship detached raises no errors', errCount() === e1, errors.slice(e1)); }
+
   // ---------- port, through the real buttons ----------
   await ev(() => { const g = __sp; T.reset(); g.gold = 9000; g.p.hull = 60; g.p.sails = 70; g.hold.rum = 12; T.consort('brig', 0); T.consort('sloop', 1); g.spares.push({ name: 'Mary Pike', gun: 5, sea: 4 }); g.openPort(g.ports[0]); });
   const click = async sel => { await page.click(sel, { timeout: 4000 }); };
@@ -113,6 +125,10 @@ const HELPERS = () => {
   } catch (e){ ok = false; why = e.message.split('\n')[0]; }
   check('port: every button in the walkthrough was clickable', ok, why);
 
+  for (const name of ['Port Royal', 'Havana', 'Fort-Royal', 'Willemstad', 'Tortuga']){
+    await ev(n => { const g = __sp; T.reset(); g.openPort(g.ports.find(q => q.name === n)); }, name); await page.click('#townScene [data-go=market]'); await page.waitForTimeout(60);
+    r = await ev(() => ({ spots: document.querySelectorAll('#townScene [data-go]').length, tab: __sp.portTab, row: !!document.getElementById('buy_sugar'), sel: !!document.querySelector('#townScene [data-go=market].sel') }));
+    check('town: ' + name + ' is drawn with five places, and clicking the market opens it', r.spots === 5 && r.tab === 'market' && r.row && r.sel, r); await ev(() => __sp.closePort()); }
   r = await ev(() => { const g = __sp; T.reset(); g.openPort(g.ports[0]); const i = g.offers.findIndex(o => o.type === 'deliver'); g.accept(i); const t = g.mission.port, reward = g.mission.reward; g.closePort(); const g0 = g.gold; g.openPort(t); const done = !g.mission, paid = g.gold - g0; g.closePort(); return { done, paid, reward }; });
   check('commission: dispatches are paid on arrival', r.done && r.paid === r.reward, r);
   r = await ev(() => { const g = __sp; T.reset(); g.repute('es', -100); const hav = g.ports.find(q => q.name === 'Havana'); g.p.x = hav.ox; g.p.y = hav.oy; T.run(.2); return g.hostile('es'); });
@@ -164,9 +180,12 @@ const HELPERS = () => {
   await page.keyboard.press('KeyP'); const c1 = await ev(() => __sp.clock); await page.waitForTimeout(500); r = await ev(() => [__sp.paused, __sp.clock]); check('keys: P pauses the sea', r[0] && r[1] === c1, r); await page.keyboard.press('KeyP');
   for (const [key, id] of [['KeyI', 'manifest'], ['KeyV', 'fleetSheet'], ['Escape', 'menu']]){ await page.keyboard.press(key); await page.waitForTimeout(150); const open = await ev(i => !document.getElementById(i).hidden, id); await page.keyboard.press('Escape'); await page.waitForTimeout(100);
     const shut = await ev(i => document.getElementById(i).hidden, id); check('keys: ' + key + ' opens and Escape closes the ' + id + ' screen', open && shut, [open, shut]); }
+  for (let i = 0; i < 14; i++) await page.keyboard.press('Minus'); await page.waitForTimeout(700); r = await ev(() => [__sp.zoom, __sp.scale]); check('zoom: the view zooms far out', r[0] <= .31 && r[1] < .55, r);
+  for (let i = 0; i < 9; i++) await page.keyboard.press('Equal');
   await page.keyboard.press('KeyC'); await page.waitForTimeout(1500); r = await ev(() => __sp.chartOpen); await page.mouse.wheel(0, -400); await page.waitForTimeout(200);
   await page.mouse.move(640, 400); await page.mouse.down(); await page.mouse.move(700, 430, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(100);
   check('chart: opens, zooms and drags without closing', r && (await ev(() => __sp.chartOpen)));
+  await page.click('#czIn'); await page.keyboard.press('Equal'); await page.keyboard.press('ArrowLeft'); check('chart: zoom buttons and keys leave it open', await ev(() => __sp.chartOpen));
   await page.keyboard.press('Escape'); await page.waitForTimeout(100); await page.keyboard.press('KeyC'); await page.waitForTimeout(300);
   const pt = await ev(() => { const g = __sp, q = g.ports.find(q => q.name === 'Cartagena'), aw = innerWidth - 32, ah = innerHeight - 14 - 12 - 62, k = Math.min(aw/g.W, ah/g.H), w = Math.min(aw, g.W*k), h = Math.min(ah, g.H*k); return [16 + (aw - w)/2 + q.x*k, 14 + (ah - h)/2 + q.y*k]; });
   await page.mouse.click(pt[0], pt[1]); await page.waitForTimeout(200); r = await ev(() => [__sp.course && __sp.course.name, __sp.autoHelm, __sp.chartOpen]); check('chart: clicking a port sets a course', r[0] === 'Cartagena' && r[1] && !r[2], r);
