@@ -20,6 +20,8 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Open the full chart | `C` (or click the small chart) |
 | Zoom in / out | `=` / `-`, mouse wheel, or pinch |
 | Aim assist on / off | `T` |
+| Fleet formation: line astern / abreast / wedge | `G` |
+| Fleet orders: line of battle / engage at will / hold fire | `H` |
 | Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
 | Game pace: slow / steady / brisk / swift | `1` / `2` / `3` / `4` |
 | Log book: save, load, difficulty | `Esc` or `L` |
@@ -42,6 +44,11 @@ On a touch screen, on-screen buttons replace the keys.
 - **In port** you ride at anchor with your bow to the open sea. Time does not stop: other ships sail on, and each repair or refit takes time.
 - **Crew and boarding.** Every ship has a crew. Yours is hired in port; below half strength your guns reload slowly. Come within a ship's length of an enemy and board her: the fight is decided by numbers, and a ship with too few hands left strikes her colours.
 - **Prizes.** The prize screen lists everything in her hold, gold and each trade good, with how much of it you have room for. A captured ship can be plundered and released, taken as your own ship (the old one is sold), or sent to port under a prize crew for the value of her hull.
+- **Fleet.** A captured ship can join your fleet; up to four consorts sail with you and fight beside you. Their holds add to yours. In port you can repair them, sell them, appoint captains, or hoist your flag in one and make her your own ship.
+- **Captains.** Each consort needs a captain. Taverns offer captains for hire, rated 1 to 5 for gunnery (faster, truer broadsides) and seamanship (speed). A captured ship's officer sometimes offers to serve. With no spare captain your first mate takes her, at the lowest rating.
+- **Crew from prizes.** Up to half of a captured ship's survivors will sign on with you. A ship added to your fleet keeps her own crew, topped up from yours if she is short.
+- **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
+- **Command.** Choose a formation and standing orders. In line of battle consorts keep station and fire as the enemy bears; engage at will sends each after the nearest enemy; hold fire keeps them back. With aim assist on, each consort's lines of fire are drawn and turn green when a target is in them. Hunters come in squadrons against a fleet.
 - **Trade.** Five goods (sugar, tobacco, rum, cocoa, cloth) are cheap where they are made and dear where they are wanted. Each class has a hold; captured merchantmen carry goods as well as gold.
 - **Politics.** Wars and peace between the four nations change over time, and ports change hands. Warships attack ships of nations they are at war with, and everyone fights pirates, whether or not you are there.
 - **Day, night and weather.** A day lasts five minutes. At night ports and ships show lights and you are harder to spot. Squalls freshen the wind, fog hides you from hunters, and storms tear the canvas of a ship under full sail.
@@ -53,7 +60,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 - **Saves** are kept in the browser's local storage: an autosave written each time you enter or leave a port, plus three manual slots in the log book. You cannot save with shot in the air or an enemy closing.
 - **Save codes.** The log book can copy the current voyage as a text code and load a pasted one, to keep a voyage outside the browser or move it to another device.
-- **What is saved:** your ship, crew, cargo, refits, gold, plunder, standing with each nation, wars and port owners, the clock and weather, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
+- **What is saved:** your ship, your fleet, laid-up ships, captains and home port, crew, cargo, refits, gold, plunder, standing with each nation, wars and port owners, the clock and weather, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
 - **Difficulty** is Easy, Normal or Hard, chosen on the title screen and changeable in the log book. It scales enemy accuracy and reload, damage you take, how soon and how many hunters come, prize money, and how fast nations anger.
 
 The pace, zoom, aim-assist and difficulty choices are remembered in the browser.
