@@ -41,6 +41,10 @@ On a touch screen, on-screen buttons replace the keys.
 - **The chart** is drawn in ink on parchment, with rhumb lines, compass roses and place names. Wheel or pinch to zoom, drag to move. Your home port is the green star. Click a port to set a course: the helmsman steers there round the land and against the wind until you touch the helm, an enemy closes, or you arrive.
 - **Fleet management** opens at any time. Pick a ship from the list to see her picture and manage her alone: repairs, crew (move hands between ships, or hire in port), her own four refits, her captain, hoisting your flag in her, selling her, or laying her up at your home port. Repairs, refits, hiring and selling need a port.
 
+## Tests
+
+`node tests/run-tests.js` runs 74 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
+
 ## How it plays
 
 - **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 640 units to the degree, so a ship is small against the land and narrow channels are sailable. Tortuga and New Providence are drawn about twice life size so their towns fit, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
@@ -59,6 +63,7 @@ On a touch screen, on-screen buttons replace the keys.
 - **Fleet.** A captured ship can join your fleet; up to four consorts sail with you and fight beside you. Their holds add to yours. In port you can repair them, refit each one separately, sell them to free a place in the fleet, appoint captains, or hoist your flag in one and make her your own ship.
 - **Captains.** Each consort needs a captain. Taverns offer captains for hire, rated 1 to 5 for gunnery (faster, truer broadsides) and seamanship (speed). A captured ship's officer sometimes offers to serve. With no spare captain your first mate takes her, at the lowest rating.
 - **Crew from prizes.** Up to half of a captured ship's survivors will sign on with you. A ship added to your fleet keeps her own crew, topped up from yours if she is short.
+- **Safe in port.** While you are in port your consorts lie under the fort's guns and cannot be attacked.
 - **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
 - **Command.** Choose a formation and standing orders. In line of battle consorts keep station and fire as the enemy bears; engage at will sends each after the nearest enemy; hold fire keeps them back. With aim assist on, each consort's lines of fire are drawn and turn green when a target is in them. Hunters come in squadrons against a fleet.
 - **Pause and targets.** Pause freezes the sea while you change formation, orders and shot. Click an enemy ship, paused or not, to make her the fleet's target.

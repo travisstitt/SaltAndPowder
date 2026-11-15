@@ -839,7 +839,7 @@ function sink(s){
   for (let k = 0; k < 7; k++) parts.push({ k:'splash', x: s.x + rand(-28,28), y: s.y + rand(-28,28), vx:0, vy:0, life: rand(.6,1.8), max:1.8, size: rand(4,9) });
   boom(clamp(1 - Math.hypot(s.x-p.x, s.y-p.y)/900, 0, 1)*.3, 200);
   if (s === p){ overT = 2.4; return; }
-  if (s.role === 'fleet'){ say('The ' + s.name + ', your ' + s.t.cname + ', is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.')); s.sinking = 2.6; setTimeout(trimHold, 0); return; }
+  if (s.role === 'fleet'){ newsLog.unshift('Lost in action: the ' + s.name + ', your ' + s.t.cname + '.'); newsLog.length = Math.min(newsLog.length, 4); say('The ' + s.name + ', your ' + s.t.cname + ', is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.')); s.sinking = 2.6; setTimeout(trimHold, 0); return; }
   const mine = s.hitByPlayer, loot = !mine || s.released ? 0 : Math.round((prize(s) ? s.cargo*.4 : BOUNTY[s.cls] || 0)*D().loot);
   if (loot > 0){ const n = 3; for (let k = 0; k < n; k++)
     crates.push({ x: s.x + rand(-34,34), y: s.y + rand(-34,34), amt: Math.max(1, Math.round(loot/n)), life: 70, ph: Math.random()*TAU }); }
@@ -903,8 +903,8 @@ function ai(s, dt){
   if (!fights && warship(s) && !s.surrendered && !s.released && !s.grappled){ // look for a quarrel with someone else
     s.scanT -= dt;
     if (s.scanT <= 0){ s.scanT = 1 + Math.random(); s.foe = null; let bd = 520;
-      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o)) continue; const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd){ bd = od; s.foe = o; } } }
-    if (s.foe && (s.foe.sinking != null || s.foe.released || s.foe.surrendered || Math.hypot(s.foe.x-s.x, s.foe.y-s.y) > 720)) s.foe = null;
+      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o) || o.owner === 'player' && state !== 'play') continue; /* your ships are safe under the fort's guns while you are in port */ const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd){ bd = od; s.foe = o; } } }
+    if (s.foe && (s.foe.sinking != null || s.foe.released || s.foe.surrendered || s.foe.owner === 'player' && state !== 'play' || Math.hypot(s.foe.x-s.x, s.foe.y-s.y) > 720)) s.foe = null;
   } else s.foe = null;
   if (s.grappled){ s.sail = 0; }
   else if (s.surrendered){
@@ -1341,9 +1341,9 @@ function update(dt){
     if (b.mine){ for (const s of ships){ if (s.sinking == null && s.owner !== 'player' && hitShip(b, s)){ struck(s);
       if (b.grape) s.crew = Math.max(0, s.crew - 3 - (Math.random()*3|0)); else if (!b.chain && Math.random() < .5) s.crew = Math.max(0, s.crew - 1);
       damage(s, b.grape ? 1 : b.chain ? 2 : 8, b.grape ? 2 : b.chain ? 12 : 1); done = true; break; } } }
-    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && hitShip(b, s)){ if (ours){ struck(s, true); capXp(b.o); } damage(s, 6, 2); done = true; break; } } }
+    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && hitShip(b, s)){ if (ours){ struck(s, true); capXp(b.o); } damage(s, 6, 2); done = true; break; } } }
     else if (sailing && p.sinking == null && hitShip(b, p)){ damage(p, 6*D().dmg, 2*D().dmg); done = true; if (!tracked) engage(b.o); if (Math.random() < .45 && p.crew > 6) p.crew--; }
-    else if (b.vp){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ damage(o, 6*D().dmg, 2); done = true; break; } } }
+    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ damage(o, 6*D().dmg, 2); done = true; break; } } }
     if (done){ for (let k = 0; k < 7; k++) parts.push({ k:'bit', c:'175,125,72', x:b.x, y:b.y, vx:rand(-80,80), vy:rand(-80,80), life:rand(.3,.8), max:.8, size:rand(1,2.6) });
       parts.push({ k:'flash', x:b.x, y:b.y, vx:0, vy:0, life:.1, max:.1, size:10 }); parts.push({ k:'smoke', g:150, x:b.x, y:b.y, vx:0, vy:0, life:.7, max:.7, size:5 });
       boom(clamp(1 - Math.hypot(b.x-p.x, b.y-p.y)/700, 0, 1)*.16, 900); }
@@ -2147,6 +2147,15 @@ function start(data){
   if (data.p){ $('title').hidden = true; state = 'play'; }
   requestAnimationFrame(frame);
 }
+/* test hook: open the page with #test to expose the game's internals to the test suite in tests/ */
+if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePort, accept, complete, grapple, capture, settlePrize, politics, snapshot, loadGame, newGame, openFleet, openManifest, setCourse, setPaused, setChart,
+  addFleet, squad, payWages, wageBill, fire, damage, struck, sink, makeOffers, spawnHunter, isLand, isNear, findPath, hostile, repute, readSlot, writeSlot, encode, decode, setDiff, makeShip, gameOver,
+  mk: (c, o, r, x, y, h) => { const q = makeShip(c, o, r, x, y, h); ships.push(q); return q; },
+  get state(){ return state; }, set state(v){ state = v; }, get p(){ return p; }, get ships(){ return ships; }, get balls(){ return balls; }, get ports(){ return ports; }, get gold(){ return gold; }, set gold(v){ gold = v; },
+  get plunder(){ return plunder; }, get hold(){ return hold; }, get standing(){ return standing; }, get mission(){ return mission; }, get offers(){ return offers; }, get wars(){ return [...wars]; }, get weather(){ return weather; },
+  get clock(){ return clock; }, set clock(v){ clock = v; }, get fleet(){ return fleet; }, get spares(){ return spares; }, get laidUp(){ return laidUp; }, get tracked(){ return tracked; }, get fleetTarget(){ return fleetTarget; },
+  get course(){ return course; }, get autoHelm(){ return autoHelm; }, get melee(){ return melee; }, get diff(){ return diff; }, get home(){ return homeName; }, get up(){ return up; }, get wind(){ return wind; },
+  get paused(){ return paused; }, get chartOpen(){ return chartOpen; }, get menuOpen(){ return menuOpen; }, get curPort(){ return curPort; }, get tavern(){ return tavern; }, W, H, DEG, CLASSES };
 const hot = window.claude && window.claude.hot;
 try { hot && hot.snapshot && hot.snapshot(() => state === 'title' || !p.alive ? {} : snapshot()); } catch (_){ }
 if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
