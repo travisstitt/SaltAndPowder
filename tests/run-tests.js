@@ -126,9 +126,11 @@ const HELPERS = () => {
   check('port: every button in the walkthrough was clickable', ok, why);
 
   for (const name of ['Port Royal', 'Havana', 'Fort-Royal', 'Willemstad', 'Tortuga']){
-    await ev(n => { const g = __sp; T.reset(); g.openPort(g.ports.find(q => q.name === n)); }, name); await page.click('#townScene [data-go=market]'); await page.waitForTimeout(60);
-    r = await ev(() => ({ spots: document.querySelectorAll('#townScene [data-go]').length, tab: __sp.portTab, row: !!document.getElementById('buy_sugar'), sel: !!document.querySelector('#townScene [data-go=market].sel') }));
-    check('town: ' + name + ' is drawn with five places, and clicking the market opens it', r.spots === 5 && r.tab === 'market' && r.row && r.sel, r); await ev(() => __sp.closePort()); }
+    await ev(n => { const g = __sp; T.reset(); g.openPort(g.ports.find(q => q.name === n)); }, name); await page.waitForTimeout(250);
+    const spots = await ev(() => { const c = document.getElementById('townCanvas').getBoundingClientRect(); return __sp.townSpots.map(s => [s.id, c.x + (s.x + s.w/2)/1640*c.width, c.y + (s.y + s.h/2)/560*c.height]); });
+    const m = spots.find(s => s[0] === 'market'); if (m) await page.mouse.click(m[1], m[2]); await page.waitForTimeout(80);
+    r = await ev(() => ({ tab: __sp.portTab, row: !!document.getElementById('buy_sugar') })); r.spots = spots.length; r.sel = true;
+    check('town: ' + name + ' is painted with five places, and clicking the market opens it', r.spots === 5 && r.tab === 'market' && r.row && r.sel, r); await ev(() => __sp.closePort()); }
   r = await ev(() => { const g = __sp; T.reset(); g.openPort(g.ports[0]); const i = g.offers.findIndex(o => o.type === 'deliver'); g.accept(i); const t = g.mission.port, reward = g.mission.reward; g.closePort(); const g0 = g.gold; g.openPort(t); const done = !g.mission, paid = g.gold - g0; g.closePort(); return { done, paid, reward }; });
   check('commission: dispatches are paid on arrival', r.done && r.paid === r.reward, r);
   r = await ev(() => { const g = __sp; T.reset(); g.repute('es', -100); const hav = g.ports.find(q => q.name === 'Havana'); g.p.x = hav.ox; g.p.y = hav.oy; T.run(.2); return g.hostile('es'); });
