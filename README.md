@@ -14,7 +14,8 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | More / less sail | `W` / `S` |
 | Fire port / starboard guns | `Q` / `E` |
 | Fire both | `Space` |
-| Switch round / chain shot | `R` |
+| Switch round / chain / grape shot | `R` |
+| Board a ship within a ship's length | `B` |
 | Dock when near a port | `F` |
 | Open the full chart | `C` (or click the small chart) |
 | Zoom in / out | `=` / `-`, mouse wheel, or pinch |
@@ -27,10 +28,10 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## How it plays
 
-- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main, drawn from real coordinates. The smaller islands are drawn a little large so they can be sailed around.
+- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. Four small islands that hold a port (Tortuga, New Providence, St Kitts and Barbados) are drawn larger than life so the town fits, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
 - **Ports** are 21 towns of the period in their real locations: Port Royal, Havana, Santiago de Cuba, Tortuga, Petit-Goave, Santo Domingo, San Juan, Nassau, Veracruz, Campeche, Trujillo, Portobelo, Cartagena, Santa Marta, Maracaibo, Willemstad, La Guaira, Cumana, Bridgetown, Fort-Royal and Basseterre. They show as yellow marks on the chart, and a pointer at the screen edge leads to the nearest one.
 - **Wind** shifts over time. You cannot sail into it; a broad reach is fastest. The compass shows the wind, your point of sail and your speed.
-- **Guns** fire sideways from each beam and reload separately. Round shot breaks hulls; chain shot shreds sails. With aim assist on, shaded lanes show where each broadside will fall and turn green when it will hit a moving target.
+- **Guns** fire sideways from each beam and reload separately. Round shot breaks hulls; chain shot shreds sails; grape shot, at short range, cuts down crew. With aim assist on, shaded lanes show where each broadside will fall and turn green when it will hit a moving target.
 - **Ships strike their colours** when the hull is battered or the sails are shot away: white flag, a white ring around them. Hold fire and sail into the ring to board for the full prize; sinking one loses most of it. White ticks on an enemy's bars mark where she will strike.
 - **Nations.** England, Spain, France and the Netherlands each hold ports and send out merchantmen and warships in their own colours. Attack a nation's ships and your standing with her falls while her enemies warm to you. At Hostile her ports close to you and her navy hunts you; a pardon can be bought in any port still open. Pirates fly black and attack everyone.
 - **Shipyard.** Every port sells five classes: sloop, schooner, brig, frigate and galleon, each with its own speed, handling, guns and hull. Your old ship is taken in part exchange and your refits carry over.
@@ -38,13 +39,19 @@ On a touch screen, on-screen buttons replace the keys.
 - **The treasure fleet.** Two unarmed Spanish galleons with heavy cargo sail under escort between Veracruz, Havana, Santo Domingo, Cartagena and Portobelo. The fleet is marked on the chart as a gold diamond.
 - **Chase.** A ship you fire on, or one that fires on you, is tracked with a pointer and a distance even when out of sight, until she is more than about 120 leagues away.
 - **In port** you ride at anchor with your bow to the open sea. Time does not stop: other ships sail on, and each repair or refit takes time.
+- **Crew and boarding.** Every ship has a crew. Yours is hired in port; below half strength your guns reload slowly. Come within a ship's length of an enemy and board her: the fight is decided by numbers, and a ship with too few hands left strikes her colours.
+- **Prizes.** A captured ship can be plundered and released, taken as your own ship (the old one is sold), or sent to port under a prize crew for the value of her hull.
+- **Trade.** Five goods (sugar, tobacco, rum, cocoa, cloth) are cheap where they are made and dear where they are wanted. Each class has a hold; captured merchantmen carry goods as well as gold.
+- **Politics.** Wars and peace between the four nations change over time, and ports change hands. Warships attack ships of nations they are at war with, and everyone fights pirates, whether or not you are there.
+- **Day, night and weather.** A day lasts five minutes. At night ports and ships show lights and you are harder to spot. Squalls freshen the wind, fog hides you from hunters, and storms tear the canvas of a ship under full sail.
+- **Towns** are each laid out differently: cathedral cities behind walls at Havana, Cartagena, Santo Domingo and Veracruz, gabled Dutch houses at Willemstad, thatched huts at Tortuga and Nassau.
 - **Hunters** come after you as your plunder grows: pirates at first, and the navy of any nation you have made an enemy.
 
 ## Saving and difficulty
 
 - **Saves** are kept in the browser's local storage: an autosave written each time you enter or leave a port, plus three manual slots in the log book. You cannot save with shot in the air or an enemy closing.
 - **Save codes.** The log book can copy the current voyage as a text code and load a pasted one, to keep a voyage outside the browser or move it to another device.
-- **What is saved:** your ship, refits, gold, plunder, standing with each nation, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
+- **What is saved:** your ship, crew, cargo, refits, gold, plunder, standing with each nation, wars and port owners, the clock and weather, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
 - **Difficulty** is Easy, Normal or Hard, chosen on the title screen and changeable in the log book. It scales enemy accuracy and reload, damage you take, how soon and how many hunters come, prize money, and how fast nations anger.
 
 The pace, zoom, aim-assist and difficulty choices are remembered in the browser.
