@@ -18,6 +18,10 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Board a ship within a ship's length | `B` |
 | Dock when near a port | `F` |
 | Open the full chart | `C` (or click the small chart) |
+| Set a course | click a port on the full chart |
+| Hand the helm to the helmsman, or take it back | `N` |
+| Pause to give orders | `P` |
+| Name the fleet's target | click an enemy ship |
 | Zoom in / out | `=` / `-`, mouse wheel, or pinch |
 | Aim assist on / off | `T` |
 | Fleet formation: line astern / abreast / wedge | `G` |
@@ -34,6 +38,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 - **Top bar and ship cards.** Gold, rank, hold, crew and sail state run across the top with the tools beside them, including a full-screen button. Down the left side is a card for your flagship and one for each consort, showing hull, sails and crew; click a card to manage that ship.
 - **Port.** A waterfront of five buildings replaces the long list: Shipyard (repair everything, buy a ship), Market, Tavern (crew and captains), Governor (commissions, standing, news, pardons, home port) and Your fleet.
+- **The chart** is drawn in ink on parchment, with rhumb lines, compass roses and place names. Wheel or pinch to zoom, drag to move. Your home port is the green star. Click a port to set a course: the helmsman steers there round the land and against the wind until you touch the helm, an enemy closes, or you arrive.
 - **Fleet management** opens at any time. Pick a ship from the list to see her picture and manage her alone: repairs, crew (move hands between ships, or hire in port), her own four refits, her captain, hoisting your flag in her, selling her, or laying her up at your home port. Repairs, refits, hiring and selling need a port.
 
 ## How it plays
@@ -56,6 +61,10 @@ On a touch screen, on-screen buttons replace the keys.
 - **Crew from prizes.** Up to half of a captured ship's survivors will sign on with you. A ship added to your fleet keeps her own crew, topped up from yours if she is short.
 - **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
 - **Command.** Choose a formation and standing orders. In line of battle consorts keep station and fire as the enemy bears; engage at will sends each after the nearest enemy; hold fire keeps them back. With aim assist on, each consort's lines of fire are drawn and turn green when a target is in them. Hunters come in squadrons against a fleet.
+- **Pause and targets.** Pause freezes the sea while you change formation, orders and shot. Click an enemy ship, paused or not, to make her the fleet's target.
+- **Captains improve.** A captain gains gunnery by landing shot and seamanship by time under way in company.
+- **Wages and shares.** Every hand and captain is paid at midnight, from the third day on; if you cannot pay, a tenth of your flagship's crew deserts. Each consort's company takes 6% of the gold from every prize.
+- **Ship names.** Every ship of yours has a name, which you can change in fleet management.
 - **Trade.** Five goods (sugar, tobacco, rum, cocoa, cloth) are cheap where they are made and dear where they are wanted. Each class has a hold; captured merchantmen carry goods as well as gold.
 - **Politics.** Wars and peace between the four nations change over time, and ports change hands. Warships attack ships of nations they are at war with, and everyone fights pirates, whether or not you are there.
 - **Day, night and weather.** A day lasts five minutes. At night ports and ships show lights and you are harder to spot. Squalls freshen the wind, fog hides you from hunters, and storms tear the canvas of a ship under full sail.

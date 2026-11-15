@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Salt and Powder</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
 <style>
 body{margin:0}[hidden]{display:none!important}
 /* Layout: full-bleed sea canvas; brass instruments pinned to the corners; ledger sheets for title, port and wreck. */
@@ -53,6 +53,15 @@ canvas#sea{position:fixed;inset:0;width:100%;height:100%;display:block}
 .meter i{display:block;height:6px;background:rgba(239,230,207,.14);border-radius:2px;overflow:hidden}
 .meter b{display:block;height:100%;width:100%;background:var(--moss)}
 .chip{background:var(--panel);border-radius:4px;padding:4px 8px}
+.coursechip{all:unset;box-sizing:border-box;cursor:pointer;background:var(--panel);border:1px solid #ff8a6a;border-radius:4px;padding:4px 8px;font-size:12.5px;line-height:1.25;color:var(--bone)}
+.coursechip:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
+#pauseBanner{position:fixed;left:50%;top:calc(var(--bar,48px) + 70px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(84vw,560px);text-align:center;background:var(--panel);border:1px solid var(--brass);border-radius:4px;padding:8px 14px;font-size:14px;line-height:1.35}
+#pauseBanner strong{font-family:var(--display);font-weight:400;font-size:20px;color:var(--brass);margin-right:4px}
+.town{position:relative}
+#townArt{position:absolute;left:0;right:0;top:0;width:100%;max-width:none;height:58%;opacity:.6;pointer-events:none}
+#townTabs button{position:relative;z-index:1}
+input[type=text]{flex:2;min-width:0;background:var(--ink);color:var(--bone);border:1px solid rgba(214,165,78,.6);border-radius:4px;padding:6px 8px;font:inherit}
+input[type=text]:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 @media (max-width:620px){.side{width:138px}.tools button{padding:6px 9px}}
 /* port: a waterfront of buildings to click, one short panel below */
 .card.wide{width:min(100%,860px)}
@@ -170,6 +179,7 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
       <button id="muteBtn" type="button">Sound on</button>
       <button id="zoomOutBtn" type="button" aria-label="Zoom out" title="Zoom out (-)">−</button>
       <button id="zoomInBtn" type="button" aria-label="Zoom in" title="Zoom in (=)">+</button>
+      <button id="pauseBtn" type="button" title="Pause to give orders (P)">Pause</button>
       <button id="fsBtn" type="button" title="Full screen">Full screen</button>
     </div>
   </div>
@@ -185,11 +195,12 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
     <div class="row" id="fleetRow" hidden><button class="mini" id="formBtn" type="button" title="Fleet formation (G)">Line astern</button><button class="mini" id="orderBtn" type="button" title="Fleet orders (H)">Line of battle</button></div>
     <div class="note2 chip" id="chase" hidden></div>
     <div class="note2 chip" id="missionLine" hidden></div>
+    <button class="note2 chip coursechip" id="courseLine" type="button" title="Hand the helm over or take it back (N)" hidden></button>
   </div>
   <div class="bottom">
     <button id="boardBtn" type="button" hidden>Board</button>
     <button id="dock" class="primary" type="button" hidden>Drop anchor</button>
-    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>V</kbd> fleet · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>4</kbd> pace · <kbd>Esc</kbd> save and load</div>
+    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>V</kbd> fleet · <kbd>P</kbd> pause for orders · <kbd>N</kbd> helmsman on a set course · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>4</kbd> pace · <kbd>Esc</kbd> save and load</div>
     <div class="touch">
       <div><button type="button" data-hold="left" aria-label="Turn to port">◀</button><button type="button" data-hold="right" aria-label="Turn to starboard">▶</button></div>
       <div class="col"><button type="button" data-tap="sailUp">More sail</button><button type="button" data-tap="sailDown">Less sail</button></div>
@@ -198,6 +209,7 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
   </div>
 </div>
 <div id="toast" class="off" role="status" aria-live="polite"></div>
+<div id="pauseBanner" role="status" hidden><strong>Paused.</strong> Set the formation (G) and orders (H), change shot (R), and click an enemy ship to name her the fleet's target. Press P to resume.</div>
 
 <div class="sheet" id="title">
   <div class="card">
@@ -211,6 +223,7 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
       <dt>Prizes</dt><dd>A ship strikes her colours when her hull is battered or her sails are shot away: white flag, sails furled, a white ring around her. Hold fire and sail into the ring to board for the full prize. Sink her and most of it goes down.</dd>
       <dt>Fleet</dt><dd>Add captured ships to your fleet, up to four consorts, each under a captain you hire. Choose their formation and their orders: line of battle, engage at will, or hold fire. Lay ships up at your home port.</dd>
       <dt>Nations</dt><dd>Attack a nation's ships and she turns hostile: her ports close and her navy hunts you. Her enemies warm to you. Governors offer paid commissions in port, and the Spanish treasure fleet, unarmed galleons under escort, is marked on the chart.</dd>
+      <dt>Course</dt><dd>Open the chart and click a port: the helmsman steers you there, round the land and against the wind. Touch the helm to take over.</dd>
       <dt>Chart</dt><dd>Ports are the yellow marks on the small chart. Open the full chart, with every port named, from the panel at top left; the game pace is set there too.</dd>
     </dl>
     <div class="seg" role="group" aria-label="Difficulty"><button type="button" data-diff="easy">Easy</button><button type="button" data-diff="normal">Normal</button><button type="button" data-diff="hard">Hard</button></div>
@@ -224,7 +237,7 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 <div class="sheet" id="port" hidden>
   <div class="card wide">
     <div class="head"><div><h2 id="portName">Port</h2><span class="note" id="portNation"></span></div><span class="purse"><span id="portGold">0</span> gold</span></div>
-    <div class="town" id="townTabs" role="tablist" aria-label="Places in town"><button type="button" role="tab" data-tab="yard" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="6" y="37" width="52" height="3" fill="#7a5532"/><path d="M9 33 Q32 44 55 33 L51 25 L13 25 Z" fill="#8a5530" stroke="#3a2412" stroke-width="1.2"/><path d="M20 25V36M28 25V38M36 25V38M44 25V36" stroke="#3a2412" stroke-width="1"/><path d="M50 25V7H33" stroke="#3a2412" stroke-width="2" fill="none"/><path d="M35 7V17" stroke="#d6a54e" stroke-width="1.4"/><rect x="32" y="17" width="6" height="5" fill="#d6a54e"/></svg><span>Shipyard</span></button><button type="button" role="tab" data-tab="market" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M9 14H55V22H9Z" fill="#c4472f"/><path d="M15 14H21V22H15ZM27 14H33V22H27ZM39 14H45V22H39ZM51 14H55V22H51Z" fill="#f2f2f2"/><path d="M11 22V40M53 22V40" stroke="#3a2412" stroke-width="2"/><rect x="12" y="30" width="40" height="4" fill="#8f6639"/><rect x="15" y="23" width="8" height="7" fill="#b98f5c" stroke="#3a2412"/><rect x="26" y="24" width="7" height="6" fill="#d6a54e" stroke="#3a2412"/><circle cx="43" cy="26" r="4" fill="#6f4b25" stroke="#d6a54e"/><rect x="18" y="34" width="5" height="6" fill="#6f4b25"/><rect x="41" y="34" width="5" height="6" fill="#6f4b25"/></svg><span>Market</span></button><button type="button" role="tab" data-tab="tavern" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="13" y="19" width="36" height="21" fill="#efe3c8"/><path d="M9 21L31 6L53 21Z" fill="#8c3522"/><rect x="27" y="28" width="8" height="12" fill="#5a3a1c"/><rect x="17" y="24" width="6" height="6" fill="#ffd24a"/><rect x="39" y="24" width="6" height="6" fill="#ffd24a"/><path d="M49 22H58" stroke="#3a2412" stroke-width="1.6"/><rect x="50" y="24" width="8" height="7" rx="1" fill="#d6a54e" stroke="#3a2412"/><rect x="40" y="9" width="4" height="7" fill="#7c2e1e"/></svg><span>Tavern</span></button><button type="button" role="tab" data-tab="governor" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="8" y="17" width="48" height="23" fill="#f4efe2"/><path d="M5 17L32 5L59 17Z" fill="#b9b3a2"/><path d="M14 19V40M23 19V40M41 19V40M50 19V40" stroke="#cfc8b4" stroke-width="3.2"/><rect x="28" y="27" width="8" height="13" fill="#5a3a1c"/><rect x="6" y="38" width="52" height="3" fill="#cfc8b4"/><path d="M32 5V0" stroke="#3a2412" stroke-width="1.2"/><path d="M32 0H41V4H32Z" fill="#d6a54e"/></svg><span>Governor</span></button><button type="button" role="tab" data-tab="fleet" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M4 34Q14 40 24 34L22 30H6Z" fill="#8a5530" stroke="#3a2412"/><path d="M14 30V10L22 26H14Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M24 38Q36 45 48 38L45 33H27Z" fill="#8a5530" stroke="#3a2412"/><path d="M35 33V8L46 29H35ZM33 33V14L27 29H33Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M44 30Q52 35 60 30L58 26H46Z" fill="#8a5530" stroke="#3a2412"/><path d="M52 26V12L58 23H52Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/></svg><span>Your fleet</span></button></div>
+    <div class="town" id="townTabs" role="tablist" aria-label="Places in town"><svg id="townArt" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true"></svg><button type="button" role="tab" data-tab="yard" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="6" y="37" width="52" height="3" fill="#7a5532"/><path d="M9 33 Q32 44 55 33 L51 25 L13 25 Z" fill="#8a5530" stroke="#3a2412" stroke-width="1.2"/><path d="M20 25V36M28 25V38M36 25V38M44 25V36" stroke="#3a2412" stroke-width="1"/><path d="M50 25V7H33" stroke="#3a2412" stroke-width="2" fill="none"/><path d="M35 7V17" stroke="#d6a54e" stroke-width="1.4"/><rect x="32" y="17" width="6" height="5" fill="#d6a54e"/></svg><span>Shipyard</span></button><button type="button" role="tab" data-tab="market" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M9 14H55V22H9Z" fill="#c4472f"/><path d="M15 14H21V22H15ZM27 14H33V22H27ZM39 14H45V22H39ZM51 14H55V22H51Z" fill="#f2f2f2"/><path d="M11 22V40M53 22V40" stroke="#3a2412" stroke-width="2"/><rect x="12" y="30" width="40" height="4" fill="#8f6639"/><rect x="15" y="23" width="8" height="7" fill="#b98f5c" stroke="#3a2412"/><rect x="26" y="24" width="7" height="6" fill="#d6a54e" stroke="#3a2412"/><circle cx="43" cy="26" r="4" fill="#6f4b25" stroke="#d6a54e"/><rect x="18" y="34" width="5" height="6" fill="#6f4b25"/><rect x="41" y="34" width="5" height="6" fill="#6f4b25"/></svg><span>Market</span></button><button type="button" role="tab" data-tab="tavern" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="13" y="19" width="36" height="21" fill="#efe3c8"/><path d="M9 21L31 6L53 21Z" fill="#8c3522"/><rect x="27" y="28" width="8" height="12" fill="#5a3a1c"/><rect x="17" y="24" width="6" height="6" fill="#ffd24a"/><rect x="39" y="24" width="6" height="6" fill="#ffd24a"/><path d="M49 22H58" stroke="#3a2412" stroke-width="1.6"/><rect x="50" y="24" width="8" height="7" rx="1" fill="#d6a54e" stroke="#3a2412"/><rect x="40" y="9" width="4" height="7" fill="#7c2e1e"/></svg><span>Tavern</span></button><button type="button" role="tab" data-tab="governor" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="8" y="17" width="48" height="23" fill="#f4efe2"/><path d="M5 17L32 5L59 17Z" fill="#b9b3a2"/><path d="M14 19V40M23 19V40M41 19V40M50 19V40" stroke="#cfc8b4" stroke-width="3.2"/><rect x="28" y="27" width="8" height="13" fill="#5a3a1c"/><rect x="6" y="38" width="52" height="3" fill="#cfc8b4"/><path d="M32 5V0" stroke="#3a2412" stroke-width="1.2"/><path d="M32 0H41V4H32Z" fill="#d6a54e"/></svg><span>Governor</span></button><button type="button" role="tab" data-tab="fleet" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M4 34Q14 40 24 34L22 30H6Z" fill="#8a5530" stroke="#3a2412"/><path d="M14 30V10L22 26H14Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M24 38Q36 45 48 38L45 33H27Z" fill="#8a5530" stroke="#3a2412"/><path d="M35 33V8L46 29H35ZM33 33V14L27 29H33Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M44 30Q52 35 60 30L58 26H46Z" fill="#8a5530" stroke="#3a2412"/><path d="M52 26V12L58 23H52Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/></svg><span>Your fleet</span></button></div>
     <ul class="ledger panel" id="ledger"></ul>
     <button class="primary" id="leaveBtn" type="button">Weigh anchor</button>
   </div>
@@ -238,9 +251,11 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
       <div class="shipdetail">
         <canvas id="shipPic" width="640" height="260" aria-hidden="true"></canvas>
         <div><strong id="shipHead"></strong><br><span class="note" id="shipSub"></span></div>
+        <div class="seg" id="nameRow"><input id="shipNameIn" type="text" maxlength="22" autocomplete="off" spellcheck="false" aria-label="Ship's name"><button type="button" id="shipNameBtn">Rename her</button></div>
         <ul class="ledger panel" id="shipRows"></ul>
       </div>
     </div>
+    <p class="note" id="fleetWages"></p>
     <div class="seg"><button type="button" id="formBtn2">Formation</button><button type="button" id="orderBtn2">Orders</button><button class="primary" id="fleetClose" type="button">Close</button></div>
   </div>
 </div>
@@ -478,6 +493,10 @@ const prize = s => s.role === 'merchant' || s.role === 'treasure';
 const strikeAt = s => prize(s) ? .4 : .22;
 const nm = s => s.nation ? s.t.name : s.t.name.toLowerCase();
 const an = t => (/^[AEIOU]/i.test(t) ? 'An ' : 'A ') + t;
+const SHIPN1 = ['Sea', 'Black', 'Golden', 'Royal', 'Swift', 'Bold', 'Lucky', 'Red', 'Grey', 'Morning', 'Wandering', 'Iron', 'Silver', 'Merry', 'Night', 'Salt'];
+const SHIPN2 = ['Wraith', 'Gull', 'Hind', 'Fortune', 'Venture', 'Revenge', 'Lark', 'Marlin', 'Tempest', 'Rose', 'Falcon', 'Dolphin', 'Star', 'Pelican', 'Serpent', 'Wind'];
+const shipName = () => SHIPN1[Math.random()*SHIPN1.length|0] + ' ' + SHIPN2[Math.random()*SHIPN2.length|0];
+const cleanName = (n, d) => { n = String(n == null ? '' : n).replace(/[^\w '.\-]/g, '').trim().slice(0, 22); return n || d || shipName(); };
 function makeShip(cls, owner, role, x, y, h){
   const t = Object.assign({}, CLASSES[cls], livery(cls, owner, role)), nat = NAT[owner] ? owner : null;
   t.name = owner === 'player' ? 'Your ' + t.cname : role === 'treasure' ? 'Spanish treasure galleon' : (nat ? NAT[nat].adj : 'Pirate') + ' ' + t.cname;
@@ -485,7 +504,7 @@ function makeShip(cls, owner, role, x, y, h){
     speedMul: 1, reload: owner === 'player' ? 3.6 : 5, rl: [0, 0], pol: 1, tack: 1, tackT: 0, wakeT: 0, alive: true,
     sinking: null, surrendered: false, released: false, board: 0, cargo: 0, dest: null, announced: false,
     path: null, pi: 0, losT: Math.random(), repT: 0, direct: false, stuck: 0, loiter: null,
-    hitByPlayer: false, provoked: false, fleet: false, off: null, home: null, foe: null, scanT: Math.random(), heel: 0,
+    name: owner === 'player' ? shipName() : '', hitByPlayer: false, provoked: false, fleet: false, off: null, home: null, foe: null, scanT: Math.random(), heel: 0,
     goods: role === 'treasure' ? { tobacco: 20 + (Math.random()*30|0), cocoa: 10 + (Math.random()*20|0) } : owner !== 'player' && role !== 'merchant' && Math.random() < .6 ? { rum: 4 + (Math.random()*10|0) } : null,
     crew: Math.round(t.crew*(owner === 'player' ? 1 : role === 'treasure' ? .45 : rand(.65, 1))) };
 }
@@ -517,17 +536,20 @@ const capCost = c => 120*(c.gun + c.sea) - 60;
 function newCaptain(lo, hi){ const r = () => clamp(lo + (Math.random()*(hi - lo + 1)|0), 1, 5);
   return { name: FIRST[Math.random()*FIRST.length|0] + ' ' + LAST[Math.random()*LAST.length|0], gun: r(), sea: r() }; }
 const mate = () => ({ name: 'your first mate', gun: 1, sea: 1, mate: true });
-const cleanCap = c => c && c.name ? { name: String(c.name).slice(0, 40), gun: clamp(c.gun|0, 1, 5), sea: clamp(c.sea|0, 1, 5), mate: !!c.mate } : mate();
+const cleanCap = c => c && c.name ? { name: String(c.name).slice(0, 40), gun: clamp(c.gun|0, 1, 5), sea: clamp(c.sea|0, 1, 5), mate: !!c.mate, xp: +c.xp || 0, sx: +c.sx || 0 } : mate();
 const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
 const cleanUp = u => { u = u || {}; return { guns: clamp(u.guns|0, 0, 6), hull: clamp(u.hull|0, 0, 5), sail: clamp(u.sail|0, 0, 5), drill: clamp(u.drill|0, 0, 5) }; };
 function fitConsort(s){ const f = s.hull/s.maxHull; s.guns = s.t.guns + s.up.guns; s.maxHull = s.t.hull + 30*s.up.hull; s.hull = s.maxHull*f; s.baseMul = (1 + .04*s.cap.sea)*(1 + .07*s.up.sail); s.speedMul = s.baseMul;
-  s.t.name = cap1(s.t.cname) + ' · ' + (s.cap.mate ? 'First mate' : 'Capt. ' + s.cap.name.split(' ').slice(-1)[0]); }
+  s.t.name = s.name; }
+const capTitle = c => c.mate ? 'Your first mate' : 'Capt. ' + c.name;
+function capXp(o){ const c = o.cap; if (!c || c.gun >= 5) return; c.xp = (c.xp || 0) + 1; // a captain learns gunnery by landing shot
+  if (c.xp >= 25 + 15*c.gun){ c.xp = 0; c.gun++; fitConsort(o); say(capTitle(c) + ' of the ' + o.name + ' has learned her guns: gunnery ' + c.gun + '.'); } }
 function addFleet(d, x, y, h){ // d: { cls, hf, sails, crew, cap, up }
-  const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap); s.up = cleanUp(d.up); fitConsort(s);
+  const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap); s.up = cleanUp(d.up); s.name = cleanName(d.name); fitConsort(s);
   s.hull = s.maxHull*clamp(+d.hf || 1, .05, 1); s.sails = clamp(d.sails == null ? 100 : +d.sails, 0, 100); s.crew = clamp(d.crew|0 || 10, 1, s.t.crew); s.sail = 1;
   ships.push(s); return s; }
-const fleetData = s => ({ cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up });
-const threat = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.surrendered && (o === tracked || o.hitByPlayer || o.announced);
+const fleetData = s => ({ cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up, name: s.name });
+const threat = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.surrendered && (o === tracked || o === fleetTarget || o.hitByPlayer || o.announced);
 function trimHold(){ let over = holdUsed() - holdCap(); for (const g of GK){ if (over <= 0) break; const d = Math.min(hold[g], over); hold[g] -= d; over -= d; } }
 function setForm(k){ formation = FORMS[k] ? k : 'column'; $('formBtn').textContent = FORMS[formation]; }
 function setOrders(k){ orders = ORDERS[k] ? k : 'line'; $('orderBtn').textContent = ORDERS[orders]; }
@@ -540,6 +562,7 @@ function fleetAI(s, dt){
   else {
     if (orders !== 'hold'){ s.scanT -= dt;
       if (s.scanT <= 0){ s.scanT = .6 + Math.random()*.4; s.foe = null; let bd = 1e9;
+        if (fleetTarget && threat(fleetTarget) && Math.hypot(fleetTarget.x-s.x, fleetTarget.y-s.y) < 1100){ s.foe = fleetTarget; bd = -1e9; } // the flagship's signal comes first
         for (const o of ships){ if (!threat(o)) continue; const od = Math.hypot(o.x-s.x, o.y-s.y), w = od - (o === tracked ? 200 : 0); if (od < 720 && w < bd){ bd = w; s.foe = o; } } }
       if (s.foe && !threat(s.foe)) s.foe = null; tgt = s.foe; } else s.foe = null;
     const c = Math.cos(p.h), n = Math.sin(p.h), tx = p.x + c*s.off[0] - n*s.off[1], ty = p.y + n*s.off[0] + c*s.off[1], lag = Math.hypot(tx-s.x, ty-s.y);
@@ -551,6 +574,7 @@ function fleetAI(s, dt){
         const base = s.t.speed*Math.max(s.pol, .3)*wind.str*windMul()*(.35 + .65*s.sails/100), wantV = clamp(p.speed + ex*.8, 0, 250); // match the flagship's speed, plus or minus the gap
         s.sail = wantV > 6 ? 1 : 0; s.speedMul = clamp(wantV/Math.max(1, base), .15, 2.4); s.speed += (wantV - s.speed)*Math.min(1, dt*1.3); }
       if (tgt){ const dx = tgt.x-s.x, dy = tgt.y-s.y; if (Math.hypot(dx, dy) <= RANGE*.9){ const rel = angd(Math.atan2(dy, dx), s.h); if (Math.abs(Math.abs(rel) - Math.PI/2) < .3) fire(s, rel > 0 ? 1 : -1, false); } } }
+    if (p.speed > 40 && s.cap.sea < 5){ s.cap.sx = (s.cap.sx || 0) + dt; if (s.cap.sx > 200 + 120*s.cap.sea){ s.cap.sx = 0; s.cap.sea++; fitConsort(s); say(capTitle(s.cap) + ' of the ' + s.name + ' has learned the sea: seamanship ' + s.cap.sea + '.'); } }
     if (lag > 2600 && !tgt){ const w = waterNear(p.x, p.y, 200); s.x = w[0]; s.y = w[1]; s.path = null; } // never lose a consort for good
   }
   moveShip(s, clamp(angd(avoid(s, want), s.h)*3, -1, 1), dt);
@@ -585,6 +609,14 @@ function weatherTick(dt){
     if (Math.random() < dt*.22){ flash = 1; boom(.2, 160); } }
   flash = Math.max(0, flash - dt*3.5);
 }
+let course = null, autoHelm = false, routeLine = null, routeT = 0, fleetTarget = null, paused = false, lastDay = 0, camNow = { x: 0, y: 0 };
+function setCourse(q){ course = q || null; autoHelm = !!q; routeLine = null; routeT = 0; p.path = null; p.losT = 0;
+  if (q){ if (p.sail === 0) p.sail = 1; say('Course set for ' + q.name + '. The helmsman has her; touch the helm to take over.'); } else say('Course cleared.'); }
+const wageBill = () => Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6;
+function payWages(day){ if (day < 3) return; const w = wageBill(); // the first days are sailed on the promise of shares
+  if (gold >= w){ gold -= w; floaters.push({ x: p.x, y: p.y - 30, txt: '−' + w + ' wages', life: 2 }); }
+  else { gold = 0; const lost = Math.max(1, Math.round(p.crew*.1)); p.crew = Math.max(5, p.crew - lost); say('You cannot meet the day\'s wages of ' + w + ' gold. ' + lost + ' hands desert.'); } }
+function setPaused(on){ paused = !!on && state === 'play'; $('pauseBanner').hidden = !paused; $('pauseBtn').textContent = paused ? 'Resume' : 'Pause'; held.left = held.right = false; }
 let standing, mission = null, offers = [], fleet = null, tracked = null, zoomMul = 1, baseScale = 1, driftT = 0, patrolT = 0;
 const TRACK_R = 3800;
 const hostile = k => !!k && standing[k] <= -25;
@@ -604,7 +636,7 @@ function newGame(saved){
   if (saved && DIFFS[saved.diff]) diff = saved.diff;
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
   mission = null; offers = []; tracked = null; fleet = null; standing = { en:10, es:-5, fr:0, nl:0 };
-  formation = 'column'; orders = 'line'; spares = []; laidUp = []; homeName = 'Port Royal'; tavern = [];
+  formation = 'column'; orders = 'line'; spares = []; laidUp = []; homeName = 'Port Royal'; tavern = []; course = null; autoHelm = false; routeLine = null; fleetTarget = null; paused = false; lastDay = 0;
   hold = { sugar:0, tobacco:0, rum:0, cocoa:0, cloth:0 }; wars = new Set(['en-es', 'es-fr', 'es-nl']); polT = rand(200, 320); newsLog = []; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
   ports.forEach(q => { q.nk = q.home; q.nation = NAT[q.home]; });
@@ -612,6 +644,7 @@ function newGame(saved){
     if (Array.isArray(saved.wars)){ wars = new Set(saved.wars.filter(w => /^(en|es|fr|nl)-(en|es|fr|nl)$/.test(w))); if (!wars.size) wars.add('en-es'); }
     if (saved.owners) ports.forEach(q => { const k = saved.owners[q.name]; if (NAT[k]){ q.nk = k; q.nation = NAT[k]; } });
     if (saved.hold) GK.forEach(g => { hold[g] = clamp(saved.hold[g]|0, 0, 400); });
+    course = ports.find(q => q.name === saved.course) || null; lastDay = Math.floor((Math.max(0, +saved.clock || 0)/DAY*24 + 8)/24);
     formation = FORMS[saved.formation] ? saved.formation : 'column'; orders = ORDERS[saved.orders] ? saved.orders : 'line';
     spares = Array.isArray(saved.spares) ? saved.spares.slice(0, 6).map(cleanCap) : []; laidUp = Array.isArray(saved.laidUp) ? saved.laidUp.slice(0, MAXLAID).filter(d => d && CLASSES[d.cls]) : [];
     homeName = ports.some(q => q.name === saved.home) ? saved.home : 'Port Royal';
@@ -627,7 +660,7 @@ function newGame(saved){
     const sc = DEG/(+saved.deg || 400); // older saves used a smaller map
     let x = +saved.p.x*sc, y = +saved.p.y*sc, h = +saved.p.h || 0;
     if (!(x > 40 && y > 40 && x < W-40 && y < H-40) || isLand(x, y)){ x = o.ox; y = o.oy; h = o.out; }
-    p = makeShip(CLASSES[saved.cls] ? saved.cls : 'sloop', 'player', 'player', x, y, h); refit(); p.crew = clamp(saved.crew == null ? 40 : saved.crew|0, 1, p.t.crew);
+    p = makeShip(CLASSES[saved.cls] ? saved.cls : 'sloop', 'player', 'player', x, y, h); refit(); p.crew = clamp(saved.crew == null ? 40 : saved.crew|0, 1, p.t.crew); p.name = cleanName(saved.pname, p.name);
     p.hull = clamp(+saved.p.hull || p.maxHull, 1, p.maxHull); p.sails = saved.p.sails == null ? 100 : clamp(+saved.p.sails || 0, 0, 100);
     if (saved.wind){ wind.dir = wind.tDir = +saved.wind.dir || 0; wind.str = wind.tStr = clamp(+saved.wind.str || 1, .7, 1.3); }
   }
@@ -806,7 +839,7 @@ function sink(s){
   for (let k = 0; k < 7; k++) parts.push({ k:'splash', x: s.x + rand(-28,28), y: s.y + rand(-28,28), vx:0, vy:0, life: rand(.6,1.8), max:1.8, size: rand(4,9) });
   boom(clamp(1 - Math.hypot(s.x-p.x, s.y-p.y)/900, 0, 1)*.3, 200);
   if (s === p){ overT = 2.4; return; }
-  if (s.role === 'fleet'){ say('Your ' + s.t.cname + ' is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.')); s.sinking = 2.6; setTimeout(trimHold, 0); return; }
+  if (s.role === 'fleet'){ say('The ' + s.name + ', your ' + s.t.cname + ', is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.')); s.sinking = 2.6; setTimeout(trimHold, 0); return; }
   const mine = s.hitByPlayer, loot = !mine || s.released ? 0 : Math.round((prize(s) ? s.cargo*.4 : BOUNTY[s.cls] || 0)*D().loot);
   if (loot > 0){ const n = 3; for (let k = 0; k < n; k++)
     crates.push({ x: s.x + rand(-34,34), y: s.y + rand(-34,34), amt: Math.max(1, Math.round(loot/n)), life: 70, ph: Math.random()*TAU }); }
@@ -911,10 +944,10 @@ function ai(s, dt){
 
 /* ---------- Input ---------- */
 const held = { left:false, right:false };
-function sailStep(d){ if (state !== 'play' || !p.alive || melee) return; p.sail = clamp(p.sail + d*.5, 0, 1); }
+function sailStep(d){ if (state !== 'play' || !p.alive || melee || paused) return; p.sail = clamp(p.sail + d*.5, 0, 1); }
 function toggleShot(){ shot = shot === 'round' ? 'chain' : shot === 'chain' ? 'grape' : 'round'; $('shotBtn').textContent = SHOTN[shot]; }
 function act(name){
-  if (state !== 'play' || !p.alive || chartOpen || menuOpen) return;
+  if (state !== 'play' || !p.alive || chartOpen || menuOpen || paused) return;
   if (name === 'sailUp') sailStep(1); else if (name === 'sailDown') sailStep(-1);
   else if (name === 'port') fire(p, -1); else if (name === 'star') fire(p, 1);
   else if (name === 'board') grapple();
@@ -924,11 +957,12 @@ function act(name){
     if (hostile(nearPort.nk)) say('The ' + nearPort.nation.adj + ' guns at ' + nearPort.name + ' warn you off. This port is closed to you until you buy a pardon elsewhere.');
     else openPort(nearPort); }
 }
-function setChart(on){ chartOpen = !!on && state === 'play'; held.left = held.right = false; $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
+function setChart(on){ if (on && !chartOpen){ chartV.z = 1; chartV.cx = p.x; chartV.cy = p.y; } chartOpen = !!on && state === 'play'; held.left = held.right = false; $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/INPUT|TEXTAREA/.test(e.target.tagName || '') && e.code !== 'Escape') return; // typing a name or a save code
   if (menuOpen){ if (e.code === 'Escape' || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
   if (state === 'port' && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV')){ e.code === 'KeyI' ? openManifest() : openFleet('F'); return; }
   if (state === 'port'){ if (e.code === 'Escape') closePort(); return; }
@@ -942,6 +976,8 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC' && !e.repeat) setChart(true);
   else if (e.code === 'KeyI' && !e.repeat) openManifest();
   else if (e.code === 'KeyV' && !e.repeat) openFleet('F');
+  else if (e.code === 'KeyP' && !e.repeat) setPaused(!paused);
+  else if (e.code === 'KeyN' && !e.repeat && course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); }
   else if (e.code === 'KeyG' && !e.repeat) cycleForm();
   else if (e.code === 'KeyH' && !e.repeat) cycleOrders();
   else if ((e.code === 'Escape' || e.code === 'KeyL') && !e.repeat) openMenu();
@@ -964,11 +1000,16 @@ function recall(k){ try { return localStorage.getItem('sp.' + k); } catch (_){ r
 function setPace(i){ paceIdx = clamp(i|0, 0, PACES.length-1); $('paceBtn').textContent = 'Pace: ' + PACES[paceIdx][1]; store('pace', paceIdx); }
 function setAssist(on){ assist = !!on; $('aimBtn').textContent = 'Aim: ' + (assist ? 'on' : 'off'); $('aimBtn').setAttribute('aria-pressed', assist); store('aim', assist ? 1 : 0); }
 function setZoom(z){ zoomMul = clamp(z, .6, 2); scale = baseScale*zoomMul; store('zoom', zoomMul.toFixed(2)); }
-addEventListener('wheel', e => { if (state !== 'play' || chartOpen) return; e.preventDefault(); setZoom(zoomMul*Math.exp(-e.deltaY*.0015)); }, { passive: false });
+addEventListener('wheel', e => { if (state !== 'play' || menuOpen) return; e.preventDefault();
+  if (chartOpen) chartV.z = clamp(chartV.z*Math.exp(-e.deltaY*.0015), 1, 5); else setZoom(zoomMul*Math.exp(-e.deltaY*.0015)); }, { passive: false });
 const touches = new Map(); let pinch = 0;
 const spread = () => { const v = [...touches.values()]; return Math.hypot(v[0][0]-v[1][0], v[0][1]-v[1][1]); };
-cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); if (touches.size === 2) pinch = spread()/zoomMul; });
-cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; touches.set(e.pointerId, [e.clientX, e.clientY]); if (touches.size === 2 && pinch && state === 'play') setZoom(spread()/pinch); });
+let dragged = false, dragAt = null;
+cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); dragged = false; dragAt = [e.clientX, e.clientY]; if (touches.size === 2) pinch = spread()/(chartOpen ? chartV.z : zoomMul); });
+cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
+  if (touches.size === 2 && pinch && state === 'play'){ if (chartOpen) chartV.z = clamp(spread()/pinch, 1, 5); else setZoom(spread()/pinch); dragged = true; }
+  else if (chartOpen && touches.size === 1 && chartGeo){ if (dragAt && Math.hypot(e.clientX-dragAt[0], e.clientY-dragAt[1]) > 6) dragged = true;
+    if (dragged){ chartV.cx -= (e.clientX-was[0])/chartGeo.k; chartV.cy -= (e.clientY-was[1])/chartGeo.k; } } });
 const lift = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = 0; };
 cv.addEventListener('pointerup', lift); cv.addEventListener('pointercancel', lift); cv.addEventListener('pointerleave', lift);
 $('zoomOutBtn').addEventListener('click', e => { setZoom(zoomMul/1.2); e.currentTarget.blur(); });
@@ -976,8 +1017,20 @@ $('zoomInBtn').addEventListener('click', e => { setZoom(zoomMul*1.2); e.currentT
 $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.length); e.currentTarget.blur(); });
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
-cv.addEventListener('click', e => { if (chartOpen){ setChart(false); return; } const m = chartRect();
-  if (state === 'play' && e.clientX >= m.x && e.clientX <= m.x + m.w && e.clientY >= m.y && e.clientY <= m.y + m.h) setChart(true); });
+cv.addEventListener('click', e => {
+  if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
+    if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }
+    if (hit){ if (hostile(hit.nk)) say(hit.name + ' is closed to you, but the course is set.'); setCourse(hit === course ? null : hit); }
+    setChart(false); return; }
+  const m = chartRect();
+  if (state !== 'play') return;
+  if (e.clientX >= m.x && e.clientX <= m.x + m.w && e.clientY >= m.y && e.clientY <= m.y + m.h){ setChart(true); return; }
+  const wx = (e.clientX - vw/2)/scale + camNow.x, wy = (e.clientY - vh/2)/scale + camNow.y; let hit = null, bd = 70; // a click on a ship names her as the fleet's target
+  for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.released || o.surrendered) continue; const d = Math.hypot(o.x-wx, o.y-wy); if (d < bd){ bd = d; hit = o; } }
+  if (hit){ fleetTarget = hit; engage(hit); say(squad().length ? 'Signal to the fleet: engage the ' + nm(hit) + '.' : 'You mark the ' + nm(hit) + ' as your chase.'); } });
+$('pauseBtn').addEventListener('click', e => { setPaused(!paused); e.currentTarget.blur(); });
+$('courseLine').addEventListener('click', () => { if (course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); } });
+$('shipNameBtn').addEventListener('click', () => { const sq = squad(), s = fleetSel[0] === 'S' ? sq[+fleetSel.slice(1)] : p; if (!s) return; s.name = cleanName($('shipNameIn').value, s.name); if (s !== p) fitConsort(s); renderFleet('shipNameBtn'); });
 $('dock').addEventListener('click', () => act('dock'));
 $('boardBtn').addEventListener('click', () => act('board'));
 function cycleForm(){ const k = Object.keys(FORMS); setForm(k[(k.indexOf(formation) + 1) % k.length]); if (squad().length) say('Formation: ' + FORMS[formation].toLowerCase() + '.'); }
@@ -1021,6 +1074,7 @@ let portTab = 'yard', fleetSel = 'F';
 function openPort(port){ setChart(false); state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
+  if (course === port){ course = null; autoHelm = false; routeLine = null; } setPaused(false);
   squad().forEach((s, i) => { const k = Math.ceil((i+1)/2), sd = i % 2 ? -1 : 1, x = port.ox - Math.sin(port.out)*sd*75*k + Math.cos(port.out)*30, y = port.oy + Math.cos(port.out)*sd*75*k + Math.sin(port.out)*30;
     if (!isLand(x, y)){ s.x = x; s.y = y; } else { s.x = port.ox; s.y = port.oy; } s.h = port.out; s.speed = 0; s.path = null; });
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));
@@ -1041,6 +1095,20 @@ function mend(s, c){ const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hul
 function renderPort(focusId){
   $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + ' port' + (curPort.name === homeName ? ' · your home port' : ''); $('portGold').textContent = gold;
   document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === portTab)));
+  if ($('townArt').dataset.port !== curPort.name + curPort.nk){ $('townArt').dataset.port = curPort.name + curPort.nk; // a skyline of this town behind the buildings: its size, roofs, church and fort
+    const sp = curPort.spec, r = rng(curPort.name.length*131 + curPort.name.charCodeAt(0)), pal = { tile:['#b0553a','#8c3d28','#c06a44'], slate:['#6b737b','#565d65','#84766a'], dutch:['#b5442e','#3f6f9e','#d6a13a','#5d8f5a'], thatch:['#b89858','#9a7d3e','#a88a4a'] }[sp.roof];
+    const wall = sp.roof === 'thatch' ? '#9c8254' : '#d9cdb0'; let o = '<path d="M0 60 L0 38 Q80 14 170 34 T340 26 T520 32 T600 22 L600 60Z" fill="#3d6f5a" opacity=".55"/>';
+    const n = 7 + sp.sz*7; for (let i = 0; i < n; i++){ const x = 14 + (i + r()*.6)*(572/n), w = 14 + r()*10, hgt = (sp.roof === 'dutch' ? 22 : 12) + r()*(6 + sp.sz*3), c = pal[r()*pal.length|0];
+      o += sp.roof === 'thatch' ? '<path d="M' + x + ' 60V' + (60 - hgt*.6) + 'h' + w + 'V60Z" fill="' + wall + '"/><path d="M' + (x - 3) + ' ' + (60 - hgt*.6) + 'L' + (x + w/2) + ' ' + (60 - hgt - 8) + 'L' + (x + w + 3) + ' ' + (60 - hgt*.6) + 'Z" fill="' + c + '"/>'
+        : sp.roof === 'dutch' ? '<path d="M' + x + ' 60V' + (60 - hgt) + 'l' + w*.25 + ' -5h' + w*.5 + 'l' + w*.25 + ' 5V60Z" fill="' + c + '"/><rect x="' + (x + w*.3) + '" y="' + (60 - hgt*.6) + '" width="' + w*.4 + '" height="' + hgt*.25 + '" fill="#f3ead6"/>'
+        : '<rect x="' + x + '" y="' + (60 - hgt) + '" width="' + w + '" height="' + hgt + '" fill="' + wall + '"/><path d="M' + (x - 2) + ' ' + (60 - hgt) + 'L' + (x + w/2) + ' ' + (60 - hgt - 8) + 'L' + (x + w + 2) + ' ' + (60 - hgt) + 'Z" fill="' + c + '"/>'; }
+    if (sp.ch) o += sp.ch === 2 ? '<rect x="268" y="22" width="64" height="38" fill="#efe8d6"/><rect x="262" y="8" width="14" height="52" fill="#e2dac4"/><rect x="324" y="8" width="14" height="52" fill="#e2dac4"/><path d="M262 8l7 -8l7 8ZM324 8l7 -8l7 8Z" fill="#8c3d28"/><circle cx="300" cy="22" r="13" fill="#9db7c4"/>'
+      : '<rect x="282" y="30" width="34" height="30" fill="#efe8d6"/><rect x="292" y="12" width="14" height="48" fill="#e2dac4"/><path d="M290 12l9 -10l9 10Z" fill="#8c3d28"/>';
+    if (sp.walls) o += '<path d="M0 60V46h8v-4h8v4h8v-4h8v4h8v-4h8v4h8V60Z" fill="#a7a99e"/><path d="M544 60V46h8v-4h8v4h8v-4h8v4h8v-4h8v4h8V60Z" fill="#a7a99e"/>';
+    const fx = sp.forts[0] === 'castle' ? 496 : 520; o += sp.forts[0] === 'castle' ? '<path d="M' + fx + ' 60V30h10v-6h8v6h20v-6h8v6h10V60Z" fill="#9a9c91"/><rect x="' + (fx + 24) + '" y="16" width="14" height="44" fill="#8b8d83"/>' : '<path d="M' + fx + ' 60l6 -18h28l6 18Z" fill="#9a9c91"/><rect x="' + (fx + 14) + '" y="30" width="12" height="14" fill="#8b8d83"/>';
+    o += '<path d="M' + (fx + 31) + ' 16V0" stroke="#2a1c10" stroke-width="1.4"/><path d="M' + (fx + 31) + ' 0h16v5h-16Z" fill="' + curPort.nation.c1 + '"/><path d="M' + (fx + 31) + ' 5h16v4h-16Z" fill="' + curPort.nation.c2 + '"/>';
+    for (let i = 0; i < 4; i++){ const x = 30 + r()*540; o += '<path d="M' + x + ' 60q2 -14 -1 -24" stroke="#5a4326" stroke-width="2" fill="none"/><path d="M' + (x - 1) + ' 36q-12 -4 -16 4M' + (x - 1) + ' 36q12 -5 17 3M' + (x - 1) + ' 36q-6 -10 -14 -8M' + (x - 1) + ' 36q7 -10 14 -7" stroke="#3f7a40" stroke-width="2.4" fill="none"/>'; }
+    $('townArt').innerHTML = o; }
   const ul = $('ledger'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderPort), T = (cls, t) => ledgerText(ul, cls, t);
   if (portTab === 'yard'){
@@ -1111,18 +1179,18 @@ function renderFleet(focusId){
   const list = $('shipList'); list.textContent = '';
   const item = (key, title, sub) => { const b = document.createElement('button'), t = document.createElement('span'), sm = document.createElement('small'); b.type = 'button'; b.className = 'shipitem'; b.id = 'fi_' + key;
     b.setAttribute('aria-pressed', String(fleetSel === key)); t.textContent = title; sm.textContent = sub; b.appendChild(t); b.appendChild(sm); b.addEventListener('click', () => { fleetSel = key; renderFleet('fi_' + key); }); list.appendChild(b); };
-  item('F', 'Flagship · ' + cap1(p.t.cname), 'Hull ' + pct(p) + '% · crew ' + p.crew + '/' + p.t.crew);
-  sq.forEach((s, i) => item('S' + i, s.t.name, stars(s.cap) + ' · hull ' + pct(s) + '% · crew ' + s.crew));
+  item('F', p.name, 'Flagship · ' + p.t.cname + ' · hull ' + pct(p) + '%');
+  sq.forEach((s, i) => item('S' + i, s.name, cap1(s.t.cname) + ' · ' + stars(s.cap) + ' · hull ' + pct(s) + '%'));
   laidUp.forEach((d, i) => item('L' + i, 'Laid up · ' + cap1(CLASSES[d.cls].cname), 'At ' + homeName + ' · hull ' + Math.round(d.hf*100) + '%'));
   const ul = $('shipRows'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderFleet);
   if (kind === 'L'){ const d = laidUp[idx], k = CLASSES[d.cls], tmp = makeShip(d.cls, 'player', 'fleet', 0, 0, 0), v = Math.round(k.value*.35*d.hf); tmp.sails = d.sails; tmp.hull = tmp.maxHull*d.hf; drawPic(tmp);
-    $('shipHead').textContent = cap1(k.cname) + ', laid up at ' + homeName;
+    $('shipHead').textContent = (d.name || cap1(k.cname)) + ', a ' + k.cname + ' laid up at ' + homeName; $('nameRow').hidden = true;
     $('shipSub').textContent = k.guns + ' guns a side · hull ' + Math.round(d.hf*100) + '% · crew ' + d.crew + ' · ' + (d.cap && !d.cap.mate ? 'Capt. ' + d.cap.name + ' ' + stars(d.cap) : 'no captain');
     R('Recall her to the fleet', atHome ? (sq.length < MAXSQ ? 'She rejoins you here.' : 'Your fleet is full at ' + MAXSQ + ' consorts.') : 'You must be in port at ' + homeName + '.', '', [['lr', 'Recall', atHome && sq.length < MAXSQ, () => { laidUp.splice(idx, 1); addFleet(d, curPort.ox, curPort.oy, curPort.out); fleetSel = 'S' + (squad().length - 1); }]]);
     R('Sell her', atHome ? 'The yard at ' + homeName + ' will take her. Her captain stays with you as a spare.' : 'You must be in port at ' + homeName + '.', v + ' gold', [['ls', 'Sell', atHome, () => { gold += v; if (d.cap && !d.cap.mate && spares.length < 6) spares.push(d.cap); laidUp.splice(idx, 1); fleetSel = 'F'; }]]);
   } else { const flag = kind === 'F', s = flag ? p : sq[idx], u = upOf(s); drawPic(s);
-    $('shipHead').textContent = flag ? 'Your flagship, a ' + s.t.cname : s.t.name;
+    $('shipHead').textContent = s.name + (flag ? ', your flagship, a ' : ', a ') + s.t.cname; $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = s.guns + ' guns a side · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
@@ -1139,13 +1207,14 @@ function renderFleet(focusId){
       R('Captain', s.cap.mate ? 'Your first mate commands her. Hire a captain in a tavern.' : 'Capt. ' + s.cap.name + ': gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea + '.', stars(s.cap),
         best.map((c, i) => ['ca_' + i, 'Appoint ' + c.name.split(' ').slice(-1)[0] + ' ' + '★'.repeat(Math.round((c.gun + c.sea)/2)), true, () => { spares.splice(spares.indexOf(c), 1); if (!s.cap.mate) spares.push(s.cap); s.cap = c; fitConsort(s); }]));
       const v = Math.round(s.t.value*.35*s.hull/s.maxHull);
-      R('Hoist your flag in her', 'She becomes your flagship and your present ship takes her place in the fleet. Refits stay with each ship.', '', [['fg', 'Hoist flag', inPort, () => { const a = fleetData(s), mine = { cls: p.cls, hf: p.hull/p.maxHull, sails: p.sails, crew: s.crew, cap: s.cap, up: Object.assign({}, up) }, myCrew = p.crew, o = p, x = s.x, y = s.y, h = s.h;
-        ships.splice(ships.indexOf(s), 1); up = cleanUp(a.up); p = makeShip(a.cls, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull*a.hf; p.sails = a.sails; p.crew = Math.min(myCrew, p.t.crew); addFleet(mine, x, y, h); trimHold(); fleetSel = 'F'; }]]);
+      R('Hoist your flag in her', 'She becomes your flagship and your present ship takes her place in the fleet. Refits stay with each ship.', '', [['fg', 'Hoist flag', inPort, () => { const a = fleetData(s), mine = { cls: p.cls, hf: p.hull/p.maxHull, sails: p.sails, crew: s.crew, cap: s.cap, up: Object.assign({}, up), name: p.name }, myCrew = p.crew, o = p, x = s.x, y = s.y, h = s.h;
+        ships.splice(ships.indexOf(s), 1); up = cleanUp(a.up); p = makeShip(a.cls, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull*a.hf; p.sails = a.sails; p.crew = Math.min(myCrew, p.t.crew); p.name = cleanName(a.name, p.name); addFleet(mine, x, y, h); trimHold(); fleetSel = 'F'; }]]);
       R('Part with her', inPort ? 'Selling frees a place in your fleet; her captain stays with you as a spare and her crew is paid off.' + (atHome ? ' Or lay her up here to recall later.' : '') : 'Ships are sold in port, and laid up at ' + homeName + '.', v + ' gold', [
         ['fs', 'Sell', inPort, () => { gold += v; if (!s.cap.mate && spares.length < 6) spares.push(s.cap); ships.splice(ships.indexOf(s), 1); trimHold(); fleetSel = 'F'; }],
         atHome ? ['fl', 'Lay up', laidUp.length < MAXLAID, () => { laidUp.push(fleetData(s)); ships.splice(ships.indexOf(s), 1); trimHold(); fleetSel = 'F'; }] : null]);
     } else ledgerText(ul, 'txt', 'To replace your flagship, buy a ship at a shipyard, take a prize as your own, or hoist your flag in one of your consorts.');
   }
+  $('fleetWages').textContent = 'Wages: ' + wageBill() + ' gold a day. Each consort\'s company takes 6% of every prize in shares.';
   $('formBtn2').textContent = 'Formation: ' + FORMS[formation]; $('orderBtn2').textContent = 'Orders: ' + ORDERS[orders];
   const f = focusId && $(focusId); if (f && !f.disabled) f.focus({ preventScroll: true }); else if (focusId) $('fleetClose').focus({ preventScroll: true });
 }
@@ -1163,7 +1232,7 @@ const SLOTS = [['auto', 'Autosave'], ['1', 'Slot 1'], ['2', 'Slot 2'], ['3', 'Sl
 function snapshot(){
   const m = mission; let np = ports[0], nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
   const owners = {}; ports.forEach(q => { if (q.nk !== q.home) owners[q.name] = q.nk; });
-  return { v:3, deg: DEG, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind,
+  return { v:3, deg: DEG, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind,
     p: { x: Math.round(p.x), y: Math.round(p.y), h: +p.h.toFixed(3), hull: Math.round(p.hull), sails: Math.round(p.sails) },
     wind: { dir: +wind.dir.toFixed(3), str: +wind.str.toFixed(2) }, fleetLeg: fleet ? fleet.leg : null,
     mission: m ? { type: m.type, nk: m.nk, title: m.title, reward: m.reward, rep: m.rep, port: m.port && m.port.name, foe: m.foe, need: m.need, have: m.have, cls: m.cls,
@@ -1180,7 +1249,7 @@ function decode(t){ try { const d = JSON.parse(decodeURIComponent(escape(atob(St
 function summary(d){ const c = CLASSES[d.cls] ? CLASSES[d.cls].cname : 'sloop', when = new Date(d.t || 0);
   return (d.rank || 'Swab') + ' · ' + c + ' · ' + (d.gold|0) + ' gold · near ' + (d.where || 'Port Royal') + ' · ' + (DIFFS[d.diff] ? DIFFS[d.diff].name : 'Normal') + ' · ' +
     when.toLocaleDateString([], { month:'short', day:'numeric' }) + ' ' + when.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
-function loadGame(d){ closeMenu(); $('title').hidden = true; $('over').hidden = true; $('port').hidden = true; initAudio(); newGame(d); setDiff(diff); state = 'play';
+function loadGame(d){ closeMenu(); setPaused(false); $('title').hidden = true; $('over').hidden = true; $('port').hidden = true; initAudio(); newGame(d); setDiff(diff); state = 'play';
   say('Voyage resumed near ' + (d.where || 'Port Royal') + '. Other ships have moved on since you saved.'); }
 function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
   document.querySelectorAll('[data-diff]').forEach(b => b.setAttribute('aria-pressed', b.dataset.diff === diff));
@@ -1235,7 +1304,17 @@ function update(dt){
   const sailing = state === 'play';
   clock += dt; weatherTick(dt); polT -= dt; if (polT <= 0){ polT = rand(220, 380); politics(); }
 
-  if (sailing){ if (p.sinking == null) moveShip(p, melee ? 0 : (held.right ? 1 : 0) - (held.left ? 1 : 0), dt);
+  const day = Math.floor((clock/DAY*24 + 8)/24); if (day > lastDay){ lastDay = day; payWages(day); }
+  if (fleetTarget && (fleetTarget.sinking != null || fleetTarget.released || fleetTarget.surrendered || fleetTarget.gone || ships.indexOf(fleetTarget) < 0)) fleetTarget = null;
+  let helm = (held.right ? 1 : 0) - (held.left ? 1 : 0);
+  if (sailing && course && p.alive){
+    if (autoHelm && helm){ autoHelm = false; say('You have the helm. The course for ' + course.name + ' stays marked; press N to hand her back.'); }
+    if (autoHelm && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x-p.x, o.y-p.y) < 650)){ autoHelm = false; say('Enemy closing. You have the helm.'); }
+    routeT -= dt; if (routeT <= 0){ routeT = 3; routeLine = findPath(p.x, p.y, course.ox, course.oy); }
+    if (Math.hypot(course.ox-p.x, course.oy-p.y) < 210){ say('Arrived off ' + course.name + '. Drop anchor when you are ready.'); if (autoHelm) p.sail = 0; course = null; autoHelm = false; routeLine = null; }
+    else if (autoHelm && !melee){ const want = avoid(p, sailable(p, navTo(p, course.ox, course.oy, dt), dt)); helm = clamp(angd(want, p.h)*3, -1, 1); }
+  }
+  if (sailing){ if (p.sinking == null) moveShip(p, melee ? 0 : helm, dt);
     else { p.sinking -= dt; overT -= dt; if (overT <= 0) gameOver(); }
     if (melee) meleeTick(dt); }
 
@@ -1262,7 +1341,7 @@ function update(dt){
     if (b.mine){ for (const s of ships){ if (s.sinking == null && s.owner !== 'player' && hitShip(b, s)){ struck(s);
       if (b.grape) s.crew = Math.max(0, s.crew - 3 - (Math.random()*3|0)); else if (!b.chain && Math.random() < .5) s.crew = Math.max(0, s.crew - 1);
       damage(s, b.grape ? 1 : b.chain ? 2 : 8, b.grape ? 2 : b.chain ? 12 : 1); done = true; break; } } }
-    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && hitShip(b, s)){ if (ours) struck(s, true); damage(s, 6, 2); done = true; break; } } }
+    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && hitShip(b, s)){ if (ours){ struck(s, true); capXp(b.o); } damage(s, 6, 2); done = true; break; } } }
     else if (sailing && p.sinking == null && hitShip(b, p)){ damage(p, 6*D().dmg, 2*D().dmg); done = true; if (!tracked) engage(b.o); if (Math.random() < .45 && p.crew > 6) p.crew--; }
     else if (b.vp){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ damage(o, 6*D().dmg, 2); done = true; break; } } }
     if (done){ for (let k = 0; k < 7; k++) parts.push({ k:'bit', c:'175,125,72', x:b.x, y:b.y, vx:rand(-80,80), vy:rand(-80,80), life:rand(.3,.8), max:.8, size:rand(1,2.6) });
@@ -1305,7 +1384,8 @@ function manifestOf(s, all){ // what she carries, dearest first, and how much of
   let space = all ? 1e9 : Math.max(0, holdCap() - holdUsed()); const out = [];
   GK.slice().sort((a, b) => GOODS[b][1] - GOODS[a][1]).forEach(g => { const n = s.goods && s.goods[g] || 0; if (!n) return; const take = Math.min(n, space); space -= take; out.push({ g, n, take }); });
   return out; }
-function takeCargo(s, all){ const c = prizeLoot(s), m = manifestOf(s, all); let tons = 0; s.cargo = 0; earn(c, s.x, s.y); m.forEach(v => { hold[v.g] += v.take; tons += v.take; }); s.goods = null; return [c, tons]; }
+function takeCargo(s, all){ const c = prizeLoot(s), m = manifestOf(s, all); let tons = 0; s.cargo = 0; earn(c, s.x, s.y);
+  const share = Math.round(c*.06*squad().length); if (share){ gold -= share; setTimeout(() => say('Your captains and their crews take ' + share + ' gold of the prize in shares.'), 2600); } m.forEach(v => { hold[v.g] += v.take; tons += v.take; }); s.goods = null; return [c, tons]; }
 function settlePrize(how){
   const s = prizeShip, name = nm(s), got = takeCargo(s, how === 'keep' || how === 'fleet'), tail = got[1] ? ' and ' + got[1] + ' tons of goods' : '';
   if (how === 'fleet'){ const need = Math.max(0, Math.ceil(s.t.crew*.3) - s.crew), cap = spares.length ? spares.sort((a, b) => b.gun + b.sea - a.gun - a.sea).shift() : mate();
@@ -1355,6 +1435,7 @@ function renderManifest(){
   ledgerText(ul, 'txt', used ? 'About ' + worth + ' gold of goods in all, more where they are wanted.' : 'The hold is empty.');
   ledgerText(ul, 'sec', 'Purse');
   ledgerLine(ul, 'Gold', 'Plunder taken so far: ' + plunder + '. Known as ' + RANKS[rankIdx][1] + '.', gold + ' gold');
+  ledgerLine(ul, 'Wages', 'Paid at midnight to every hand and captain in the fleet. Unpaid crews desert.', wageBill() + ' a day');
   ledgerText(ul, 'sec', 'Your ' + p.t.cname);
   ledgerLine(ul, 'Crew', p.crew < p.t.crew*.5 ? 'Short-handed: the guns reload slowly.' : 'Enough hands to work the guns.', p.crew + ' of ' + p.t.crew);
   ledgerLine(ul, 'Hull', 'Timbers and planking.', Math.round(p.hull) + ' of ' + Math.round(p.maxHull));
@@ -1743,7 +1824,7 @@ function render(dt){
   cx.setTransform(dpr, 0, 0, dpr, 0, 0);
   cx.fillStyle = C.sea; cx.fillRect(0, 0, vw, vh);
   const sk = shake > .3 ? shake : 0;
-  const camX = p.x + Math.cos(p.h)*30 + rand(-sk, sk), camY = p.y + Math.sin(p.h)*30 + rand(-sk, sk);
+  const camX = p.x + Math.cos(p.h)*30 + rand(-sk, sk), camY = p.y + Math.sin(p.h)*30 + rand(-sk, sk); camNow.x = camX; camNow.y = camY;
   const hw = vw/scale/2, hh2 = vh/scale/2, x0 = camX-hw, y0 = camY-hh2, x1 = camX+hw, y1 = camY+hh2;
   const wc = Math.cos(wind.dir), wn = Math.sin(wind.dir);
   drift.x += wc*dt*26*wind.str; drift.y += wn*dt*26*wind.str;
@@ -1797,7 +1878,7 @@ function render(dt){
   for (const s of ships) if (s.x > x0-120 && s.x < x1+120 && s.y > y0-120 && s.y < y1+120) drawShip(s);
   drawShip(p);
   for (const s of ships) if (s.x > x0-60 && s.x < x1+60 && s.y > y0-60 && s.y < y1+60) drawBars(s);
-  for (const s of [tracked, mission && mission.ship]){ if (!s || s.sinking != null || s.surrendered) continue; const r = s.t.len*.74; cx.strokeStyle = s === tracked ? s.t.tag : '#7fe0d0'; cx.lineWidth = 2;
+  for (const s of [tracked, mission && mission.ship, fleetTarget]){ if (!s || s.sinking != null || s.surrendered) continue; const r = s.t.len*(s === fleetTarget ? .86 : .74); cx.strokeStyle = s === fleetTarget ? '#ff5a4a' : s === tracked ? s.t.tag : '#7fe0d0'; cx.lineWidth = s === fleetTarget ? 2.6 : 2;
     for (const v of [[-1,-1],[1,-1],[1,1],[-1,1]]){ cx.beginPath(); cx.moveTo(s.x + v[0]*r, s.y + v[1]*(r-12)); cx.lineTo(s.x + v[0]*r, s.y + v[1]*r); cx.lineTo(s.x + v[0]*(r-12), s.y + v[1]*r); cx.stroke(); } }
 
   for (const b of balls){ const u = 1 - b.life/b.life0, ht = Math.sin(Math.PI*clamp(u, 0, 1));
@@ -1872,7 +1953,8 @@ function render(dt){
         const tl = text + ' · ' + lg(x, y); cx.strokeText(tl, 0, 36); cx.fillStyle = C.bone; cx.fillText(tl, 0, 36); cx.fillStyle = col; }); };
     const mt = missionTarget();
     let np = null, nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
-    if (!mt || mt.port !== np) badge(np.x, np.y, C.brass, np.name, () => { cx.fillStyle = '#ffd24a'; circle(cx, 0, 0, 5); cx.fill(); });
+    if (course) badge(course.x, course.y, '#ff8a6a', 'Course: ' + course.name, () => { cx.strokeStyle = '#ff8a6a'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(-8, 6); cx.lineTo(0, -9); cx.lineTo(8, 6); cx.stroke(); });
+    else if (!mt || mt.port !== np) badge(np.x, np.y, C.brass, np.name, () => { cx.fillStyle = '#ffd24a'; circle(cx, 0, 0, 5); cx.fill(); });
     for (const s of ships) if (s.surrendered && s.sinking == null) badge(s.x, s.y, '#ffffff', 'Struck', () => { cx.fillStyle = '#ffffff'; cx.fillRect(-7, -9, 2, 18); cx.fillRect(-5, -9, 13, 9); });
     if (tracked && !tracked.surrendered) badge(tracked.x, tracked.y, tracked.t.tag, tracked.t.name, () => { cx.strokeStyle = tracked.t.tag; cx.lineWidth = 1.6; circle(cx, 0, 0, 7); cx.stroke();
       cx.beginPath(); cx.moveTo(-12, 0); cx.lineTo(12, 0); cx.moveTo(0, -12); cx.lineTo(0, 12); cx.stroke(); });
@@ -1902,47 +1984,117 @@ function drawCompass(){
   cx.strokeText(l2, tx, ty+17); cx.fillStyle = name === 'In irons' ? '#ff8a73' : C.bone; cx.fillText(l2, tx, ty+17);
   cx.strokeText(l3, tx, ty+34); cx.fillStyle = C.bone; cx.fillText(l3, tx, ty+34);
 }
-function chartMarks(x, y, k, big){
-  for (const q of ports){ const px = x + q.x*k, py = y + q.y*k; cx.fillStyle = '#08191e'; circle(cx, px, py, big ? 7.5 : 4.2); cx.fill();
-    if (big){ cx.fillStyle = hostile(q.nk) ? '#5a5f60' : q.nation.c1; circle(cx, px, py, 6); cx.fill(); }
-    cx.fillStyle = '#ffd24a'; circle(cx, px, py, big ? 3.4 : 2.9); cx.fill(); }
+const HOMEC = '#35d6a0';
+function routeOn(x, y, k, w){ if (!course) return; const pts = [[p.x, p.y]].concat(routeLine || [[course.ox, course.oy]]);
+  cx.strokeStyle = '#c8321e'; cx.lineWidth = w; cx.setLineDash([w*3, w*2.4]); cx.beginPath(); pts.forEach((v, i) => i ? cx.lineTo(x + v[0]*k, y + v[1]*k) : cx.moveTo(x + v[0]*k, y + v[1]*k)); cx.stroke(); cx.setLineDash([]); }
+function chartMarks(x, y, k){ // the small chart in the corner
+  routeOn(x, y, k, 1.4);
+  for (const q of ports){ const px = x + q.x*k, py = y + q.y*k, home = q.name === homeName; cx.fillStyle = '#08191e'; circle(cx, px, py, home ? 5.4 : 4.2); cx.fill();
+    cx.fillStyle = home ? HOMEC : '#ffd24a'; circle(cx, px, py, home ? 3.9 : 2.9); cx.fill(); if (q === course){ cx.strokeStyle = '#ff7a5c'; cx.lineWidth = 1.5; circle(cx, px, py, 7); cx.stroke(); } }
   if (state !== 'title') for (const s of ships){ if (s.sinking != null || s.released) continue; const d = Math.hypot(s.x-p.x, s.y-p.y), sx = x + s.x*k, sy = y + s.y*k;
     if (s.surrendered){ const pr = 3 + 2*(.5 + .5*Math.sin(time*5)); cx.strokeStyle = '#ffffff'; cx.lineWidth = 1.5; circle(cx, sx, sy, pr + 1.5); cx.stroke(); cx.fillStyle = '#ffffff'; circle(cx, sx, sy, 2); cx.fill(); continue; }
     if (s === tracked){ cx.strokeStyle = s.t.tag; cx.lineWidth = 1.5; circle(cx, sx, sy, 5); cx.stroke(); }
     else if (prize(s) ? d > 1800 : d > 2600) continue;
     cx.fillStyle = s.role === 'fleet' ? '#ffffff' : s.t.tag; cx.fillRect(sx - 1.6, sy - 1.6, 3.2, 3.2); }
-  if (fleet && fleet.lead){ const fx = x + fleet.lead.x*k, fy = y + fleet.lead.y*k, r = big ? 7 : 4.5; cx.fillStyle = '#08191e'; cx.beginPath(); cx.moveTo(fx, fy-r-1.5); cx.lineTo(fx+r+1.5, fy); cx.lineTo(fx, fy+r+1.5); cx.lineTo(fx-r-1.5, fy); cx.closePath(); cx.fill();
-    cx.fillStyle = '#ffe07a'; cx.beginPath(); cx.moveTo(fx, fy-r); cx.lineTo(fx+r, fy); cx.lineTo(fx, fy+r); cx.lineTo(fx-r, fy); cx.closePath(); cx.fill();
-    if (big){ cx.font = '700 12px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(8,25,30,.9)'; cx.strokeText('Treasure fleet', fx, fy - 12); cx.fillStyle = '#ffe07a'; cx.fillText('Treasure fleet', fx, fy - 12); } }
-  const mt = missionTarget(); if (mt){ cx.strokeStyle = '#7fe0d0'; cx.lineWidth = 2; circle(cx, x + mt.x*k, y + mt.y*k, (big ? 11 : 6.5) + Math.sin(time*4)); cx.stroke(); }
-  const pr = (big ? 9 : 6) + 2*Math.sin(time*4); cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 1.2; circle(cx, x + p.x*k, y + p.y*k, pr); cx.stroke();
+  if (fleet && fleet.lead){ const fx = x + fleet.lead.x*k, fy = y + fleet.lead.y*k, r = 4.5; cx.fillStyle = '#08191e'; cx.beginPath(); cx.moveTo(fx, fy-r-1.5); cx.lineTo(fx+r+1.5, fy); cx.lineTo(fx, fy+r+1.5); cx.lineTo(fx-r-1.5, fy); cx.closePath(); cx.fill();
+    cx.fillStyle = '#ffe07a'; cx.beginPath(); cx.moveTo(fx, fy-r); cx.lineTo(fx+r, fy); cx.lineTo(fx, fy+r); cx.lineTo(fx-r, fy); cx.closePath(); cx.fill(); }
+  const mt = missionTarget(); if (mt){ cx.strokeStyle = '#7fe0d0'; cx.lineWidth = 2; circle(cx, x + mt.x*k, y + mt.y*k, 6.5 + Math.sin(time*4)); cx.stroke(); }
+  const pr = 6 + 2*Math.sin(time*4); cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 1.2; circle(cx, x + p.x*k, y + p.y*k, pr); cx.stroke();
   cx.save(); cx.translate(x + p.x*k, y + p.y*k); cx.rotate(p.h); cx.fillStyle = '#ffffff'; cx.beginPath(); cx.moveTo(6, 0); cx.lineTo(-4, 3.6); cx.lineTo(-4, -3.6); cx.closePath(); cx.fill(); cx.restore();
 }
 function drawChart(){
   const m = chartRect(), k = m.w/W;
   cx.drawImage(miniC, m.x, m.y, m.w, m.h);
-  cx.save(); cx.beginPath(); cx.rect(m.x, m.y, m.w, m.h); cx.clip(); chartMarks(m.x, m.y, k, false); cx.restore();
+  cx.save(); cx.beginPath(); cx.rect(m.x, m.y, m.w, m.h); cx.clip(); chartMarks(m.x, m.y, k); cx.restore();
   cx.strokeStyle = 'rgba(214,165,78,.8)'; cx.lineWidth = 1.5; cx.strokeRect(m.x+.5, m.y+.5, m.w-1, m.h-1);
 }
+/* the full chart is drawn once, in ink on parchment, and then only marked up */
+const INK = '#3a2614', FELL = '"IM Fell English", Georgia, "Times New Roman", serif', FELLSC = '"IM Fell English SC", Georgia, serif';
+const chartV = { z: 1, cx: 0, cy: 0 }; let chartCache = null, chartGeo = null;
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { chartCache = null; });
+function buildChart(){
+  const cw = 2600, chh = Math.round(cw*H/W), c = document.createElement('canvas'); c.width = cw; c.height = chh;
+  const g = c.getContext('2d'), k = cw/W, r = rng(77), mx = lon => X(lon)*k, my = lat => Y(lat)*k;
+  g.fillStyle = '#e9d9b0'; g.fillRect(0, 0, cw, chh);
+  for (let i = 0; i < 320; i++){ const x = r()*cw, y = r()*chh, rad = 40 + r()*230, a = .025 + r()*.05, gr = g.createRadialGradient(x, y, 0, x, y, rad), col = r() < .55 ? '120,85,40,' : '255,250,225,';
+    gr.addColorStop(0, 'rgba(' + col + a + ')'); gr.addColorStop(1, 'rgba(' + col + '0)'); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad*2, rad*2); }
+  g.strokeStyle = 'rgba(90,60,30,.05)'; g.lineWidth = 1; g.beginPath(); for (let i = 0; i < 1400; i++){ const x = r()*cw, y = r()*chh, l = 8 + r()*40, a = (r() - .5)*.5; g.moveTo(x, y); g.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); } g.stroke();
+  const roses = [[mx(-93), my(24.6), 62], [mx(-79.5), my(13.3), 74], [mx(-63.3), my(22.4), 50]];
+  roses.forEach(c2 => { for (let i = 0; i < 32; i++){ const a = i/32*TAU; g.strokeStyle = i % 8 === 0 ? 'rgba(58,38,20,.3)' : i % 4 === 0 ? 'rgba(40,95,75,.22)' : i % 2 === 0 ? 'rgba(150,50,30,.16)' : 'rgba(58,38,20,.09)'; g.lineWidth = .9;
+    g.beginPath(); g.moveTo(c2[0], c2[1]); g.lineTo(c2[0] + Math.cos(a)*4000, c2[1] + Math.sin(a)*4000); g.stroke(); } });
+  g.strokeStyle = 'rgba(58,38,20,.2)'; g.lineWidth = .8; g.fillStyle = INK; g.font = '15px ' + FELL; g.textAlign = 'center';
+  for (let lon = -95; lon <= -60; lon += 5){ g.beginPath(); g.moveTo(mx(lon), 0); g.lineTo(mx(lon), chh); g.stroke(); g.fillText(-lon + '° W', mx(lon), 40); g.fillText(-lon + '° W', mx(lon), chh - 28); }
+  g.textAlign = 'left'; for (let lat = 10; lat <= 25; lat += 5){ g.beginPath(); g.moveTo(0, my(lat)); g.lineTo(cw, my(lat)); g.stroke(); g.fillText(lat + '° N', 30, my(lat) - 5); g.fillText(lat + '° N', cw - 76, my(lat) - 5); }
+  g.save(); g.scale(k, k); g.lineJoin = 'round';
+  for (const v of [[560, .045], [380, .06], [230, .08], [120, .1], [50, .14]]){ g.strokeStyle = 'rgba(58,112,132,' + v[1] + ')'; g.lineWidth = v[0]; lands.forEach(l => g.stroke(l.path)); }
+  lands.forEach(l => { g.save(); g.clip(l.path); g.fillStyle = '#dcc88f'; g.fillRect(l.x0, l.y0, l.x1 - l.x0, l.y1 - l.y0);
+    g.strokeStyle = 'rgba(105,125,70,.2)'; g.lineWidth = 420; g.stroke(l.path); g.strokeStyle = 'rgba(125,92,45,.3)'; g.lineWidth = 150; g.stroke(l.path); g.strokeStyle = 'rgba(100,70,35,.32)'; g.lineWidth = 46; g.stroke(l.path); g.restore(); });
+  g.strokeStyle = INK; g.lineWidth = 1.5/k; lands.forEach(l => g.stroke(l.path)); g.restore();
+  g.strokeStyle = 'rgba(58,38,20,.75)'; g.lineWidth = 1.1; g.lineCap = 'round';
+  for (let gy = 0; gy < H; gy += 250) for (let gx = 0; gx < W; gx += 250){ const x = gx + hh(gx, gy, 31)*200, y = gy + hh(gx, gy, 32)*200;
+    if (hh(gx, gy, 33) > .62 || !at(deepM, x, y) || !at(deepM, x + 230, y) || !at(deepM, x - 230, y) || !at(deepM, x, y + 230) || !at(deepM, x, y - 230)) continue;
+    const px = x*k, py = y*k, sz = 6 + hh(gx, gy, 34)*6; g.beginPath(); g.moveTo(px - sz, py + sz*.5); g.quadraticCurveTo(px - sz*.2, py - sz*1.1, px + sz*.1, py - sz*.9); g.quadraticCurveTo(px + sz*.6, py - sz*.3, px + sz, py + sz*.5); g.stroke();
+    g.beginPath(); for (let j = 0; j < 3; j++){ g.moveTo(px + sz*(.25 + j*.2), py - sz*(.45 - j*.22)); g.lineTo(px + sz*(.35 + j*.2), py + sz*.42); } g.stroke(); }
+  const spaced = (t, x, y, size, gap, rot, col, sc) => { g.save(); g.translate(x, y); g.rotate(rot || 0); g.font = (sc ? '' : 'italic ') + size + 'px ' + (sc ? FELLSC : FELL); g.fillStyle = col || INK; g.textAlign = 'left';
+    let w = 0; for (const ch of t) w += g.measureText(ch).width + gap; let px = -w/2; for (const ch of t){ g.fillText(ch, px, 0); px += g.measureText(ch).width + gap; } g.restore(); };
+  const SEA = 'rgba(40,82,104,.8)';
+  spaced('CARIBBEAN SEA', mx(-71.5), my(15), 40, 26, 0, SEA); spaced('or the North Sea', mx(-71.5), my(14.2), 22, 4, 0, SEA);
+  spaced('GULF OF MEXICO', mx(-90.5), my(26.6), 34, 20, 0, SEA); spaced('The Western Ocean', mx(-66), my(23.9), 24, 7, 0, SEA);
+  spaced('Bay of Honduras', mx(-86.6), my(17.6), 20, 3, 0, SEA); spaced('Windward Passage', mx(-74.3), my(20.9), 15, 1, -.9, SEA); spaced('Straits of Florida', mx(-81.2), my(24.1), 17, 3, .12, SEA);
+  spaced('CUBA', mx(-79.2), my(22), 26, 22, .22, INK, 1); spaced('HISPANIOLA', mx(-70.6), my(18.85), 21, 9, 0, INK, 1); spaced('JAMAICA', mx(-77.3), my(18.12), 13, 4, .1, INK, 1);
+  spaced('FLORIDA', mx(-81.4), my(27.3), 19, 8, 1.2, INK, 1); spaced('YUCATAN', mx(-89), my(19.6), 22, 10, 0, INK, 1); spaced('NEW SPAIN', mx(-94.3), my(17.4), 22, 10, -.25, INK, 1);
+  spaced('HONDURAS', mx(-86.6), my(14.7), 20, 9, 0, INK, 1); spaced('TIERRA FIRME', mx(-68), my(8.9), 30, 20, 0, INK, 1); spaced('DARIEN', mx(-78.2), my(8.35), 15, 6, .2, INK, 1);
+  spaced('The Bahama Islands', mx(-74.3), my(25.3), 19, 4, .5, INK); spaced('The Caribbee Islands', mx(-59.9), my(16.6), 18, 4, 1.45, INK); spaced('PORTO RICO', mx(-66.45), my(18.22), 10, 2, 0, INK, 1);
+  roses.forEach(c2 => { const R0 = c2[2]; g.save(); g.translate(c2[0], c2[1]);
+    g.fillStyle = '#e9d9b0'; g.strokeStyle = INK; g.lineWidth = 1.2; circle(g, 0, 0, R0*.62); g.fill(); g.stroke(); circle(g, 0, 0, R0*.56); g.stroke();
+    for (const lv of [[16, R0*.5, .09, 'rgba(40,95,75,.9)'], [8, R0*.74, .13, 'rgba(150,50,30,.9)'], [4, R0, .17, INK]]){ const n = lv[0]; for (let i = 0; i < n; i++){ const a = i/n*TAU - Math.PI/2 + (n === 8 ? TAU/16 : n === 16 ? TAU/32 : 0);
+      for (const sd of [-1, 1]){ g.beginPath(); g.moveTo(Math.cos(a)*lv[1], Math.sin(a)*lv[1]); g.lineTo(Math.cos(a + sd*lv[2]*2.4)*R0*.16, Math.sin(a + sd*lv[2]*2.4)*R0*.16); g.lineTo(0, 0); g.closePath(); g.fillStyle = sd < 0 ? lv[3] : '#efe2bd'; g.fill(); g.strokeStyle = INK; g.lineWidth = .8; g.stroke(); } } }
+    g.fillStyle = INK; g.beginPath(); g.moveTo(0, -R0 - 22); g.quadraticCurveTo(9, -R0 - 10, 3, -R0 - 3); g.lineTo(-3, -R0 - 3); g.quadraticCurveTo(-9, -R0 - 10, 0, -R0 - 22); g.fill();
+    g.font = '16px ' + FELLSC; g.textAlign = 'center'; g.fillText('N', 0, -R0 - 26); g.restore(); });
+  const boat = (x, y, sc, flip) => { g.save(); g.translate(x, y); g.scale(sc*(flip ? -1 : 1), sc); g.strokeStyle = INK; g.fillStyle = '#e9d9b0'; g.lineWidth = 1.2/sc;
+    g.beginPath(); g.moveTo(-26, 4); g.quadraticCurveTo(0, 16, 28, 2); g.lineTo(34, -6); g.lineTo(22, -3); g.lineTo(-22, -3); g.lineTo(-30, -9); g.closePath(); g.fill(); g.stroke();
+    for (const m of [[-12, 30], [4, 38], [18, 26]]){ g.beginPath(); g.moveTo(m[0], -3); g.lineTo(m[0], -m[1] - 6); g.stroke(); g.beginPath(); g.moveTo(m[0] - 9, -m[1]); g.quadraticCurveTo(m[0] + 6, -m[1]*.55, m[0] - 9, -8); g.lineTo(m[0] + 8, -8); g.quadraticCurveTo(m[0] + 15, -m[1]*.55, m[0] + 8, -m[1]); g.closePath(); g.fill(); g.stroke(); }
+    g.beginPath(); for (let i = -36; i < 40; i += 12){ g.moveTo(i, 14); g.quadraticCurveTo(i + 3, 10, i + 6, 14); } g.stroke(); g.restore(); };
+  boat(mx(-88.3), my(23.6), 1.1, false); boat(mx(-66.2), my(13.6), 1.3, true); boat(mx(-72.2), my(23.9), .9, true);
+  const bx = mx(-68.6), by = my(27.8), bw = mx(-59.4) - bx, bh = my(24.75) - by; // cartouche
+  g.fillStyle = 'rgba(233,217,176,.92)'; g.fillRect(bx, by, bw, bh); g.strokeStyle = INK; g.lineWidth = 2.2; g.strokeRect(bx, by, bw, bh); g.lineWidth = .9; g.strokeRect(bx + 7, by + 7, bw - 14, bh - 14);
+  g.fillStyle = INK; g.textAlign = 'center'; g.font = '42px "Pirata One", ' + FELL; g.fillText('The Caribbean', bx + bw/2, by + 58);
+  g.font = 'italic 21px ' + FELL; g.fillText('with the Spanish Main & the Islands adjacent,', bx + bw/2, by + 90); g.fillText('for the use of Gentlemen of Fortune', bx + bw/2, by + 116);
+  const lg = 5*DEG*k, sx0 = bx + bw/2 - lg/2 - 30, sy0 = by + bh - 34; g.lineWidth = 1.2; g.strokeRect(sx0, sy0, lg, 8); for (let i = 0; i < 4; i += 2) g.fillRect(sx0 + lg/4*i, sy0, lg/4, 8);
+  g.font = '15px ' + FELL; g.fillText('0', sx0, sy0 - 5); g.fillText('50', sx0 + lg/2, sy0 - 5); g.fillText('100 Leagues', sx0 + lg + 8, sy0 - 5);
+  g.strokeStyle = INK; g.lineWidth = 6; g.strokeRect(9, 9, cw - 18, chh - 18); g.lineWidth = 1.3; g.strokeRect(19, 19, cw - 38, chh - 38);
+  for (const v of [[0, 0, cw, 0, 0, 1], [0, chh, cw, chh, 0, -1], [0, 0, 0, chh, 1, 0], [cw, 0, cw, chh, -1, 0]]){ const gr = g.createLinearGradient(v[0], v[1], v[0] + v[4]*150, v[1] + v[5]*150);
+    gr.addColorStop(0, 'rgba(70,42,16,.42)'); gr.addColorStop(1, 'rgba(70,42,16,0)'); g.fillStyle = gr; g.fillRect(0, 0, cw, chh); }
+  return c;
+}
 function drawBigChart(){
-  cx.fillStyle = 'rgba(5,16,20,.9)'; cx.fillRect(0, 0, vw, vh);
-  const aw = vw - pad.l - pad.r, ah = vh - pad.t - pad.b - 70, k = Math.max(Math.min(aw/W, ah/H), .06), w = Math.min(aw, W*k), h = Math.min(ah, H*k);
-  const x = pad.l + (aw - w)/2, y = pad.t + 46 + (ah - h)/2;
-  const ox = W*k > w ? clamp(p.x*k - w/2, 0, W*k - w) : 0, oy = H*k > h ? clamp(p.y*k - h/2, 0, H*k - h) : 0;
-  cx.save(); cx.beginPath(); cx.rect(x, y, w, h); cx.clip(); cx.fillStyle = '#0f3a47'; cx.fillRect(x, y, w, h);
-  cx.strokeStyle = 'rgba(239,230,207,.07)'; cx.lineWidth = 1; cx.beginPath();
-  for (let lon = -95; lon < -58; lon += 5){ const gx = x - ox + X(lon)*k; cx.moveTo(gx, y); cx.lineTo(gx, y + h); }
-  for (let lat = 10; lat < 28; lat += 5){ const gy = y - oy + Y(lat)*k; cx.moveTo(x, gy); cx.lineTo(x + w, gy); } cx.stroke();
-  cx.save(); cx.translate(x - ox, y - oy); landLayer(cx, k, true); cx.restore();
-  chartMarks(x - ox, y - oy, k, true);
-  cx.font = (k < .07 ? 13 : 15) + 'px "Pirata One", Georgia, serif'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(8,25,30,.9)'; cx.fillStyle = C.bone;
-  for (const q of ports){ const px = x - ox + q.x*k, py = y - oy + q.y*k, c = Math.cos(q.ang), n = Math.sin(q.ang);
-    cx.textAlign = c > .3 ? 'left' : c < -.3 ? 'right' : 'center'; const tx = px + c*11, ty = py + n*13 + 5;
-    cx.strokeText(q.name, tx, ty); cx.fillText(q.name, tx, ty); }
+  cx.fillStyle = 'rgba(5,16,20,.93)'; cx.fillRect(0, 0, vw, vh);
+  if (!chartCache) chartCache = buildChart();
+  const aw = vw - pad.l - pad.r, top = 14, ah = vh - top - pad.b - 62, k0 = Math.min(aw/W, ah/H), k = k0*chartV.z, w = Math.min(aw, W*k), h = Math.min(ah, H*k);
+  const x = pad.l + (aw - w)/2, y = top + (ah - h)/2;
+  chartV.cx = clamp(chartV.cx, w/2/k, W - w/2/k); chartV.cy = clamp(chartV.cy, h/2/k, H - h/2/k);
+  const ox = chartV.cx*k - w/2, oy = chartV.cy*k - h/2, cs = chartCache.width/W; chartGeo = { x, y, w, h, k, ox, oy };
+  cx.save(); cx.beginPath(); cx.rect(x, y, w, h); cx.clip();
+  cx.imageSmoothingQuality = 'high'; cx.drawImage(chartCache, ox/k*cs, oy/k*cs, w/k*cs, h/k*cs, x, y, w, h);
+  const X0 = x - ox, Y0 = y - oy, fs = clamp(11 + 3*chartV.z, 13, 20);
+  routeOn(X0, Y0, k, 2.2);
+  if (state !== 'title') for (const s of ships){ if (s.sinking != null || s.released) continue; const d = Math.hypot(s.x-p.x, s.y-p.y); if (s.role !== 'fleet' && s !== tracked && !s.surrendered && (prize(s) ? d > 1800 : d > 2600)) continue;
+    const sx = X0 + s.x*k, sy = Y0 + s.y*k; cx.fillStyle = s.role === 'fleet' ? '#ffffff' : s.nation ? NAT[s.nation].c1 : '#111111'; cx.strokeStyle = INK; cx.lineWidth = 1; cx.fillRect(sx - 3, sy - 3, 6, 6); cx.strokeRect(sx - 3, sy - 3, 6, 6); }
+  if (fleet && fleet.lead){ const fx = X0 + fleet.lead.x*k, fy = Y0 + fleet.lead.y*k, r = 8; cx.fillStyle = '#e8b92e'; cx.strokeStyle = INK; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(fx, fy-r); cx.lineTo(fx+r, fy); cx.lineTo(fx, fy+r); cx.lineTo(fx-r, fy); cx.closePath(); cx.fill(); cx.stroke();
+    cx.font = 'italic ' + (fs - 1) + 'px ' + FELL; cx.textAlign = 'center'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.9)'; cx.strokeText('The Plate Fleet', fx, fy - 13); cx.fillStyle = '#7a4a08'; cx.fillText('The Plate Fleet', fx, fy - 13); }
+  const mt = missionTarget(); if (mt){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.4; circle(cx, X0 + mt.x*k, Y0 + mt.y*k, 13 + Math.sin(time*4)); cx.stroke(); }
+  for (const q of ports){ const px = X0 + q.x*k, py = Y0 + q.y*k, home = q.name === homeName, c = Math.cos(q.ang), n = Math.sin(q.ang);
+    if (q === course){ cx.strokeStyle = '#c8321e'; cx.lineWidth = 2.4; circle(cx, px, py, 13); cx.stroke(); }
+    if (home){ cx.fillStyle = HOMEC; cx.strokeStyle = INK; cx.lineWidth = 1.5; cx.beginPath(); for (let i = 0; i < 10; i++){ const a = i/10*TAU - Math.PI/2, r = i % 2 ? 6 : 13; cx.lineTo(px + Math.cos(a)*r, py + Math.sin(a)*r); } cx.closePath(); cx.fill(); cx.stroke(); }
+    else { cx.fillStyle = INK; circle(cx, px, py, 7.5); cx.fill(); cx.fillStyle = hostile(q.nk) ? '#8d8676' : q.nation.c1; circle(cx, px, py, 5.8); cx.fill(); cx.fillStyle = '#f4ecd2'; circle(cx, px, py, 2.2); cx.fill(); }
+    cx.font = fs + 'px ' + FELLSC; cx.textAlign = c > .3 ? 'left' : c < -.3 ? 'right' : 'center'; const tx = px + c*13, ty = py + n*17 + 5, label = q.name + (home ? ' (home)' : '');
+    cx.lineWidth = 4; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(label, tx, ty); cx.fillStyle = home ? '#0b6b4c' : INK; cx.fillText(label, tx, ty); }
+  const ppx = X0 + p.x*k, ppy = Y0 + p.y*k; cx.strokeStyle = '#c8321e'; cx.lineWidth = 1.6; circle(cx, ppx, ppy, 12 + 2.5*Math.sin(time*4)); cx.stroke();
+  cx.save(); cx.translate(ppx, ppy); cx.rotate(p.h); cx.fillStyle = '#c8321e'; cx.strokeStyle = INK; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-6, 5.5); cx.lineTo(-3, 0); cx.lineTo(-6, -5.5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
   cx.restore(); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(x+.5, y+.5, w-1, h-1);
-  cx.textAlign = 'center'; cx.fillStyle = C.bone; cx.font = '30px "Pirata One", Georgia, serif'; cx.fillText('The Caribbean', vw/2, y - 14);
-  cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f'; cx.fillText(coarse ? 'Tap anywhere to return to the helm' : 'Press any key or click to return to the helm', vw/2, y + h + 22);
-  const items = NKEYS.map(k => [NAT[k].c1, NAT[k].land.replace(/^the /, '') + ': ' + standWord(standing[k])]); let tw = 0;
+  cx.textAlign = 'center'; cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f';
+  cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it (again to clear). Wheel to zoom, drag to move. Any key or a click on the sea closes.'), vw/2, y + h + 22);
+  const items = NKEYS.map(k2 => [NAT[k2].c1, NAT[k2].land.replace(/^the /, '') + ': ' + standWord(standing[k2])]).concat([[HOMEC, 'Home: ' + homeName]]); let tw = 0;
   cx.font = '700 13px "Alegreya Sans", sans-serif'; items.forEach(v => { tw += cx.measureText(v[1]).width + 34; });
   let lx = vw/2 - tw/2 + 8; const ly = y + h + 44; cx.textAlign = 'left';
   if (tw < aw) items.forEach(v => { cx.fillStyle = v[0]; circle(cx, lx, ly - 4, 5); cx.fill(); cx.fillStyle = C.bone; cx.fillText(v[1], lx + 9, ly); lx += cx.measureText(v[1]).width + 34; });
@@ -1955,7 +2107,9 @@ let cardKey = null, cards = [];
 function hud(){
   setT($('gold'), String(gold)); setT($('rank'), RANKS[rankIdx][1]);
   setT($('holdLine'), holdUsed() + '/' + holdCap() + ' t'); setT($('crewStat'), p.crew + '/' + p.t.crew);
-  setT($('sailSet'), p.sail === 0 ? 'Furled' : p.sail < 1 ? 'Battle' : 'Full'); setT($('flagName'), cap1(p.t.cname));
+  setT($('sailSet'), p.sail === 0 ? 'Furled' : p.sail < 1 ? 'Battle' : 'Full'); setT($('flagName'), p.name);
+  const cl = $('courseLine'); if (cl.hidden === !!course) cl.hidden = !course;
+  if (course) setT(cl, 'Course: ' + course.name + ' · ' + Math.max(1, Math.round(Math.hypot(course.x-p.x, course.y-p.y)/DEG*20)) + ' lg · ' + (autoHelm ? 'helmsman steering' : 'you have the helm (N)'));
   setW($('bHull'), p.hull/p.maxHull); setW($('bSails'), p.sails/100);
   const hc = p.hull/p.maxHull > .4 ? 'var(--moss)' : 'var(--blood)'; if ($('bHull')._c !== hc){ $('bHull')._c = hc; $('bHull').style.background = hc; }
   setW($('bPort'), 1 - p.rl[0]/(p.reload*crewSlow())); setW($('bStar'), 1 - p.rl[1]/(p.reload*crewSlow()));
@@ -1984,7 +2138,7 @@ function hud(){
 
 /* ---------- Boot ---------- */
 let last = 0;
-function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0]; last = t; const held2 = chartOpen || menuOpen; if (!held2) update(dt); render(held2 ? 0 : dt); hud(); requestAnimationFrame(frame); }
+function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0]; last = t; const held2 = chartOpen || menuOpen || paused; if (!held2) update(dt); render(held2 ? 0 : dt); hud(); requestAnimationFrame(frame); }
 function start(data){
   data = data || {};
   const sz = +recall('zoom'); if (sz) zoomMul = clamp(sz, .6, 2);
