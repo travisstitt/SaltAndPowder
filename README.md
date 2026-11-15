@@ -20,7 +20,8 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Open the full chart | `C` (or click the small chart) |
 | Zoom in / out | `=` / `-`, mouse wheel, or pinch |
 | Aim assist on / off | `T` |
-| Game pace: slow / steady / brisk | `1` / `2` / `3` |
+| Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
+| Game pace: slow / steady / brisk / swift | `1` / `2` / `3` / `4` |
 | Log book: save, load, difficulty | `Esc` or `L` |
 | Mute | `M` |
 
@@ -28,7 +29,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## How it plays
 
-- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. Four small islands that hold a port (Tortuga, New Providence, St Kitts and Barbados) are drawn larger than life so the town fits, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
+- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 640 units to the degree, so a ship is small against the land and narrow channels are sailable. Tortuga and New Providence are drawn about twice life size so their towns fit, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
 - **Ports** are 21 towns of the period in their real locations: Port Royal, Havana, Santiago de Cuba, Tortuga, Petit-Goave, Santo Domingo, San Juan, Nassau, Veracruz, Campeche, Trujillo, Portobelo, Cartagena, Santa Marta, Maracaibo, Willemstad, La Guaira, Cumana, Bridgetown, Fort-Royal and Basseterre. They show as yellow marks on the chart, and a pointer at the screen edge leads to the nearest one.
 - **Wind** shifts over time. You cannot sail into it; a broad reach is fastest. The compass shows the wind, your point of sail and your speed.
 - **Guns** fire sideways from each beam and reload separately. Round shot breaks hulls; chain shot shreds sails; grape shot, at short range, cuts down crew. With aim assist on, shaded lanes show where each broadside will fall and turn green when it will hit a moving target.
@@ -40,10 +41,11 @@ On a touch screen, on-screen buttons replace the keys.
 - **Chase.** A ship you fire on, or one that fires on you, is tracked with a pointer and a distance even when out of sight, until she is more than about 120 leagues away.
 - **In port** you ride at anchor with your bow to the open sea. Time does not stop: other ships sail on, and each repair or refit takes time.
 - **Crew and boarding.** Every ship has a crew. Yours is hired in port; below half strength your guns reload slowly. Come within a ship's length of an enemy and board her: the fight is decided by numbers, and a ship with too few hands left strikes her colours.
-- **Prizes.** A captured ship can be plundered and released, taken as your own ship (the old one is sold), or sent to port under a prize crew for the value of her hull.
+- **Prizes.** The prize screen lists everything in her hold, gold and each trade good, with how much of it you have room for. A captured ship can be plundered and released, taken as your own ship (the old one is sold), or sent to port under a prize crew for the value of her hull.
 - **Trade.** Five goods (sugar, tobacco, rum, cocoa, cloth) are cheap where they are made and dear where they are wanted. Each class has a hold; captured merchantmen carry goods as well as gold.
 - **Politics.** Wars and peace between the four nations change over time, and ports change hands. Warships attack ships of nations they are at war with, and everyone fights pirates, whether or not you are there.
 - **Day, night and weather.** A day lasts five minutes. At night ports and ships show lights and you are harder to spot. Squalls freshen the wind, fog hides you from hunters, and storms tear the canvas of a ship under full sail.
+- **Motion.** Ships heel to the wind and out of their turns, roll from the recoil of a broadside, pitch harder in a storm, throw spray at speed, and shiver their canvas in irons. Wrecks leave planks afloat.
 - **Towns** are each laid out differently: cathedral cities behind walls at Havana, Cartagena, Santo Domingo and Veracruz, gabled Dutch houses at Willemstad, thatched huts at Tortuga and Nassau.
 - **Hunters** come after you as your plunder grows: pirates at first, and the navy of any nation you have made an enemy.
 
