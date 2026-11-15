@@ -25,6 +25,55 @@ canvas#sea{position:fixed;inset:0;width:100%;height:100%;display:block}
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;justify-content:space-between}
 #hud > *{pointer-events:auto}
+#hud{justify-content:flex-start;gap:8px}
+.bottom{margin-top:auto}
+/* top bar: the purse and ship's state on the left, tools on the right; one type scale throughout */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;background:var(--panel);border:1px solid rgba(214,165,78,.45);border-radius:4px;padding:6px 12px}
+.stats{display:flex;gap:6px 20px;align-items:center;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:1px;line-height:1.1}
+.stat .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim)}
+.stat .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--bone);white-space:nowrap}
+.stat .v.gold{color:var(--brass);font-size:17px}
+.stat .link{all:unset;cursor:pointer;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--bone);text-decoration:underline dotted;text-underline-offset:3px}
+.stat .link:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
+.tools{display:flex;gap:5px;align-items:center;margin-left:auto;max-width:100%;overflow-x:auto;padding-bottom:1px}
+.tools button{padding:4px 9px;font-size:12.5px;line-height:1.3;white-space:nowrap}
+.tools .sep{width:1px;align-self:stretch;background:rgba(214,165,78,.35);margin:0 3px;flex:none}
+.side{align-self:flex-start;display:flex;flex-direction:column;gap:6px;width:176px}
+#fleetCol{display:flex;flex-direction:column;gap:6px}
+.shipcard{all:unset;box-sizing:border-box;display:grid;gap:3px;width:100%;background:var(--panel);border:1px solid rgba(214,165,78,.35);border-radius:4px;padding:6px 8px;cursor:pointer}
+.shipcard.flag{border-color:var(--brass)}
+.shipcard:hover{background:rgba(18,50,58,.95)}
+.shipcard:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
+.shipcard .nm{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12.5px;font-weight:700;color:var(--bone);white-space:nowrap;overflow:hidden}
+.shipcard .nm > span{overflow:hidden;text-overflow:ellipsis}
+.shipcard .nm small{font-size:10.5px;font-weight:400;letter-spacing:.06em;color:var(--brass);flex:none}
+.shipcard .cr{font-size:11px;color:var(--bone-dim);font-variant-numeric:tabular-nums}
+.meter{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--bone-dim)}
+.meter i{display:block;height:6px;background:rgba(239,230,207,.14);border-radius:2px;overflow:hidden}
+.meter b{display:block;height:100%;width:100%;background:var(--moss)}
+.chip{background:var(--panel);border-radius:4px;padding:4px 8px}
+@media (max-width:620px){.side{width:138px}.tools button{padding:6px 9px}}
+/* port: a waterfront of buildings to click, one short panel below */
+.card.wide{width:min(100%,860px)}
+.town{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:10px 6px 0;border-radius:4px;border:1px solid rgba(214,165,78,.45);
+  background:linear-gradient(#2b6470 0 58%,#b5ae9b 58% 64%,#11434f 64%)}
+.town button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 2px 7px;border-radius:4px;text-align:center;font-size:13px;font-weight:700;color:var(--bone);border:2px solid transparent}
+.town svg{width:100%;max-width:96px;height:auto;display:block}
+.town button:hover svg{transform:translateY(-2px)}
+.town button[aria-selected="true"]{background:rgba(8,25,30,.5);border-color:var(--brass)}
+.town button:focus-visible{outline:2px solid var(--bone);outline-offset:1px}
+.ledger.panel{min-height:230px;max-height:min(46vh,430px);overflow:auto;padding-right:4px}
+.ledger .btns{align-items:center}
+.fleetgrid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:14px;min-height:0}
+.shiplist{display:flex;flex-direction:column;gap:6px}
+.shipitem{text-align:left;display:grid;gap:2px;font-weight:700}
+.shipitem small{font-weight:400;font-size:12px;color:var(--bone-dim)}
+.shipitem[aria-pressed="true"]{background:#17404a;border-color:var(--bone)}
+.shipdetail{min-width:0;display:flex;flex-direction:column;gap:8px}
+#shipPic{width:100%;max-width:440px;aspect-ratio:64/26;align-self:center;border:1px solid rgba(214,165,78,.5);border-radius:4px}
+.shipdetail .ledger.panel{min-height:0;max-height:min(38vh,340px)}
+@media (max-width:640px){.fleetgrid{grid-template-columns:1fr}.shiplist{flex-direction:row;overflow-x:auto}.shipitem{flex:none}.town button{font-size:11px}}
 .status{align-self:flex-start;background:var(--panel);border:1px solid rgba(214,165,78,.45);border-radius:4px;
   padding:10px 12px;width:196px;display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
 .gold{font-family:var(--display);font-size:26px;line-height:1;color:var(--brass)}
@@ -44,7 +93,7 @@ button:disabled{opacity:.45;cursor:default}
 button.primary{background:var(--brass);color:var(--ink);font-weight:700;border-color:var(--brass)}
 button.primary:hover:not(:disabled){background:#e6b963}
 .mini{padding:2px 8px;font-size:12px}
-#toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);
+#toast{position:fixed;left:50%;top:calc(var(--bar,48px) + 26px + env(safe-area-inset-top,0px));transform:translateX(-50%);
   max-width:min(60vw,420px);text-align:center;background:var(--panel);border:1px solid rgba(239,230,207,.25);
   border-radius:4px;padding:6px 14px;font-size:15px;pointer-events:none;transition:opacity .3s}
 #toast.off{opacity:0}
@@ -82,7 +131,7 @@ button.primary:hover:not(:disabled){background:#e6b963}
 .seg button[aria-pressed="true"]{background:var(--brass);color:var(--ink);font-weight:700}
 .ledger .btns{display:flex;gap:6px}
 .ledger .btns button{min-width:66px}
-.ledger .btns{flex-wrap:wrap;justify-content:flex-end;max-width:260px}
+.ledger .btns{flex-wrap:wrap;justify-content:flex-end;max-width:340px}
 textarea{width:100%;box-sizing:border-box;background:var(--ink);color:var(--bone);border:1px solid rgba(214,165,78,.6);border-radius:4px;padding:8px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 .amt{color:var(--brass);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
@@ -100,28 +149,47 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 <canvas id="sea" aria-label="The sea: your ship, islands, ports and other vessels"></canvas>
 
 <div id="hud">
-  <div class="status" id="status">
-    <div class="gold"><span id="gold">0</span><small>gold</small></div>
-    <div class="rank" id="rank">Swab</div>
-    <div class="rank note2" id="chase" hidden></div>
-    <div class="rank note2" id="missionLine" hidden></div>
-    <button class="holdline" id="holdLine" type="button" title="Open the ship's manifest">Hold</button>
-    <div class="bar">Hull <i><b id="bHull"></b></i></div>
-    <div class="bar">Sails <i><b id="bSails"></b></i></div>
-    <div class="bar">Port <i><b id="bPort"></b></i></div>
-    <div class="bar">Stbd <i><b id="bStar"></b></i></div>
-    <div class="row"><span id="sailSet">Sails furled</span></div>
-    <div class="row"><button class="mini" id="shotBtn" type="button">Round shot</button><button class="mini" id="muteBtn" type="button">Sound on</button></div>
-    <div class="row"><button class="mini" id="paceBtn" type="button">Pace: Steady</button><button class="mini" id="chartBtn" type="button">Chart</button></div>
-    <div class="row"><button class="mini" id="aimBtn" type="button" aria-pressed="true">Aim assist: on</button></div>
-    <div class="row"><button class="mini" id="zoomOutBtn" type="button">Zoom out</button><button class="mini" id="zoomInBtn" type="button">Zoom in</button></div>
+  <div class="topbar" id="topbar">
+    <div class="stats">
+      <div class="stat"><span class="k">Gold</span><span class="v gold" id="gold">0</span></div>
+      <div class="stat"><span class="k">Rank</span><span class="v" id="rank">Swab</span></div>
+      <div class="stat"><span class="k">Hold</span><button class="v link" id="holdLine" type="button" title="Open the ship's manifest">0/40 t</button></div>
+      <div class="stat"><span class="k">Crew</span><span class="v" id="crewStat">40/60</span></div>
+      <div class="stat"><span class="k">Sails</span><span class="v" id="sailSet">Furled</span></div>
+    </div>
+    <div class="tools">
+      <button id="shotBtn" type="button" title="Shot loaded (R)">Round shot</button>
+      <button id="aimBtn" type="button" aria-pressed="true" title="Aim assist (T)">Aim: on</button>
+      <button id="paceBtn" type="button" title="Game pace (1 to 4)">Pace: Steady</button>
+      <span class="sep"></span>
+      <button id="chartBtn" type="button" title="Chart (C)">Chart</button>
+      <button id="fleetBtn" type="button" title="Fleet management (V)">Fleet</button>
+      <button id="cargoBtn" type="button" title="Manifest (I)">Manifest</button>
+      <button id="menuBtn" type="button" title="Save, load, difficulty (Esc)">Log book</button>
+      <span class="sep"></span>
+      <button id="muteBtn" type="button">Sound on</button>
+      <button id="zoomOutBtn" type="button" aria-label="Zoom out" title="Zoom out (-)">−</button>
+      <button id="zoomInBtn" type="button" aria-label="Zoom in" title="Zoom in (=)">+</button>
+      <button id="fsBtn" type="button" title="Full screen">Full screen</button>
+    </div>
+  </div>
+  <div class="side" id="side">
+    <button class="shipcard flag" id="flagCard" type="button" title="Manage your flagship">
+      <span class="nm"><span id="flagName">Sloop</span><small>Flagship</small></span>
+      <span class="meter"><span>Hull</span><i><b id="bHull"></b></i></span>
+      <span class="meter"><span>Sail</span><i><b id="bSails"></b></i></span>
+      <span class="meter"><span>Port</span><i><b id="bPort"></b></i></span>
+      <span class="meter"><span>Stbd</span><i><b id="bStar"></b></i></span>
+    </button>
+    <div id="fleetCol"></div>
     <div class="row" id="fleetRow" hidden><button class="mini" id="formBtn" type="button" title="Fleet formation (G)">Line astern</button><button class="mini" id="orderBtn" type="button" title="Fleet orders (H)">Line of battle</button></div>
-    <div class="row"><button class="mini" id="cargoBtn" type="button">Manifest</button><button class="mini" id="menuBtn" type="button">Log book</button></div>
+    <div class="note2 chip" id="chase" hidden></div>
+    <div class="note2 chip" id="missionLine" hidden></div>
   </div>
   <div class="bottom">
     <button id="boardBtn" type="button" hidden>Board</button>
     <button id="dock" class="primary" type="button" hidden>Drop anchor</button>
-    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>4</kbd> pace · <kbd>Esc</kbd> save and load</div>
+    <div class="keys"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>V</kbd> fleet · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>4</kbd> pace · <kbd>Esc</kbd> save and load</div>
     <div class="touch">
       <div><button type="button" data-hold="left" aria-label="Turn to port">◀</button><button type="button" data-hold="right" aria-label="Turn to starboard">▶</button></div>
       <div class="col"><button type="button" data-tap="sailUp">More sail</button><button type="button" data-tap="sailDown">Less sail</button></div>
@@ -154,11 +222,26 @@ textarea:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 </div>
 
 <div class="sheet" id="port" hidden>
-  <div class="card">
-    <div class="head"><h2 id="portName">Port</h2><span class="purse"><span id="portGold">0</span> gold</span></div>
-    <p class="note"><span id="portNation"></span>. You ride at anchor with your bow to the open sea. The world does not wait: ships sail on while you are here, and every repair and refit takes time.</p>
-    <ul class="ledger" id="ledger"></ul>
+  <div class="card wide">
+    <div class="head"><div><h2 id="portName">Port</h2><span class="note" id="portNation"></span></div><span class="purse"><span id="portGold">0</span> gold</span></div>
+    <div class="town" id="townTabs" role="tablist" aria-label="Places in town"><button type="button" role="tab" data-tab="yard" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="6" y="37" width="52" height="3" fill="#7a5532"/><path d="M9 33 Q32 44 55 33 L51 25 L13 25 Z" fill="#8a5530" stroke="#3a2412" stroke-width="1.2"/><path d="M20 25V36M28 25V38M36 25V38M44 25V36" stroke="#3a2412" stroke-width="1"/><path d="M50 25V7H33" stroke="#3a2412" stroke-width="2" fill="none"/><path d="M35 7V17" stroke="#d6a54e" stroke-width="1.4"/><rect x="32" y="17" width="6" height="5" fill="#d6a54e"/></svg><span>Shipyard</span></button><button type="button" role="tab" data-tab="market" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M9 14H55V22H9Z" fill="#c4472f"/><path d="M15 14H21V22H15ZM27 14H33V22H27ZM39 14H45V22H39ZM51 14H55V22H51Z" fill="#f2f2f2"/><path d="M11 22V40M53 22V40" stroke="#3a2412" stroke-width="2"/><rect x="12" y="30" width="40" height="4" fill="#8f6639"/><rect x="15" y="23" width="8" height="7" fill="#b98f5c" stroke="#3a2412"/><rect x="26" y="24" width="7" height="6" fill="#d6a54e" stroke="#3a2412"/><circle cx="43" cy="26" r="4" fill="#6f4b25" stroke="#d6a54e"/><rect x="18" y="34" width="5" height="6" fill="#6f4b25"/><rect x="41" y="34" width="5" height="6" fill="#6f4b25"/></svg><span>Market</span></button><button type="button" role="tab" data-tab="tavern" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="13" y="19" width="36" height="21" fill="#efe3c8"/><path d="M9 21L31 6L53 21Z" fill="#8c3522"/><rect x="27" y="28" width="8" height="12" fill="#5a3a1c"/><rect x="17" y="24" width="6" height="6" fill="#ffd24a"/><rect x="39" y="24" width="6" height="6" fill="#ffd24a"/><path d="M49 22H58" stroke="#3a2412" stroke-width="1.6"/><rect x="50" y="24" width="8" height="7" rx="1" fill="#d6a54e" stroke="#3a2412"/><rect x="40" y="9" width="4" height="7" fill="#7c2e1e"/></svg><span>Tavern</span></button><button type="button" role="tab" data-tab="governor" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><rect x="8" y="17" width="48" height="23" fill="#f4efe2"/><path d="M5 17L32 5L59 17Z" fill="#b9b3a2"/><path d="M14 19V40M23 19V40M41 19V40M50 19V40" stroke="#cfc8b4" stroke-width="3.2"/><rect x="28" y="27" width="8" height="13" fill="#5a3a1c"/><rect x="6" y="38" width="52" height="3" fill="#cfc8b4"/><path d="M32 5V0" stroke="#3a2412" stroke-width="1.2"/><path d="M32 0H41V4H32Z" fill="#d6a54e"/></svg><span>Governor</span></button><button type="button" role="tab" data-tab="fleet" aria-selected="false"><svg viewBox="0 0 64 44" aria-hidden="true"><path d="M4 34Q14 40 24 34L22 30H6Z" fill="#8a5530" stroke="#3a2412"/><path d="M14 30V10L22 26H14Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M24 38Q36 45 48 38L45 33H27Z" fill="#8a5530" stroke="#3a2412"/><path d="M35 33V8L46 29H35ZM33 33V14L27 29H33Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/><path d="M44 30Q52 35 60 30L58 26H46Z" fill="#8a5530" stroke="#3a2412"/><path d="M52 26V12L58 23H52Z" fill="#f2e9d2" stroke="#3a2412" stroke-width=".8"/></svg><span>Your fleet</span></button></div>
+    <ul class="ledger panel" id="ledger"></ul>
     <button class="primary" id="leaveBtn" type="button">Weigh anchor</button>
+  </div>
+</div>
+
+<div class="sheet" id="fleetSheet" hidden>
+  <div class="card wide">
+    <div class="head"><h2>Fleet</h2><span class="purse"><span id="fleetGold">0</span> gold</span></div>
+    <div class="fleetgrid">
+      <div class="shiplist" id="shipList"></div>
+      <div class="shipdetail">
+        <canvas id="shipPic" width="640" height="260" aria-hidden="true"></canvas>
+        <div><strong id="shipHead"></strong><br><span class="note" id="shipSub"></span></div>
+        <ul class="ledger panel" id="shipRows"></ul>
+      </div>
+    </div>
+    <div class="seg"><button type="button" id="formBtn2">Formation</button><button type="button" id="orderBtn2">Orders</button><button class="primary" id="fleetClose" type="button">Close</button></div>
   </div>
 </div>
 
@@ -226,7 +309,7 @@ const DIFFS = {
   hard:   { name:'Hard',   dmg:1.4, spread:.08, reload:4.2, hunt:.7,  maxH:5, loot:.85,  rep:1.3, purse:0,   note:'Enemies shoot straight and reload fast, you take more damage, hunters come sooner and in greater number, prizes pay less, and nations anger quickly.' } };
 let diff = 'normal'; const D = () => DIFFS[diff];
 const C = { sea:'#11434f', bone:'#efe6cf', brass:'#d6a54e', blood:'#c4472f', ink:'#08191e', navy:'#4a7fbd' };
-const cv = document.getElementById('sea'), cx = cv.getContext('2d');
+const cv = document.getElementById('sea'); let cx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
@@ -435,12 +518,15 @@ function newCaptain(lo, hi){ const r = () => clamp(lo + (Math.random()*(hi - lo 
   return { name: FIRST[Math.random()*FIRST.length|0] + ' ' + LAST[Math.random()*LAST.length|0], gun: r(), sea: r() }; }
 const mate = () => ({ name: 'your first mate', gun: 1, sea: 1, mate: true });
 const cleanCap = c => c && c.name ? { name: String(c.name).slice(0, 40), gun: clamp(c.gun|0, 1, 5), sea: clamp(c.sea|0, 1, 5), mate: !!c.mate } : mate();
-function addFleet(d, x, y, h){ // d: { cls, hf, sails, crew, cap }
-  const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap);
+const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
+const cleanUp = u => { u = u || {}; return { guns: clamp(u.guns|0, 0, 6), hull: clamp(u.hull|0, 0, 5), sail: clamp(u.sail|0, 0, 5), drill: clamp(u.drill|0, 0, 5) }; };
+function fitConsort(s){ const f = s.hull/s.maxHull; s.guns = s.t.guns + s.up.guns; s.maxHull = s.t.hull + 30*s.up.hull; s.hull = s.maxHull*f; s.baseMul = (1 + .04*s.cap.sea)*(1 + .07*s.up.sail); s.speedMul = s.baseMul;
+  s.t.name = cap1(s.t.cname) + ' · ' + (s.cap.mate ? 'First mate' : 'Capt. ' + s.cap.name.split(' ').slice(-1)[0]); }
+function addFleet(d, x, y, h){ // d: { cls, hf, sails, crew, cap, up }
+  const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap); s.up = cleanUp(d.up); fitConsort(s);
   s.hull = s.maxHull*clamp(+d.hf || 1, .05, 1); s.sails = clamp(d.sails == null ? 100 : +d.sails, 0, 100); s.crew = clamp(d.crew|0 || 10, 1, s.t.crew); s.sail = 1;
-  s.t.name = s.t.cname.charAt(0).toUpperCase() + s.t.cname.slice(1) + ' · ' + (s.cap.mate ? 'First mate' : 'Capt. ' + s.cap.name.split(' ').slice(-1)[0]);
-  s.speedMul = 1 + .04*s.cap.sea; ships.push(s); return s; }
-const fleetData = s => ({ cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap });
+  ships.push(s); return s; }
+const fleetData = s => ({ cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up });
 const threat = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.surrendered && (o === tracked || o.hitByPlayer || o.announced);
 function trimHold(){ let over = holdUsed() - holdCap(); for (const g of GK){ if (over <= 0) break; const d = Math.min(hold[g], over); hold[g] -= d; over -= d; } }
 function setForm(k){ formation = FORMS[k] ? k : 'column'; $('formBtn').textContent = FORMS[formation]; }
@@ -458,7 +544,7 @@ function fleetAI(s, dt){
       if (s.foe && !threat(s.foe)) s.foe = null; tgt = s.foe; } else s.foe = null;
     const c = Math.cos(p.h), n = Math.sin(p.h), tx = p.x + c*s.off[0] - n*s.off[1], ty = p.y + n*s.off[0] + c*s.off[1], lag = Math.hypot(tx-s.x, ty-s.y);
     const ex = (tx-s.x)*c + (ty-s.y)*n, ey = -(tx-s.x)*n + (ty-s.y)*c; // how far her station is ahead of her, and to starboard
-    s.speedMul = (1 + .04*s.cap.sea)*(ex > 380 ? 1.9 : ex > 120 ? 1.4 : 1); // consorts crowd on sail to keep station
+    s.speedMul = s.baseMul*(ex > 380 ? 1.9 : ex > 120 ? 1.4 : 1); // consorts crowd on sail to keep station
     if (tgt && orders === 'engage' && Math.hypot(s.x-p.x, s.y-p.y) < 1200) want = attack(s, tgt.x, tgt.y, dt, false);
     else { if (lag > 700) want = navTo(s, tx, ty, dt), s.sail = 1;
       else { want = p.h + clamp(ey/110, -.7, .7); // steer the flagship's course, easing sideways into her slot; never turn back for it
@@ -688,7 +774,7 @@ const crewSlow = () => 1 + Math.max(0, 1 - p.crew/(p.t.crew*.5)); // an underman
 function fire(s, side, vp){
   const i = side > 0 ? 1 : 0;
   if (s.rl[i] > 0 || s.sinking != null || s.surrendered || s.grappled) return;
-  s.rl[i] = s === p ? s.reload*crewSlow() : s.cap ? 5.8 - .5*s.cap.gun : D().reload; s.heel = clamp(s.heel - side*.55, -1, 1); // recoil rolls her away from the broadside
+  s.rl[i] = s === p ? s.reload*crewSlow() : s.cap ? reloadOf(s) : D().reload; s.heel = clamp(s.heel - side*.55, -1, 1); // recoil rolls her away from the broadside
   for (let g = 0; g < s.guns; g++)
     pending.push({ o: s, off: (s.guns === 1 ? 0 : g/(s.guns-1) - .5)*s.t.len*.62, side, delay: Math.random()*.22, shot: s === p ? shot : 'round', vp: !!vp });
 }
@@ -843,8 +929,8 @@ const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' }
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (menuOpen){ if (e.code === 'Escape' || e.code === 'KeyI' && !$('manifest').hidden) closeMenu(); return; }
-  if (state === 'port' && e.code === 'KeyI' && !e.repeat){ openManifest(); return; }
+  if (menuOpen){ if (e.code === 'Escape' || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
+  if (state === 'port' && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV')){ e.code === 'KeyI' ? openManifest() : openFleet('F'); return; }
   if (state === 'port'){ if (e.code === 'Escape') closePort(); return; }
   if (state !== 'play') return;
   if (chartOpen){ setChart(false); e.preventDefault(); return; }
@@ -855,6 +941,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyT' && !e.repeat) setAssist(!assist);
   else if (e.code === 'KeyC' && !e.repeat) setChart(true);
   else if (e.code === 'KeyI' && !e.repeat) openManifest();
+  else if (e.code === 'KeyV' && !e.repeat) openFleet('F');
   else if (e.code === 'KeyG' && !e.repeat) cycleForm();
   else if (e.code === 'KeyH' && !e.repeat) cycleOrders();
   else if ((e.code === 'Escape' || e.code === 'KeyL') && !e.repeat) openMenu();
@@ -875,7 +962,7 @@ $('muteBtn').addEventListener('click', e => { toggleMute(); e.currentTarget.blur
 function store(k, v){ try { localStorage.setItem('sp.' + k, v); } catch (_){ } }
 function recall(k){ try { return localStorage.getItem('sp.' + k); } catch (_){ return null; } }
 function setPace(i){ paceIdx = clamp(i|0, 0, PACES.length-1); $('paceBtn').textContent = 'Pace: ' + PACES[paceIdx][1]; store('pace', paceIdx); }
-function setAssist(on){ assist = !!on; $('aimBtn').textContent = 'Aim assist: ' + (assist ? 'on' : 'off'); $('aimBtn').setAttribute('aria-pressed', assist); store('aim', assist ? 1 : 0); }
+function setAssist(on){ assist = !!on; $('aimBtn').textContent = 'Aim: ' + (assist ? 'on' : 'off'); $('aimBtn').setAttribute('aria-pressed', assist); store('aim', assist ? 1 : 0); }
 function setZoom(z){ zoomMul = clamp(z, .6, 2); scale = baseScale*zoomMul; store('zoom', zoomMul.toFixed(2)); }
 addEventListener('wheel', e => { if (state !== 'play' || chartOpen) return; e.preventDefault(); setZoom(zoomMul*Math.exp(-e.deltaY*.0015)); }, { passive: false });
 const touches = new Map(); let pinch = 0;
@@ -922,13 +1009,16 @@ function toggleMute(){ muted = !muted; $('muteBtn').textContent = muted ? 'Sound
 
 /* ---------- Port ---------- */
 const UPG = {
-  guns:  { name:'Mount another pair of guns', max:6, cost:l => 300 + 250*l, desc:() => p.guns + ' guns a side' },
-  hull:  { name:'Sister the hull timbers',    max:5, cost:l => 250 + 200*l, desc:() => 'Hull strength ' + Math.round(p.maxHull) },
-  sail:  { name:'Bend on finer sailcloth',    max:5, cost:l => 250 + 200*l, desc:() => 'Speed +' + Math.round((p.speedMul-1)*100) + '%' },
-  drill: { name:'Drill the gun crews',        max:5, cost:l => 200 + 175*l, desc:() => 'Reload ' + p.reload.toFixed(1) + ' s' }
+  guns:  { name:'Guns',         act:'Mount another pair',  max:6, cost:l => 300 + 250*l, val:s => s.guns + ' a side' },
+  hull:  { name:'Hull timbers', act:'Sister the timbers',  max:5, cost:l => 250 + 200*l, val:s => 'Strength ' + Math.round(s.maxHull) },
+  sail:  { name:'Sailcloth',    act:'Bend on finer canvas', max:5, cost:l => 250 + 200*l, val:s => '+' + 7*upOf(s).sail + '% speed' },
+  drill: { name:'Gun drill',    act:'Drill the gun crews', max:5, cost:l => 200 + 175*l, val:s => 'Reload ' + reloadOf(s).toFixed(1) + ' s' }
 };
+const upOf = s => s === p ? up : s.up;
+const reloadOf = s => s === p ? p.reload*crewSlow() : (5.8 - .5*s.cap.gun)*Math.pow(.9, s.up.drill);
 const tradeIn = () => Math.round(CLASSES[p.cls].value*.5);
-function openPort(port){ setChart(false); state = 'port'; curPort = port; held.left = held.right = false;
+let portTab = 'yard', fleetSel = 'F';
+function openPort(port){ setChart(false); state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
   squad().forEach((s, i) => { const k = Math.ceil((i+1)/2), sd = i % 2 ? -1 : 1, x = port.ox - Math.sin(port.out)*sd*75*k + Math.cos(port.out)*30, y = port.oy + Math.cos(port.out)*sd*75*k + Math.sin(port.out)*30;
@@ -938,80 +1028,134 @@ function openPort(port){ setChart(false); state = 'port'; curPort = port; held.l
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
 function closePort(){ autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
-function renderPort(focusId){
-  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + ' port'; $('portGold').textContent = gold;
-  const ul = $('ledger'); ul.textContent = '';
-  const li = (cls, text) => { const e = document.createElement('li'); e.className = cls; e.textContent = text; ul.appendChild(e); return e; };
-  const row = (id, name, desc, label, enabled, fn) => {
-    const e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), b = document.createElement('button');
-    sp.textContent = name; sm.textContent = desc; sp.appendChild(sm); b.type = 'button'; b.id = id; b.textContent = label; b.disabled = !enabled;
-    b.addEventListener('click', () => { fn(); renderPort(id); }); e.appendChild(sp); e.appendChild(b); ul.appendChild(e);
-  };
-  li('sec', 'Repairs and refit');
-  const hm = Math.ceil(p.maxHull - p.hull), sm2 = Math.ceil(100 - p.sails);
-  row('rHull', 'Careen and patch the hull', hm ? hm + ' points of damage' : 'Sound as a bell', hm ? Math.min(hm, gold) + ' gold' : 'No need', hm > 0 && gold > 0,
-    () => { const c = Math.min(hm, gold); gold -= c; p.hull = Math.min(p.maxHull, p.hull + c); ashore(4 + c*.15); });
-  row('rSail', 'Mend the sails', sm2 ? sm2 + ' points of damage' : 'Drawing well', sm2 ? Math.min(sm2, gold) + ' gold' : 'No need', sm2 > 0 && gold > 0,
-    () => { const c = Math.min(sm2, gold); gold -= c; p.sails = Math.min(100, p.sails + c); ashore(3 + c*.1); });
-  Object.keys(UPG).forEach(k => { const u = UPG[k], l = up[k], maxed = l >= u.max, c = u.cost(l);
-    row('u_' + k, u.name, u.desc(), maxed ? 'Finest fitted' : c + ' gold', !maxed && gold >= c, () => { gold -= c; up[k]++; refit(); ashore(20); }); });
-  const need = p.t.crew - p.crew, hire = Math.min(10, need, Math.floor(gold/8));
-  row('crew', 'Sign on hands at the tavern', 'Crew ' + p.crew + ' of ' + p.t.crew + '. Guns reload slowly below half strength, and boarding is decided by numbers.', hire > 0 ? 'Hire ' + hire + ': ' + hire*8 + ' gold' : need ? '8 gold a hand' : 'Full crew', hire > 0,
-    () => { gold -= hire*8; p.crew += hire; ashore(4); });
-  li('sec', 'Market');
-  li('txt', 'Hold: ' + holdUsed() + ' of ' + holdCap() + ' tons. Goods are cheap where they are made and dear where they are wanted.');
-  GK.forEach(g => { const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9)), n = Math.min(10, holdCap() - holdUsed(), Math.floor(gold/pr)), have = hold[g];
-    const e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), bs = document.createElement('span'); bs.className = 'btns';
-    sp.textContent = GOODS[g][0] + ' · ' + pr + ' gold a ton'; sm.textContent = (curPort.spec.mk.indexOf(g) >= 0 ? 'Made here, cheap. ' : curPort.spec.dm.indexOf(g) >= 0 ? 'Wanted here, dear. ' : '') + 'You hold ' + have + '.'; sp.appendChild(sm);
-    const btn = (id, label, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label; b.disabled = !on; b.addEventListener('click', () => { fn(); renderPort(id); }); bs.appendChild(b); };
-    btn('buy_' + g, n > 0 ? 'Buy ' + n : 'Buy', n > 0, () => { gold -= n*pr; hold[g] += n; });
-    btn('sell_' + g, have ? 'Sell ' + have + ': ' + have*sell : 'Sell', have > 0, () => { gold += have*sell; hold[g] = 0; repute(curPort.nk, .5); });
-    e.appendChild(sp); e.appendChild(bs); ul.appendChild(e); });
-  li('sec', 'Fleet and captains');
-  const sq = squad(), atHome = curPort.name === homeName;
-  const row3 = (name, desc, btns) => { const e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), bs = document.createElement('span'); bs.className = 'btns';
-    sp.textContent = name; sm.textContent = desc; sp.appendChild(sm); btns.forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.id = v[0]; b.textContent = v[1]; b.disabled = !v[2]; b.addEventListener('click', () => { v[3](); renderPort(v[0]); }); bs.appendChild(b); });
-    e.appendChild(sp); e.appendChild(bs); ul.appendChild(e); };
-  li('txt', (sq.length ? 'Your fleet: ' + sq.length + ' of ' + MAXSQ + ' consorts sail with you. ' : 'You sail alone. Board a ship and choose to add her to your fleet; up to ' + MAXSQ + ' consorts can sail with you. ') +
-    (atHome ? curPort.name + ' is your home port: ships can be laid up here and recalled.' : 'Your home port is ' + homeName + '.'));
-  sq.forEach((s, i) => { const fix = Math.ceil(s.maxHull - s.hull) + Math.ceil(100 - s.sails), fc = Math.min(fix, gold), best = spares.slice().sort((a, b) => b.gun + b.sea - a.gun - a.sea)[0];
-    row3(s.t.cname.charAt(0).toUpperCase() + s.t.cname.slice(1) + ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : capLine(s.cap)),
-      'Hull ' + Math.round(s.hull) + '/' + s.maxHull + ' · sails ' + Math.round(s.sails) + '% · crew ' + s.crew + '/' + s.t.crew + ' · ' + s.guns + ' guns a side · hold ' + s.t.hold, [
-      ['fx_' + i, fix ? 'Repair ' + fc : 'Sound', fix > 0 && gold > 0, () => { let c = fc; gold -= c; const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hull = Math.min(s.maxHull, s.hull + h); c -= h; s.sails = Math.min(100, s.sails + c); ashore(4); }],
-      ['fg_' + i, 'Hoist your flag', true, () => { const a = fleetData(s), mine = { cls: p.cls, hf: p.hull/p.maxHull, sails: p.sails, crew: s.crew, cap: s.cap }, myCrew = p.crew;
-        s.gone = true; ships.splice(ships.indexOf(s), 1); const o = p; p = makeShip(a.cls, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull*a.hf; p.sails = a.sails; p.crew = Math.min(myCrew, p.t.crew);
-        addFleet(mine, s.x, s.y, s.h); trimHold(); }],
-      atHome ? ['fl_' + i, 'Lay up', laidUp.length < MAXLAID, () => { laidUp.push(fleetData(s)); s.gone = true; ships.splice(ships.indexOf(s), 1); trimHold(); }]
-             : ['fs_' + i, 'Sell ' + Math.round(s.t.value*.35*s.hull/s.maxHull), true, () => { gold += Math.round(s.t.value*.35*s.hull/s.maxHull); if (!s.cap.mate) spares.push(s.cap); s.gone = true; ships.splice(ships.indexOf(s), 1); trimHold(); }]]);
-    if (best && best.gun + best.sea > s.cap.gun + s.cap.sea) row3('Give her to ' + capLine(best), 'Replaces ' + (s.cap.mate ? 'your first mate' : 'Capt. ' + s.cap.name + ', who goes ashore as a spare') + '.', [['fc_' + i, 'Appoint', true, () => {
-      spares.splice(spares.indexOf(best), 1); if (!s.cap.mate) spares.push(s.cap); const d = fleetData(s); d.cap = best; const x = s.x, y = s.y, h = s.h; ships.splice(ships.indexOf(s), 1); addFleet(d, x, y, h); }]]); });
-  if (atHome) laidUp.forEach((d, i) => row3('Laid up: ' + CLASSES[d.cls].cname + ' · ' + (d.cap && !d.cap.mate ? 'Capt. ' + d.cap.name + ' ' + stars(d.cap) : 'no captain'), 'Hull ' + Math.round(d.hf*100) + '% · crew ' + d.crew, [
-    ['lr_' + i, 'Recall', sq.length < MAXSQ, () => { laidUp.splice(i, 1); addFleet(d, curPort.ox, curPort.oy, curPort.out); }]]));
-  if (!atHome) row('home', 'Make ' + curPort.name + ' your home port', 'Ships laid up at ' + homeName + ' are brought round. Costs 400 gold.', '400 gold', gold >= 400, () => { gold -= 400; homeName = curPort.name; ashore(10); });
-  if (spares.length) li('txt', 'Spare captains ashore with you: ' + spares.map(c => c.name + ' ' + stars(c)).join(', ') + '. They take the next ship you add to your fleet.');
-  tavern.forEach((c, i) => row('cap_' + i, 'Hire ' + capLine(c), 'Gunnery makes her broadsides faster and truer; seamanship makes her faster and keeps her on station.', capCost(c) + ' gold', gold >= capCost(c) && spares.length < 6,
-    () => { gold -= capCost(c); spares.push(c); tavern.splice(i, 1); }));
-  li('sec', 'Shipyard');
-  li('txt', 'You command a ' + p.t.cname + '. The yard allows ' + tradeIn() + ' gold for her in trade; your refits carry over to the new ship.');
-  YARD.forEach(c => { if (c === p.cls) return; const k = CLASSES[c], net = Math.max(0, k.price - tradeIn());
-    row('y_' + c, k.cname.charAt(0).toUpperCase() + k.cname.slice(1), k.guns + ' guns a side · hull ' + k.hull + ' · speed ' + k.speed + ' · crew ' + k.crew + ' · hold ' + k.hold + ' · ' + (k.turn >= 1.25 ? 'nimble' : k.turn >= 1.05 ? 'handy' : k.turn >= .9 ? 'steady' : 'ponderous'),
-      net + ' gold', gold >= net, () => { gold -= net; const o = p; p = makeShip(c, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull; p.crew = Math.min(o.crew, p.t.crew);
-        let over = holdUsed() - holdCap(); for (const g of GK){ if (over <= 0) break; const d = Math.min(hold[g], over); hold[g] -= d; over -= d; } ashore(25); }); });
-  li('sec', "Governor's commissions");
-  if (mission) row('m_drop', mission.title, missionText() + '. Sworn to ' + NAT[mission.nk].land + ', pays ' + mission.reward + ' gold.', 'Abandon', true,
-    () => { if (mission.ship) mission.ship.role = 'hunter'; mission = null; makeOffers(curPort); });
-  else if (!offers.length) li('txt', 'The governor has nothing for you today.');
-  else offers.forEach((o, i) => row('m_' + i, o.title, o.text + ' Pays ' + o.reward + ' gold.', 'Accept', true, () => accept(i)));
-  li('sec', 'News and standing');
-  li('txt', 'At war: ' + ([...wars].map(w => { const a = w.split('-'); return Land(a[0]) + ' and ' + NAT[a[1]].land; }).join('; ') || 'no one') + '.');
-  newsLog.forEach(n => li('txt', n));
-  li('txt', NKEYS.map(k => NAT[k].land.replace(/^the /, '') + ': ' + standWord(standing[k])).join(' · ') + '. Attacking a nation\'s ships angers her and pleases her enemies.');
-  const w = NKEYS.filter(hostile).sort((a, b) => standing[a] - standing[b])[0];
-  if (w){ const c = 300 + Math.round((-25 - standing[w])*8);
-    row('pardon', 'Buy a pardon from ' + NAT[w].land, 'Ends the hostility and reopens ' + NAT[w].adj + ' ports.', c + ' gold', gold >= c, () => { gold -= c; standing[w] = -10;
-      ships.forEach(s => { if (s.nation === w){ s.provoked = false; s.hitByPlayer = false; if (s.role === 'hunter') s.role = 'patrol'; } }); if (w === 'es' && fleet) fleet.alarm = false; }); }
-  const f = focusId && $(focusId); (f && !f.disabled ? f : $('leaveBtn')).focus();
+/* one row of a ledger: a name, a line of detail, a value, and any number of buttons */
+function uiRow(ul, name, desc, amt, btns, rerender){
+  const e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), right = document.createElement('span'); right.className = 'btns';
+  sp.textContent = name; sm.textContent = desc; sp.appendChild(sm);
+  if (amt){ const a = document.createElement('span'); a.className = 'amt'; a.textContent = amt; right.appendChild(a); }
+  (btns || []).forEach(v => { if (!v) return; const b = document.createElement('button'); b.type = 'button'; b.id = v[0]; b.textContent = v[1]; b.disabled = !v[2]; b.addEventListener('click', () => { v[3](); rerender(v[0]); }); right.appendChild(b); });
+  e.appendChild(sp); e.appendChild(right); ul.appendChild(e);
 }
+const hurt = s => Math.ceil(s.maxHull - s.hull) + Math.ceil(100 - s.sails);
+function mend(s, c){ const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hull = Math.min(s.maxHull, s.hull + h); c -= h; const v = Math.min(c, Math.ceil(100 - s.sails)); s.sails = Math.min(100, s.sails + v); return c - v; }
+function renderPort(focusId){
+  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + ' port' + (curPort.name === homeName ? ' · your home port' : ''); $('portGold').textContent = gold;
+  document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === portTab)));
+  const ul = $('ledger'); ul.textContent = '';
+  const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderPort), T = (cls, t) => ledgerText(ul, cls, t);
+  if (portTab === 'yard'){
+    const all = [p].concat(squad()), total = all.reduce((n, s) => n + hurt(s), 0), pay = Math.min(total, gold);
+    T('sec', 'Shipwright');
+    R('Repair ' + (all.length > 1 ? 'the whole fleet' : 'your ' + p.t.cname), total ? total + ' points of damage to hulls and sails' + (pay < total ? ', and you can pay for ' + pay : '') + '. The work takes time, and the world sails on.' : 'Every plank and sail is sound.', '',
+      [['rAll', total ? 'Repair: ' + pay + ' gold' : 'No need', total > 0 && gold > 0, () => { let c = pay; gold -= pay; all.forEach(s => { c = mend(s, c); }); ashore(4 + pay*.1); }]]);
+    R('Refit and manage your ships', 'Guns, timbers, sailcloth and gun drill for each ship, crew transfers, captains, selling and laying up.', '', [['toFleet', 'Open the fleet', true, () => openFleet('F')]]);
+    T('sec', 'Ships for sale');
+    T('txt', 'You command a ' + p.t.cname + '. The yard allows ' + tradeIn() + ' gold for her in trade, and her refits carry over to the new ship.');
+    YARD.forEach(c => { if (c === p.cls) return; const k = CLASSES[c], net = Math.max(0, k.price - tradeIn());
+      R(cap1(k.cname), k.guns + ' guns a side · hull ' + k.hull + ' · speed ' + k.speed + ' · crew ' + k.crew + ' · hold ' + k.hold + ' · ' + (k.turn >= 1.25 ? 'nimble' : k.turn >= 1.05 ? 'handy' : k.turn >= .9 ? 'steady' : 'ponderous'), net + ' gold',
+        [['y_' + c, 'Buy', gold >= net, () => { gold -= net; const o = p; p = makeShip(c, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull; p.crew = Math.min(o.crew, p.t.crew); trimHold(); ashore(25); }]]); });
+  } else if (portTab === 'market'){
+    T('sec', 'Market');
+    T('txt', 'Hold: ' + holdUsed() + ' of ' + holdCap() + ' tons across your fleet. Goods are cheap where they are made and dear where they are wanted.');
+    GK.forEach(g => { const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9)), n = Math.min(10, holdCap() - holdUsed(), Math.floor(gold/pr)), have = hold[g];
+      R(GOODS[g][0], (curPort.spec.mk.indexOf(g) >= 0 ? 'Made here, cheap. ' : curPort.spec.dm.indexOf(g) >= 0 ? 'Wanted here, dear. ' : '') + 'You hold ' + have + ' tons.', pr + ' a ton', [
+        ['buy_' + g, n > 0 ? 'Buy ' + n : 'Buy', n > 0, () => { gold -= n*pr; hold[g] += n; }],
+        ['sell_' + g, have ? 'Sell ' + have + ' for ' + have*sell : 'Sell', have > 0, () => { gold += have*sell; hold[g] = 0; repute(curPort.nk, .5); }]]); });
+  } else if (portTab === 'tavern'){
+    const need = p.t.crew - p.crew, hire = Math.min(10, need, Math.floor(gold/8));
+    T('sec', 'Hands for hire');
+    R('Sign on hands for your flagship', 'Guns reload slowly below half strength, and boarding is decided by numbers. Hire for your consorts in the fleet screen.', p.crew + ' of ' + p.t.crew,
+      [['crew', hire > 0 ? 'Hire ' + hire + ': ' + hire*8 + ' gold' : need ? '8 gold a hand' : 'Full crew', hire > 0, () => { gold -= hire*8; p.crew += hire; ashore(4); }]]);
+    T('sec', 'Captains for hire');
+    if (!tavern.length) T('txt', 'No captains are looking for a ship here today.');
+    tavern.forEach((c, i) => R('Capt. ' + c.name + ' ' + stars(c), 'Gunnery ' + c.gun + ' (faster, truer broadsides) · seamanship ' + c.sea + ' (speed).', capCost(c) + ' gold',
+      [['cap_' + i, 'Hire', gold >= capCost(c) && spares.length < 6, () => { gold -= capCost(c); spares.push(c); tavern.splice(i, 1); }]]));
+    T('txt', spares.length ? 'Spare captains with you: ' + spares.map(c => c.name + ' ' + stars(c)).join(', ') + '. Appoint them in the fleet screen; the best takes the next ship you capture.' : 'You have no spare captains. A captured ship sails under your first mate until you appoint one.');
+  } else {
+    T('sec', "Governor's commissions");
+    if (mission) R(mission.title, missionText() + '. Sworn to ' + NAT[mission.nk].land + ', pays ' + mission.reward + ' gold.', '', [['m_drop', 'Abandon', true, () => { if (mission.ship) mission.ship.role = 'hunter'; mission = null; makeOffers(curPort); }]]);
+    else if (!offers.length) T('txt', 'The governor has nothing for you today.');
+    else offers.forEach((o, i) => R(o.title, o.text, o.reward + ' gold', [['m_' + i, 'Accept', true, () => accept(i)]]));
+    T('sec', 'Standing and news');
+    T('txt', NKEYS.map(k => NAT[k].land.replace(/^the /, '') + ': ' + standWord(standing[k])).join(' · ') + '. At war: ' + ([...wars].map(w => { const a = w.split('-'); return Land(a[0]) + ' and ' + NAT[a[1]].land; }).join('; ') || 'no one') + '.');
+    newsLog.slice(0, 2).forEach(n => T('txt', n));
+    const w = NKEYS.filter(hostile).sort((a, b) => standing[a] - standing[b])[0];
+    if (w){ const c = 300 + Math.round((-25 - standing[w])*8);
+      R('Buy a pardon from ' + NAT[w].land, 'Ends the hostility and reopens ' + NAT[w].adj + ' ports.', c + ' gold', [['pardon', 'Buy', gold >= c, () => { gold -= c; standing[w] = -10;
+        ships.forEach(s => { if (s.nation === w){ s.provoked = false; s.hitByPlayer = false; if (s.role === 'hunter') s.role = 'patrol'; } }); if (w === 'es' && fleet) fleet.alarm = false; }]]); }
+    if (curPort.name !== homeName) R('Make ' + curPort.name + ' your home port', 'Ships laid up at ' + homeName + ' are brought round.', '400 gold', [['home', 'Settle here', gold >= 400, () => { gold -= 400; homeName = curPort.name; ashore(10); }]]);
+    else T('txt', curPort.name + ' is your home port. Lay ships up here from the fleet screen.');
+  }
+  if (menuOpen) return;
+  const f = focusId && $(focusId); if (f && !f.disabled) f.focus(); else if (focusId) $('leaveBtn').focus();
+}
+document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'fleet'){ openFleet('F'); return; } portTab = b.dataset.tab; renderPort(); }));
+
+/* ---------- Fleet management: every ship, at sea or in port ---------- */
+function drawPic(s){
+  const c = $('shipPic'), w = c.width, h = c.height, g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0);
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1a6072'); gr.addColorStop(1, '#0d3340'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(205,240,238,.18)'; g.lineWidth = 2; for (let i = 0; i < 26; i++){ const x = h1(i*3.1)*w, y = h1(i*7.7 + 2)*h; g.beginPath(); g.moveTo(x - 12, y); g.quadraticCurveTo(x, y - 7, x + 12, y); g.stroke(); }
+  const k = Math.min(w/(s.t.len*1.75), h/(s.t.wid*3.6));
+  const ghost = Object.assign({}, s, { x: 0, y: 0, h: 0, sail: 1, pol: .9, heel: 0, speed: 70, sinking: null, surrendered: false, released: false });
+  const main = cx; cx = g; g.save(); g.translate(w/2 - s.t.len*k*.06, h/2 + 4); g.scale(k, k);
+  try { drawShip(ghost); } finally { g.restore(); cx = main; }
+}
+function openFleet(sel){ if (state !== 'play' && state !== 'port') return; setChart(false); menuOpen = true; held.left = held.right = false; fleetSel = sel || 'F';
+  $('fleetSheet').hidden = false; renderFleet(); $('fleetClose').focus({ preventScroll: true }); }
+function renderFleet(focusId){
+  const inPort = state === 'port', atHome = inPort && curPort.name === homeName, sq = squad(), pct = s => Math.round(s.hull/s.maxHull*100);
+  let kind = fleetSel[0], idx = +fleetSel.slice(1) || 0;
+  if (kind === 'S' && !sq[idx] || kind === 'L' && !laidUp[idx]){ kind = 'F'; fleetSel = 'F'; }
+  $('fleetGold').textContent = gold;
+  const list = $('shipList'); list.textContent = '';
+  const item = (key, title, sub) => { const b = document.createElement('button'), t = document.createElement('span'), sm = document.createElement('small'); b.type = 'button'; b.className = 'shipitem'; b.id = 'fi_' + key;
+    b.setAttribute('aria-pressed', String(fleetSel === key)); t.textContent = title; sm.textContent = sub; b.appendChild(t); b.appendChild(sm); b.addEventListener('click', () => { fleetSel = key; renderFleet('fi_' + key); }); list.appendChild(b); };
+  item('F', 'Flagship · ' + cap1(p.t.cname), 'Hull ' + pct(p) + '% · crew ' + p.crew + '/' + p.t.crew);
+  sq.forEach((s, i) => item('S' + i, s.t.name, stars(s.cap) + ' · hull ' + pct(s) + '% · crew ' + s.crew));
+  laidUp.forEach((d, i) => item('L' + i, 'Laid up · ' + cap1(CLASSES[d.cls].cname), 'At ' + homeName + ' · hull ' + Math.round(d.hf*100) + '%'));
+  const ul = $('shipRows'); ul.textContent = '';
+  const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderFleet);
+  if (kind === 'L'){ const d = laidUp[idx], k = CLASSES[d.cls], tmp = makeShip(d.cls, 'player', 'fleet', 0, 0, 0), v = Math.round(k.value*.35*d.hf); tmp.sails = d.sails; tmp.hull = tmp.maxHull*d.hf; drawPic(tmp);
+    $('shipHead').textContent = cap1(k.cname) + ', laid up at ' + homeName;
+    $('shipSub').textContent = k.guns + ' guns a side · hull ' + Math.round(d.hf*100) + '% · crew ' + d.crew + ' · ' + (d.cap && !d.cap.mate ? 'Capt. ' + d.cap.name + ' ' + stars(d.cap) : 'no captain');
+    R('Recall her to the fleet', atHome ? (sq.length < MAXSQ ? 'She rejoins you here.' : 'Your fleet is full at ' + MAXSQ + ' consorts.') : 'You must be in port at ' + homeName + '.', '', [['lr', 'Recall', atHome && sq.length < MAXSQ, () => { laidUp.splice(idx, 1); addFleet(d, curPort.ox, curPort.oy, curPort.out); fleetSel = 'S' + (squad().length - 1); }]]);
+    R('Sell her', atHome ? 'The yard at ' + homeName + ' will take her. Her captain stays with you as a spare.' : 'You must be in port at ' + homeName + '.', v + ' gold', [['ls', 'Sell', atHome, () => { gold += v; if (d.cap && !d.cap.mate && spares.length < 6) spares.push(d.cap); laidUp.splice(idx, 1); fleetSel = 'F'; }]]);
+  } else { const flag = kind === 'F', s = flag ? p : sq[idx], u = upOf(s); drawPic(s);
+    $('shipHead').textContent = flag ? 'Your flagship, a ' + s.t.cname : s.t.name;
+    $('shipSub').textContent = s.guns + ' guns a side · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
+    if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
+    const fix = hurt(s), fc = Math.min(fix, gold);
+    R('Hull and sails', fix ? fix + ' points of damage.' : 'Sound.', Math.round(s.hull) + '/' + Math.round(s.maxHull) + ' · ' + Math.round(s.sails) + '%', [['fx', fix ? 'Repair: ' + fc + ' gold' : 'No need', inPort && fix > 0 && gold > 0, () => { gold -= fc; mend(s, fc); ashore(3 + fc*.1); }]]);
+    const hire = Math.min(10, s.t.crew - s.crew, Math.floor(gold/8));
+    R('Crew', flag ? 'Below half strength her guns reload slowly.' : 'Move hands between her and your flagship, five at a time.', s.crew + '/' + s.t.crew, [
+      flag ? null : ['cm', '−5 to flagship', s.crew >= 10 && p.crew + 5 <= p.t.crew, () => { s.crew -= 5; p.crew += 5; }],
+      flag ? null : ['cp', '+5 from flagship', p.crew >= 15 && s.crew + 5 <= s.t.crew, () => { s.crew += 5; p.crew -= 5; }],
+      ['ch', hire > 0 ? 'Hire ' + hire + ': ' + hire*8 + ' gold' : 'Hire', inPort && hire > 0, () => { gold -= hire*8; s.crew += hire; ashore(3); }]]);
+    Object.keys(UPG).forEach(k => { const U = UPG[k], l = u[k], maxed = l >= U.max, c = U.cost(l);
+      R(U.name, U.act + '. Level ' + l + ' of ' + U.max + '.', U.val(s), [['up_' + k, maxed ? 'Finest fitted' : c + ' gold', inPort && !maxed && gold >= c, () => { gold -= c; u[k]++; flag ? refit() : fitConsort(s); ashore(15); }]]); });
+    if (!flag){
+      const best = spares.slice().sort((a, b) => b.gun + b.sea - a.gun - a.sea).slice(0, 3);
+      R('Captain', s.cap.mate ? 'Your first mate commands her. Hire a captain in a tavern.' : 'Capt. ' + s.cap.name + ': gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea + '.', stars(s.cap),
+        best.map((c, i) => ['ca_' + i, 'Appoint ' + c.name.split(' ').slice(-1)[0] + ' ' + '★'.repeat(Math.round((c.gun + c.sea)/2)), true, () => { spares.splice(spares.indexOf(c), 1); if (!s.cap.mate) spares.push(s.cap); s.cap = c; fitConsort(s); }]));
+      const v = Math.round(s.t.value*.35*s.hull/s.maxHull);
+      R('Hoist your flag in her', 'She becomes your flagship and your present ship takes her place in the fleet. Refits stay with each ship.', '', [['fg', 'Hoist flag', inPort, () => { const a = fleetData(s), mine = { cls: p.cls, hf: p.hull/p.maxHull, sails: p.sails, crew: s.crew, cap: s.cap, up: Object.assign({}, up) }, myCrew = p.crew, o = p, x = s.x, y = s.y, h = s.h;
+        ships.splice(ships.indexOf(s), 1); up = cleanUp(a.up); p = makeShip(a.cls, 'player', 'player', o.x, o.y, o.h); refit(); p.hull = p.maxHull*a.hf; p.sails = a.sails; p.crew = Math.min(myCrew, p.t.crew); addFleet(mine, x, y, h); trimHold(); fleetSel = 'F'; }]]);
+      R('Part with her', inPort ? 'Selling frees a place in your fleet; her captain stays with you as a spare and her crew is paid off.' + (atHome ? ' Or lay her up here to recall later.' : '') : 'Ships are sold in port, and laid up at ' + homeName + '.', v + ' gold', [
+        ['fs', 'Sell', inPort, () => { gold += v; if (!s.cap.mate && spares.length < 6) spares.push(s.cap); ships.splice(ships.indexOf(s), 1); trimHold(); fleetSel = 'F'; }],
+        atHome ? ['fl', 'Lay up', laidUp.length < MAXLAID, () => { laidUp.push(fleetData(s)); ships.splice(ships.indexOf(s), 1); trimHold(); fleetSel = 'F'; }] : null]);
+    } else ledgerText(ul, 'txt', 'To replace your flagship, buy a ship at a shipyard, take a prize as your own, or hoist your flag in one of your consorts.');
+  }
+  $('formBtn2').textContent = 'Formation: ' + FORMS[formation]; $('orderBtn2').textContent = 'Orders: ' + ORDERS[orders];
+  const f = focusId && $(focusId); if (f && !f.disabled) f.focus({ preventScroll: true }); else if (focusId) $('fleetClose').focus({ preventScroll: true });
+}
+$('fleetClose').addEventListener('click', closeMenu);
+$('fleetBtn').addEventListener('click', e => { openFleet('F'); e.currentTarget.blur(); });
+$('flagCard').addEventListener('click', () => openFleet('F'));
+$('formBtn2').addEventListener('click', () => { cycleForm(); renderFleet('formBtn2'); });
+$('orderBtn2').addEventListener('click', () => { cycleOrders(); renderFleet('orderBtn2'); });
+$('fsBtn').addEventListener('click', e => { e.currentTarget.blur(); const no = () => say('Full screen is not available in this view.');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else { const r = document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(no); } } catch (_){ no(); } });
 
 /* ---------- Saving and difficulty ---------- */
 let menuOpen = false;
@@ -1043,7 +1187,7 @@ function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
   document.querySelectorAll('.diffNote').forEach(e => { e.textContent = D().name + ': ' + D().note; }); }
 function refreshTitle(){ const l = latest(); $('contBtn').hidden = !l; if (l) $('contBtn').textContent = 'Continue: ' + summary(l); }
 function openMenu(){ setChart(false); menuOpen = true; held.left = held.right = false; $('menu').hidden = false; $('saveCode').value = ''; renderMenu(); $('menuClose').focus(); }
-function closeMenu(){ menuOpen = false; $('menu').hidden = true; $('manifest').hidden = true; refreshTitle(); document.activeElement && document.activeElement.blur(); }
+function closeMenu(){ menuOpen = false; $('menu').hidden = true; $('manifest').hidden = true; $('fleetSheet').hidden = true; if (state === 'port') renderPort(); refreshTitle(); document.activeElement && document.activeElement.blur(); }
 function renderMenu(focusId, note){
   const ok = canSave(), live = state === 'play' || state === 'port';
   $('menuNote').textContent = note || (!live ? 'Start or load a voyage to save it.' : ok ? 'The game also saves by itself each time you enter or leave a port.' : 'You cannot save with shot in the air or an enemy closing. Shake her off first.');
@@ -1264,6 +1408,7 @@ function resize(){
   baseScale = clamp(Math.sqrt(vw*vh)/620, .85, 2); scale = baseScale*zoomMul;
   const cs = getComputedStyle($('hud'));
   pad = { t: parseFloat(cs.paddingTop)||12, r: parseFloat(cs.paddingRight)||16, b: parseFloat(cs.paddingBottom)||12, l: parseFloat(cs.paddingLeft)||16 };
+  const tb = $('topbar').offsetHeight; pad.t += tb + 8; document.documentElement.style.setProperty('--bar', tb + 'px'); // the compass and chart sit below the top bar
   vignette = cx.createRadialGradient(vw/2, vh/2, Math.min(vw, vh)*.35, vw/2, vh/2, Math.hypot(vw, vh)*.62);
   vignette.addColorStop(0, 'rgba(3,14,18,0)'); vignette.addColorStop(1, 'rgba(3,14,18,.5)');
   const m = chartRect(); miniC = document.createElement('canvas'); miniC.width = Math.round(m.w*dpr); miniC.height = Math.round(m.h*dpr);
@@ -1806,16 +1951,27 @@ function drawBigChart(){
 /* ---------- HUD ---------- */
 const setT = (el, v) => { if (el._v !== v){ el._v = v; el.textContent = v; } };
 const setW = (el, f) => { const v = Math.round(clamp(f, 0, 1)*100) + '%'; if (el._w !== v){ el._w = v; el.style.width = v; } };
+let cardKey = null, cards = [];
 function hud(){
   setT($('gold'), String(gold)); setT($('rank'), RANKS[rankIdx][1]);
+  setT($('holdLine'), holdUsed() + '/' + holdCap() + ' t'); setT($('crewStat'), p.crew + '/' + p.t.crew);
+  setT($('sailSet'), p.sail === 0 ? 'Furled' : p.sail < 1 ? 'Battle' : 'Full'); setT($('flagName'), cap1(p.t.cname));
   setW($('bHull'), p.hull/p.maxHull); setW($('bSails'), p.sails/100);
   const hc = p.hull/p.maxHull > .4 ? 'var(--moss)' : 'var(--blood)'; if ($('bHull')._c !== hc){ $('bHull')._c = hc; $('bHull').style.background = hc; }
-  setW($('bPort'), 1 - p.rl[0]/p.reload); setW($('bStar'), 1 - p.rl[1]/p.reload);
-  setT($('sailSet'), (p.sail === 0 ? 'Sails furled' : p.sail < 1 ? 'Battle sails' : 'Full sail') + ' · Crew ' + p.crew + '/' + p.t.crew);
+  setW($('bPort'), 1 - p.rl[0]/(p.reload*crewSlow())); setW($('bStar'), 1 - p.rl[1]/(p.reload*crewSlow()));
+  const sq = ships.filter(o => o.role === 'fleet' && o.sinking == null), key = sq.map(o => o.t.name).join('|');
+  if (key !== cardKey){ cardKey = key; cards = []; const col = $('fleetCol'); col.textContent = ''; // one compact card for each consort
+    sq.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'shipcard'; b.title = 'Manage this ship';
+      const nmE = document.createElement('span'); nmE.className = 'nm'; const t = document.createElement('span'), st = document.createElement('small'); t.textContent = o.t.name; st.textContent = '★'.repeat(Math.round((o.cap.gun + o.cap.sea)/2)); nmE.appendChild(t); nmE.appendChild(st); b.appendChild(nmE);
+      const meter = label => { const m = document.createElement('span'), l = document.createElement('span'), tr = document.createElement('i'), f = document.createElement('b'); m.className = 'meter'; l.textContent = label; tr.appendChild(f); m.appendChild(l); m.appendChild(tr); b.appendChild(m); return f; };
+      const c = { hull: meter('Hull'), sails: meter('Sail'), crew: document.createElement('span') }; c.sails.style.background = 'var(--bone)'; c.crew.className = 'cr'; b.appendChild(c.crew);
+      b.addEventListener('click', () => openFleet('S' + i)); col.appendChild(b); cards.push(c); }); }
+  sq.forEach((o, i) => { const c = cards[i]; if (!c) return; setW(c.hull, o.hull/o.maxHull); setW(c.sails, o.sails/100);
+    const col = o.hull/o.maxHull > .4 ? 'var(--moss)' : 'var(--blood)'; if (c.hull._c !== col){ c.hull._c = col; c.hull.style.background = col; }
+    setT(c.crew, 'Crew ' + o.crew + '/' + o.t.crew + (o.foe ? ' · engaging' : '')); });
+  const fr = $('fleetRow'); if (fr.hidden === !!sq.length) fr.hidden = !sq.length;
   const bb = $('boardBtn'), bs = state === 'play' && !chartOpen && !menuOpen ? boardable() : null;
   if (bb.hidden === !!bs) bb.hidden = !bs; if (bs) setT(bb, 'Board the ' + nm(bs) + (coarse ? '' : ' · B'));
-  const fr = $('fleetRow'), hasSq = ships.some(o => o.role === 'fleet' && o.sinking == null); if (fr.hidden === hasSq) fr.hidden = !hasSq;
-  setT($('holdLine'), 'Hold ' + holdUsed() + '/' + holdCap() + ' tons' + (holdUsed() ? ': ' + GK.filter(g => hold[g]).map(g => hold[g] + ' ' + GOODS[g][0].toLowerCase()).join(', ') : ''));
   const ce = $('chase'), me = $('missionLine');
   if (ce.hidden === !!tracked) ce.hidden = !tracked;
   if (tracked) setT(ce, 'Chase: ' + tracked.t.name + ' · ' + Math.max(1, Math.round(Math.hypot(tracked.x-p.x, tracked.y-p.y)/DEG*20)) + ' lg');

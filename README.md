@@ -22,12 +22,19 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Aim assist on / off | `T` |
 | Fleet formation: line astern / abreast / wedge | `G` |
 | Fleet orders: line of battle / engage at will / hold fire | `H` |
+| Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
 | Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
 | Game pace: slow / steady / brisk / swift | `1` / `2` / `3` / `4` |
 | Log book: save, load, difficulty | `Esc` or `L` |
 | Mute | `M` |
 
 On a touch screen, on-screen buttons replace the keys.
+
+## Screens
+
+- **Top bar and ship cards.** Gold, rank, hold, crew and sail state run across the top with the tools beside them, including a full-screen button. Down the left side is a card for your flagship and one for each consort, showing hull, sails and crew; click a card to manage that ship.
+- **Port.** A waterfront of five buildings replaces the long list: Shipyard (repair everything, buy a ship), Market, Tavern (crew and captains), Governor (commissions, standing, news, pardons, home port) and Your fleet.
+- **Fleet management** opens at any time. Pick a ship from the list to see her picture and manage her alone: repairs, crew (move hands between ships, or hire in port), her own four refits, her captain, hoisting your flag in her, selling her, or laying her up at your home port. Repairs, refits, hiring and selling need a port.
 
 ## How it plays
 
@@ -44,7 +51,7 @@ On a touch screen, on-screen buttons replace the keys.
 - **In port** you ride at anchor with your bow to the open sea. Time does not stop: other ships sail on, and each repair or refit takes time.
 - **Crew and boarding.** Every ship has a crew. Yours is hired in port; below half strength your guns reload slowly. Come within a ship's length of an enemy and board her: the fight is decided by numbers, and a ship with too few hands left strikes her colours.
 - **Prizes.** The prize screen lists everything in her hold, gold and each trade good, with how much of it you have room for. A captured ship can be plundered and released, taken as your own ship (the old one is sold), or sent to port under a prize crew for the value of her hull.
-- **Fleet.** A captured ship can join your fleet; up to four consorts sail with you and fight beside you. Their holds add to yours. In port you can repair them, sell them, appoint captains, or hoist your flag in one and make her your own ship.
+- **Fleet.** A captured ship can join your fleet; up to four consorts sail with you and fight beside you. Their holds add to yours. In port you can repair them, refit each one separately, sell them to free a place in the fleet, appoint captains, or hoist your flag in one and make her your own ship.
 - **Captains.** Each consort needs a captain. Taverns offer captains for hire, rated 1 to 5 for gunnery (faster, truer broadsides) and seamanship (speed). A captured ship's officer sometimes offers to serve. With no spare captain your first mate takes her, at the lowest rating.
 - **Crew from prizes.** Up to half of a captured ship's survivors will sign on with you. A ship added to your fleet keeps her own crew, topped up from yours if she is short.
 - **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
