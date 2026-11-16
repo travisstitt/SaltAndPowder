@@ -851,8 +851,8 @@ let dispatches = [], dispNew = 0, shipSeq = 0;
 function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null }); if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
   if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
 function dispBadge(){ const b = $('dispBtn'); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); }
-const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station' };
-const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']] };
+const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station', cap:250 };
+const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']], cap:[[100, '100 gold'], [250, '250 gold'], [500, '500 gold'], [1000, '1000 gold']] };
 const docWord = (k, v) => (DOCS[k].find(o => o[0] === v) || DOCS[k][0])[1];
 const cleanDoc = d => { const o = Object.assign({}, DOC0); if (d) for (const k in DOCS) if (DOCS[k].some(v => v[0] === d[k])) o[k] = d[k]; return o; };
 const admits = q => (!hostile(q.nk) || q.spec.free || q.spec.land) && !iced(q);
@@ -869,12 +869,43 @@ function dock(s, port){ /* a consort goes in: safe from weather and the enemy un
   else say('The ' + s.name + ' is in at ' + port.name + ' and lies safe at anchor there.'); }
 function runFor(s, q, why){ if (s.task && s.task.type !== 'port' && s.task.type !== 'fleet') s.prev = s.task; else if (!s.task || s.task.type === 'fleet') s.prev = null; setTask(s, { type: 'port', port: q, flee: true, why });
   dispatch(s, why === 'weather' ? 'Glass falling. I am running for ' + q.name + '.' : 'Hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent, sails at ' + Math.round(s.sails) + '. I am breaking off for ' + q.name + '.'); }
-function tradeCall(s, port){ const t = s.task, other = t.ends[t.idx ^ 1]; /* sell what she brought, buy what the other end wants */
-  if (t.cargo){ const rev = Math.round(price(port, t.cargo.g)*.9*t.cargo.tons), profit = rev - t.cargo.cost, share = Math.max(0, Math.round(profit*.1)); gold += rev - share; if (profit > 0) plunder += profit - share;
-    dispatch(s, 'Sold ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear' : 'a loss of ' + -profit + ' gold') + (share ? ', ' + share + ' of it to her company.' : '.')); t.cargo = null; t.runs = (t.runs || 0) + 1; }
-  let best = null, bm = 1; for (const g of GK){ if (port.spec.land && port.spec.mk.indexOf(g) < 0) continue; const m = price(other, g)*.9 - price(port, g); if (m > bm){ bm = m; best = g; } }
-  if (best){ const pr = price(port, best), tons = Math.min(s.t.hold, Math.floor(gold*.6/pr)); if (tons > 0){ gold -= tons*pr; t.cargo = { g: best, tons, cost: tons*pr }; } }
-  s.dwell = 14; }
+const CAPS = [100, 250, 500, 1000];
+const etaTo = (s, a, b) => Math.hypot(b.ox - a.ox, b.oy - a.oy)/(s.t.speed*.6);
+function tradePlan(s, from, t){ /* the best cargo and port from here: what it costs now against what it should fetch when she lands it, with a margin for luck */
+  let best = null; const ports2 = t.set.filter(q => q !== from && admits(q));
+  for (const q of ports2){ const when = clock + etaTo(s, from, q); for (const g of GK){ if (from.spec.land && from.spec.mk.indexOf(g) < 0) continue; if (q.spec.land && q.spec.dm.indexOf(g) < 0 && q.spec.mk.indexOf(g) < 0) continue;
+    const buy = price(from, g), sell = Math.min(price(q, g, when), price(q, g))*.9, m = sell - buy; if (m < buy*.12) continue; const tons = Math.min(s.t.hold, Math.floor(t.funds/buy)); if (tons < 1) continue; const gain = m*tons/(60 + etaTo(s, from, q));
+    if (!best || gain > best.gain) best = { g, q, tons, buy, gain }; } } return best; }
+function tradeCall(s, port){ const t = s.task; t.need = false; /* sell if it pays, or carry it on; then buy the best cargo going, or go where one is */
+  if (t.cargo){ const c = t.cargo, here = Math.round(price(port, c.g)*.9*c.tons); let alt = null;
+    if (here < c.cost && (t.div || 0) < 2) for (const q of t.set){ if (q === port || !admits(q)) continue; const r = Math.min(price(q, c.g, clock + etaTo(s, port, q)), price(q, c.g))*.9*c.tons; if (r > c.cost*1.04 && (!alt || r > alt.r)) alt = { q, r }; }
+    if (alt){ t.div = (t.div || 0) + 1; t.dest = alt.q; s.dwell = 5; dispatch(s, GOODS[c.g][0] + ' is cheap at ' + port.name + ' today. I am carrying my cargo on to ' + alt.q.name + ' sooner than sell at a loss.'); return; }
+    const profit = here - c.cost; t.funds += here; t.cargo = null; t.div = 0; t.runs = (t.runs || 0) + 1; t.made = (t.made || 0) + profit; let tail = '';
+    if (t.funds > t.cap){ const over = t.funds - t.cap, share = Math.round(over*.1); t.funds = t.cap; gold += over - share; plunder += over - share; tail = ' I remit ' + (over - share) + ' gold to you, and ' + share + ' goes to my people.'; }
+    dispatch(s, 'Sold ' + c.tons + ' tons of ' + GOODS[c.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear.' : 'a loss of ' + -profit + ' gold, the market having turned.') + tail); }
+  if (t.funds < Math.max(40, t.cap*.25)){ t.need = true; s.dwell = 1e9; dispatch(s, 'My trading money is down to ' + Math.round(t.funds) + ' gold, too little to load a cargo worth carrying. I ask ' + (t.cap - Math.round(t.funds)) + ' gold to make it up to ' + t.cap + ', and lie at ' + port.name + ' until I hear.', 'funds'); return; }
+  const plan = tradePlan(s, port, t);
+  if (plan){ t.cargo = { g: plan.g, tons: plan.tons, cost: plan.tons*plan.buy }; t.funds -= t.cargo.cost; t.dest = plan.q; t.idle = 0; s.dwell = 14; return; }
+  /* nothing worth loading here: try the port in her waters with the best prospect, in ballast */
+  let go = null; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = tradePlan(s, q, t); if (pl && (!go || pl.gain > go.gain)) go = { q, gain: pl.gain }; }
+  t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 8; } else { s.dwell = 40; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
+function startTrade(s, set, area){ set = set.filter((q, i) => q && set.indexOf(q) === i); if (set.length < 2){ say('A trader needs at least two open ports to work between.'); return false; }
+  const cap = s.doc.cap || 250, put = Math.min(gold, cap); if (put < 40){ say('You have not the gold to give her a trading stock.'); return false; } gold -= put;
+  let near = set[0]; for (const q of set) if (Math.hypot(q.ox - s.x, q.oy - s.y) < Math.hypot(near.ox - s.x, near.oy - s.y)) near = q;
+  setTask(s, { type: 'trade', set, dest: near, cargo: null, funds: put, cap, area: area || null, runs: 0, made: 0 }); say('The ' + s.name + ' takes ' + put + ' gold as her trading stock and makes for ' + near.name + '.'); return true; }
+/* choosing on the chart: a port, two ports, or a stretch of water */
+let chartPick = null, chartPtr = [0, 0];
+function pickOnChart(s, kind){ closeMenu(); setChart(true, s); chartV.z = kind === 'area' ? 1.8 : 2.4; chartPick = { s, kind, step: 0, a: null }; }
+function pickHint(){ const k = chartPick.kind, n = chartPick.s.name; return k === 'port' ? 'Click the port the ' + n + ' is to make for.' : k === 'cruise' ? 'Click the port the ' + n + ' is to cruise off.' : k === 'blockade' ? 'Click the port the ' + n + ' is to blockade.' : k === 'patrol' ? 'Click the port the ' + n + ' is to patrol to.'
+  : k === 'two' ? (chartPick.step ? 'Now click the second port, to trade with ' + chartPick.a.name + '.' : 'Click the first of the two ports the ' + n + ' is to trade between.') : chartPick.step ? 'Now click again to set how wide her trading waters are.' : 'Click the middle of the waters the ' + n + ' is to trade in.'; }
+function pickClick(hit, wx, wy){ const c = chartPick, s = c.s; let done = false;
+  if (c.kind === 'area'){ if (!c.step){ c.a = [wx, wy]; c.step = 1; return; } const r = clamp(Math.hypot(wx - c.a[0], wy - c.a[1]), 500, 8000), set = ports.filter(q => admits(q) && Math.hypot(q.ox - c.a[0], q.oy - c.a[1]) < r);
+    if (set.length < 2){ say('Fewer than two open ports lie in those waters. Click farther out for a wider stretch.'); return; } done = startTrade(s, set, { x: Math.round(c.a[0]), y: Math.round(c.a[1]), r: Math.round(r) }); }
+  else if (!hit){ say('Click on a port.'); return; }
+  else if (c.kind === 'two'){ if (!c.step){ c.a = hit; c.step = 1; return; } if (hit === c.a){ say('Choose a different port for the other end.'); return; } if (!admits(hit) || !admits(c.a)){ say('Both ports must be open to you.'); return; } done = startTrade(s, [c.a, hit], null); }
+  else if (c.kind === 'port'){ setTask(s, { type: 'port', port: hit }); say('The ' + s.name + ' is ordered to ' + hit.name + '.'); done = true; }
+  else { assign(s, c.kind, hit); done = true; }
+  if (done){ chartPick = null; setChart(false); openFleet('S' + Math.max(0, squad().indexOf(s))); } }
 function think(s){ /* once a second each captain looks at the sky, at his ship and at the enemy, and acts on his standing orders */
   const D2 = s.doc, sea = s.cap.sea, frac = s.hull/s.maxHull, flee = s.task && s.task.type === 'port' && s.task.flee;
   const blow = hurr ? hurr.stage === 1 || sea >= 3 : weather.kind === 'storm' && weather.k > (sea >= 3 ? .25 : .65);
@@ -884,25 +915,26 @@ function think(s){ /* once a second each captain looks at the sky, at his ship a
   if (D2.dmg > 0 && (frac < D2.dmg || s.sails < 22) && !flee){ const q = openPortNear(s, 1e9); if (q){ runFor(s, q, 'damage'); return; } }
   s.evade = null; if (D2.foe !== 'any' && s.task && s.task.type !== 'fleet' && Math.hypot(p.x - s.x, p.y - s.y) > 1000){ const mine = s.hull*(s.guns + 1)*(D2.foe === 'equal' ? 1.6 : 1); let bd = 800;
     for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd && o.hull*(o.guns + 1) > mine){ bd = d; s.evade = o; } } } }
-function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null; return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
+function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null; return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, set: t.set ? t.set.map(q => q.name) : null, dest: t.dest ? t.dest.name : null, funds: t.funds, cap: t.cap, area: t.area || null, runs: t.runs, made: t.made, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
 function taskFrom(d, s){ const P = n => ports.find(q => q.name === n), ends = Array.isArray(d.ends) ? d.ends.map(P) : null, okEnds = ends && ends.length === 2 && ends[0] && ends[1];
   if (d.type === 'port' && P(d.port)) return { type: 'port', port: P(d.port) }; if (d.type === 'hold') return { type: 'hold' };
-  if (d.type === 'trade' && okEnds) return { type: 'trade', ends, idx: d.idx ? 1 : 0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null };
+  if (d.type === 'trade'){ const set = (Array.isArray(d.set) ? d.set.map(P) : ends || []).filter(Boolean); if (set.length >= 2) return { type: 'trade', set, dest: P(d.dest) || set[0], funds: clamp(+d.funds || 0, 0, 1e5), cap: CAPS.indexOf(d.cap) >= 0 ? d.cap : 250, area: d.area && d.area.r ? { x: +d.area.x, y: +d.area.y, r: +d.area.r } : null, runs: d.runs|0, made: d.made|0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null }; }
   const at = Array.isArray(d.at) && d.at[0] > 50 && d.at[1] > 50 && d.at[0] < W - 50 && d.at[1] < H - 50 ? [+d.at[0], +d.at[1]] : [s.x, s.y];
   return { type: 'raid', at, prey: null, label: ['cruise', 'patrol', 'blockade'].indexOf(d.label) >= 0 ? d.label : undefined, until: d.until ? d.until|0 : undefined, ends: okEnds ? ends : undefined, idx: d.idx ? 1 : 0, port: d.label === 'blockade' ? P(d.port) : undefined }; }
 function assign(s, kind, q){ const here = openPortNear(s, 1e9) || q, home = ports.find(x => x.name === homeName) || q;
   if (kind === 'cruise') setTask(s, { type: 'raid', label: 'cruise', at: [q.ox, q.oy], prey: null, until: calIdx() + 3 });
   else if (kind === 'blockade') setTask(s, { type: 'raid', label: 'blockade', at: [q.ox, q.oy], prey: null, port: q });
   else if (kind === 'patrol') setTask(s, { type: 'raid', label: 'patrol', at: [q.ox, q.oy], prey: null, ends: [here, q], idx: 1 });
-  else if (kind === 'trade'){ if (q === home){ say('Choose a port other than your home port to trade with.'); return; } setTask(s, { type: 'trade', ends: [home, q], idx: Math.hypot(home.ox - s.x, home.oy - s.y) < Math.hypot(q.ox - s.x, q.oy - s.y) ? 0 : 1, cargo: null }); } }
+  else if (kind === 'trade') startTrade(s, [q, home], null); }
 function fleetSignal(kind){ const sq = squad(); if (kind === 'recall'){ sq.forEach(s => setTask(s, { type: 'fleet' })); say('Signal to all ships: rejoin the flag.'); }
   else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); }); say('Signal to all ships: make for the nearest open port.'); }
   else { const q = ports.find(x => x.name === homeName); sq.forEach(s => setTask(s, { type: 'port', port: q })); say('Signal to all ships: rendezvous at ' + homeName + '.'); } }
 const inCompany = s => !s.docked && Math.hypot(s.x - p.x, s.y - p.y) < 900;
-const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? 'Loading at ' : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.ends[t.idx].name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
+const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? (t.need ? 'Waiting for funds at ' : 'Loading at ') : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.dest.name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
   : t.flee && !t.arrived ? 'Running for ' + t.port.name
   : t.arrived ? 'Waiting at ' + t.port.name : 'Bound for ' + t.port.name; };
-function setTask(s, t){ if (s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
+function setTask(s, t){ if (s.task && s.task.type === 'trade' && (!t || t.type !== 'trade')){ const o = s.task, back = Math.round(o.funds + (o.cargo ? o.cargo.cost*.8 : 0)); if (back > 0){ gold += back; say('The ' + s.name + ' hands back her trading stock: ' + back + ' gold.'); } } /* her trading money comes home with her */
+  if (s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
 const fairGame = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.gone && (o === fleetTarget || o.owner === 'pirate' || prize(o) && (hostile(o.nation) || o.hitByPlayer));
   // what a consort may take on her own
 const POLICY = { plunder:'Plunder and release', keep:'Take into the fleet', send:'Send in as prizes', leave:'Leave to the flagship' };
@@ -982,7 +1014,7 @@ function detached(s, dt){ // a consort acting on her own orders
   const t = s.task; let want = s.h; s.speedMul = s.baseMul;
   if (s.evade && s.evade.sinking == null){ s.sail = 1; return Math.atan2(s.y - s.evade.y, s.x - s.evade.x); } /* too strong for her: she shows her heels */
   if (t.type === 'hold'){ s.sail = 0; }
-  else if (t.type === 'trade'){ const q = t.ends[t.idx], d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true; dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.'); } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
+  else if (t.type === 'trade'){ const q = t.dest, d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true; dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.'); } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
   else if (t.type === 'port'){ const d = Math.hypot(t.port.ox - s.x, t.port.oy - s.y);
     if (d < 180 && admits(t.port)){ dock(s, t.port); return s.h; }
     if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ', which is closed to her, and waits outside for you.');
@@ -1007,7 +1039,7 @@ function detached(s, dt){ // a consort acting on her own orders
   return want;
 }
 function fleetAI(s, dt){
-  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && state === 'play' && (s.dwell -= dt) <= 0){ const t = s.task; t.idx ^= 1; s.h = s.docked.out; s.docked = null; s.sail = 1; }
+  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && state === 'play' && (s.dwell -= dt) <= 0){ const t = s.task; if (t.dest === s.docked) tradeCall(s, s.docked); else { s.h = s.docked.out; s.docked = null; s.sail = 1; } }
     else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' }); say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
     else if (s.task && s.task.why === 'weather' && !hurr && weather.kind !== 'storm' && repairCost(s) <= 8){ afterRepairs(s, s.prev ? 'station' : 'join'); } return; }
   s.thinkT = (s.thinkT || 0) - dt; if (s.thinkT <= 0){ s.thinkT = 1; think(s); }
@@ -1042,7 +1074,7 @@ function fleetAI(s, dt){
 }
 function laneBears(s, side){ for (const o of ships){ if (!threat(o)) continue; const dx = o.x-s.x, dy = o.y-s.y; if (Math.hypot(dx, dy) > RANGE) continue;
   const rel = angd(Math.atan2(dy, dx), s.h); if ((rel > 0 ? 1 : -1) === side && Math.abs(Math.abs(rel) - Math.PI/2) < .3) return true; } return false; }
-const price = (q, g) => Math.max(2, Math.round(GOODS[g][1]*(q.spec.mk.indexOf(g) >= 0 ? .7 : q.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && q.home === 'es' || q.name === 'Monte Cristi' && (g === 'flour' || g === 'fish') ? 1.7 : g === 'flour' || g === 'fish' ? 1.6 : 1.35) : 1)*(1 + .1*Math.sin(clock*.011 + q.x*.01 + g.length*2.1))));
+const price = (q, g, t) => Math.max(2, Math.round(GOODS[g][1]*(q.spec.mk.indexOf(g) >= 0 ? .7 : q.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && q.home === 'es' || q.name === 'Monte Cristi' && (g === 'flour' || g === 'fish') ? 1.7 : g === 'flour' || g === 'fish' ? 1.6 : 1.35) : 1)*(1 + .1*Math.sin((t == null ? clock : t)*.011 + q.x*.01 + g.length*2.1))));
 let gazette = [], courtList = [], courtTok = 0;
 const OFFICERS = { master:['Sailing master', 'Half a knot more out of her on every point of sailing.'], gunner:['Gunner', 'The guns are served a tenth faster.'], surgeon:['Surgeon', 'Some of the wounded come back to duty each month.'], bosun:['Boatswain', 'Sails are knotted and spliced at sea.'] };
 let morale = 70, officers = {}, foul = 0, fouling = false, lastCall = 0, rivals = [];
@@ -1074,7 +1106,10 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
   else if (mode === 'dispatches'){ dispNew = 0; dispBadge(); el('div', 'mast', 'Dispatches'); el('div', 'dateline', dateStr() + ' · from the captains of your fleet');
     if (!dispatches.length) el('p', 'lead', 'Nothing has come in. Your captains write when they make port, break off, or have something to report.');
     dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
-      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null;
+      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask === 'repair' && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null; if (v.ask === 'funds' && (!s || !s.task || s.task.type !== 'trade' || !s.task.need)) v.ask = null;
+      if (v.ask === 'funds'){ const t2 = s.task, want = Math.max(0, t2.cap - Math.round(t2.funds)), r = el('div', 'dbtns'); [['send', 'Send her ' + Math.min(want, gold) + ' gold'], ['recall', 'Recall her to the flag'], ['', 'Let her wait']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'df_' + (o[0] || 'wait') + i; b2.textContent = o[1]; b2.disabled = o[0] === 'send' && gold < 1;
+        b2.addEventListener('click', () => { v.ask = null; if (o[0] === 'send'){ const n = Math.min(want, gold); gold -= n; t2.funds += n; t2.need = false; s.dwell = 2; v.t += ' [Sent ' + n + ' gold.]'; } else if (o[0] === 'recall'){ setTask(s, { type: 'fleet' }); v.t += ' [Recalled.]'; } else v.t += ' [Left waiting.]'; openPaper('dispatches'); }); r.appendChild(b2); }); }
+      else
       if (v.ask){ const c = repairCost(s), r = el('div', 'dbtns'); [['back', 'Pay ' + c + ' and send her back'], ['join', 'Pay and have her rejoin'], ['stay', 'Pay and keep her in port'], ['', 'Leave her as she is']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'dp_' + (o[0] || 'leave') + i; b2.textContent = o[1]; b2.disabled = !!o[0] && gold < 1;
         b2.addEventListener('click', () => { v.ask = null; if (o[0]){ const paid = payRepairs(s, o[0] === 'back' ? 'station' : o[0]); v.t += ' [Paid ' + paid + ' gold. ' + (o[0] === 'back' ? 'Sent back to her station.' : o[0] === 'join' ? 'Ordered to rejoin.' : 'Kept in port.') + ']'; } else v.t += ' [Left unrepaired.]'; openPaper('dispatches'); }); r.appendChild(b2); }); } }); }
   else { el('div', 'mast', 'The ' + homeName + ' Gazette'); const ws = [...wars].map(w => NAT[w.slice(0, 2)].land + ' and ' + NAT[w.slice(3)].land).join('; ');
@@ -1719,7 +1754,7 @@ function act(name){
 let chartMark = null; /* a ship of yours picked out on the chart */
 function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
   if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
-  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok;
+  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0); } /* a choice abandoned goes back to her card */
   held.left = held.right = false; $('chartTools').hidden = !chartOpen;
   $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
@@ -1780,7 +1815,7 @@ const touches = new Map(); let pinch = 0;
 const spread = () => { const v = [...touches.values()]; return Math.hypot(v[0][0]-v[1][0], v[0][1]-v[1][1]); };
 let dragged = false, dragAt = null;
 cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); dragged = false; dragAt = [e.clientX, e.clientY]; if (touches.size === 2) pinch = spread()/(chartOpen ? chartV.z : zoomMul); });
-cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
+cv.addEventListener('pointermove', e => { chartPtr = [e.clientX, e.clientY]; if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 2 && pinch && (state === 'play' || chartOpen)){ if (chartOpen) chartV.z = clamp(spread()/pinch, 1, 5); else setZoom(spread()/pinch); dragged = true; }
   else if (chartOpen && touches.size === 1 && chartGeo){ if (dragAt && Math.hypot(e.clientX-dragAt[0], e.clientY-dragAt[1]) > 6) dragged = true;
     if (dragged){ chartV.cx -= (e.clientX-was[0])/chartGeo.k; chartV.cy -= (e.clientY-was[1])/chartGeo.k; } } });
@@ -1795,6 +1830,7 @@ $('portChart').addEventListener('click', () => setChart(true));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }
+    if (chartPick){ pickClick(hit, g ? (e.clientX - g.x + g.ox)/g.k : 0, g ? (e.clientY - g.y + g.oy)/g.k : 0); return; }
     if (hit){ if (hostile(hit.nk)) say(hit.name + ' is closed to you, but the course is set.'); setCourse(hit === course ? null : hit); }
     setChart(false); return; }
   const m = chartRect();
@@ -2316,15 +2352,13 @@ function renderFleet(focusId){
         ['to_raid', 'Hunt prizes', tt !== 'raid', () => setTask(s, { type: 'raid', at: [s.x, s.y], prey: null })],
         ['to_chase', mark ? 'Chase the ' + nm(mark) : 'Chase my mark', !!mark && mark.sinking == null && !mark.released, () => setTask(s, { type: 'chase', prey: mark, at: [s.x, s.y] })],
         ['to_hold', 'Hold here', tt !== 'hold', () => setTask(s, { type: 'hold' })]]);
-      { const e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), right = document.createElement('span'), sel = document.createElement('select'), b = document.createElement('button');
-        sp.textContent = 'Send her to a port'; sm.textContent = 'She sails there and waits at anchor. Meet her there, or come within sight, and she rejoins.';
-          sp.appendChild(sm); right.className = 'btns'; sel.id = 'taskPort'; sel.setAttribute('aria-label', 'Port to send her to');
-        ports.slice().sort((a, b2) => a.name < b2.name ? -1 : 1).forEach(q => { const o = document.createElement('option'); o.value = q.name; o.textContent = q.name + (q.name === homeName ? ' (home)' : hostile(q.nk) ? ' (hostile)' : ''); if ((s.task && s.task.port || ports.find(x => x.name === homeName)) === q) o.selected = true; sel.appendChild(o); });
-        b.type = 'button'; b.id = 'to_port'; b.textContent = 'Send her'; b.addEventListener('click', () => { const q = ports.find(x => x.name === sel.value); if (q) setTask(s, { type: 'port', port: q }); renderFleet('to_port'); });
-        right.appendChild(sel); right.appendChild(b); e.appendChild(sp); e.appendChild(right); ul.appendChild(e); }
-      { const sel = $('taskPort'), pick = () => ports.find(x => x.name === sel.value);
-        R('Independent service', 'Using the port chosen above: cruise off it for three months, blockade it, patrol between it and the port nearest her now, or trade between it and ' + homeName + ' on her own account. Her company keeps a tenth of what she makes.', '', [
-          ['as_cruise', 'Cruise', true, () => assign(s, 'cruise', pick())], ['as_blockade', 'Blockade', true, () => assign(s, 'blockade', pick())], ['as_patrol', 'Patrol', true, () => assign(s, 'patrol', pick())], ['as_trade', 'Trade', true, () => assign(s, 'trade', pick())]]); }
+      R('Send her to a port', 'Choose the port on the chart. She sails there, goes in and lies safe; meet her there and she rejoins.', '', [['to_port', 'Choose on the chart', true, () => pickOnChart(s, 'port')]]);
+      R('Independent service', 'Choose on the chart where she is to cruise for three months, which port she is to blockade, or which port she is to patrol to from where she lies. Her company keeps a tenth of what she takes.', '', [
+        ['as_cruise', 'Cruise', true, () => pickOnChart(s, 'cruise')], ['as_blockade', 'Blockade', true, () => pickOnChart(s, 'blockade')], ['as_patrol', 'Patrol', true, () => pickOnChart(s, 'patrol')]]);
+      { const t2 = s.task && s.task.type === 'trade' ? s.task : null, ci = Math.max(0, DOCS.cap.findIndex(o => o[0] === s.doc.cap));
+        R('Trade on her own account', t2 ? 'She works ' + (t2.area ? t2.set.length + ' ports in the waters you marked' : t2.set.map(q => q.name).join(' and ')) + ' with ' + Math.round(t2.funds) + ' gold in hand' + (t2.cargo ? ' and ' + t2.cargo.tons + ' tons of ' + GOODS[t2.cargo.g][0].toLowerCase() + ' aboard' : '') + '. ' + (t2.runs || 0) + ' cargoes sold, ' + (t2.made || 0) + ' gold made.' : 'Mark two ports on the chart, or a stretch of water whose ports her captain may choose between. He buys what should sell at a profit where he is bound, carries a cargo on sooner than sell at a loss, and remits what he makes above his stock.', '', [
+          ['as_two', 'Two ports', true, () => pickOnChart(s, 'two')], ['as_area', 'An area', true, () => pickOnChart(s, 'area')]]);
+        R('Her trading stock', 'The gold she takes from your purse to trade with. It comes back when she is given other orders. If it runs too low to load a cargo, her captain writes to ask for more.', '', [['so_cap', DOCS.cap[ci][1], !t2, () => { s.doc.cap = DOCS.cap[(ci + 1) % DOCS.cap.length][0]; }]]); }
       ledgerText(ul, 'sec', 'Standing orders');
       [['wx', 'In a hurricane', 'A good seaman sees it coming sooner.'], ['dmg', 'When damaged', 'She breaks off and makes for the nearest open port.'], ['foe', 'Against warships, when detached', 'Whether she stands or runs.'], ['allow', 'Repairs without asking', 'Above this her captain writes for your leave.'], ['after', 'Once repaired', '']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k]));
         R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
@@ -3609,6 +3643,11 @@ function drawBigChart(){
     { const tw = cx.measureText(label).width, bx0 = cx.textAlign === 'left' ? tx : cx.textAlign === 'right' ? tx - tw : tx - tw/2, box = [bx0 - 3, ty - fs, bx0 + tw + 3, ty + 4];
       if (placed.some(o => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])) continue; placed.push(box); }
     cx.lineWidth = 4; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(label, tx, ty); cx.fillStyle = home ? '#0b6b4c' : INK; cx.fillText(label, tx, ty); }
+  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null; /* trading waters: being marked out, or already hers */
+    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]); circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
+      for (const q of ports) if (admits(q) && Math.hypot(q.ox - ar.x, q.oy - ar.y) < ar.r){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); } }
+    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
+    if (chartPick && chartPick.kind === 'two' && chartPick.a){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 3; circle(cx, X0 + chartPick.a.x*k, Y0 + chartPick.a.y*k, 13); cx.stroke(); } }
   if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k; cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4)); cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
     cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)'; cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48); } /* her name stands clear of the port names, under the ring */
   const ppx = X0 + p.x*k, ppy = Y0 + p.y*k; cx.strokeStyle = '#c8321e'; cx.lineWidth = 1.6; circle(cx, ppx, ppy, 12 + 2.5*Math.sin(time*4)); cx.stroke();
@@ -3617,7 +3656,8 @@ function drawBigChart(){
     cx.lineTo(-6, -5.5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
   cx.restore(); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(x+.5, y+.5, w-1, h-1);
   cx.textAlign = 'center'; cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f';
-  cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
+  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)'; cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
+  if (!chartPick) cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
   const items = NKEYS.map(k2 => [k2, NAT[k2].land.replace(/^the /, '') + ': ' + standWord(standing[k2])]).concat([[null, 'Home: ' + homeName]]); let tw = 0;
   cx.font = '700 13px "Alegreya Sans", sans-serif'; items.forEach(v => { tw += cx.measureText(v[1]).width + 34; });
   let lx = vw/2 - tw/2 + 8; const ly = y + h + 44; cx.textAlign = 'left';
@@ -3693,6 +3733,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
+  pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
   say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;

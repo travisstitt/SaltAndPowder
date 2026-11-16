@@ -13,7 +13,7 @@ function act(name){
 let chartMark = null; /* a ship of yours picked out on the chart */
 function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
   if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
-  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok;
+  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0); } /* a choice abandoned goes back to her card */
   held.left = held.right = false; $('chartTools').hidden = !chartOpen;
   $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
@@ -74,7 +74,7 @@ const touches = new Map(); let pinch = 0;
 const spread = () => { const v = [...touches.values()]; return Math.hypot(v[0][0]-v[1][0], v[0][1]-v[1][1]); };
 let dragged = false, dragAt = null;
 cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); dragged = false; dragAt = [e.clientX, e.clientY]; if (touches.size === 2) pinch = spread()/(chartOpen ? chartV.z : zoomMul); });
-cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
+cv.addEventListener('pointermove', e => { chartPtr = [e.clientX, e.clientY]; if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 2 && pinch && (state === 'play' || chartOpen)){ if (chartOpen) chartV.z = clamp(spread()/pinch, 1, 5); else setZoom(spread()/pinch); dragged = true; }
   else if (chartOpen && touches.size === 1 && chartGeo){ if (dragAt && Math.hypot(e.clientX-dragAt[0], e.clientY-dragAt[1]) > 6) dragged = true;
     if (dragged){ chartV.cx -= (e.clientX-was[0])/chartGeo.k; chartV.cy -= (e.clientY-was[1])/chartGeo.k; } } });
@@ -89,6 +89,7 @@ $('portChart').addEventListener('click', () => setChart(true));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }
+    if (chartPick){ pickClick(hit, g ? (e.clientX - g.x + g.ox)/g.k : 0, g ? (e.clientY - g.y + g.oy)/g.k : 0); return; }
     if (hit){ if (hostile(hit.nk)) say(hit.name + ' is closed to you, but the course is set.'); setCourse(hit === course ? null : hit); }
     setChart(false); return; }
   const m = chartRect();

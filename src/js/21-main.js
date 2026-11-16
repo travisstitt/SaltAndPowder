@@ -19,6 +19,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
+  pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
   say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;

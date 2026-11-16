@@ -136,6 +136,11 @@ function drawBigChart(){
     { const tw = cx.measureText(label).width, bx0 = cx.textAlign === 'left' ? tx : cx.textAlign === 'right' ? tx - tw : tx - tw/2, box = [bx0 - 3, ty - fs, bx0 + tw + 3, ty + 4];
       if (placed.some(o => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])) continue; placed.push(box); }
     cx.lineWidth = 4; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(label, tx, ty); cx.fillStyle = home ? '#0b6b4c' : INK; cx.fillText(label, tx, ty); }
+  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null; /* trading waters: being marked out, or already hers */
+    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]); circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
+      for (const q of ports) if (admits(q) && Math.hypot(q.ox - ar.x, q.oy - ar.y) < ar.r){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); } }
+    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
+    if (chartPick && chartPick.kind === 'two' && chartPick.a){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 3; circle(cx, X0 + chartPick.a.x*k, Y0 + chartPick.a.y*k, 13); cx.stroke(); } }
   if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k; cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4)); cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
     cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)'; cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48); } /* her name stands clear of the port names, under the ring */
   const ppx = X0 + p.x*k, ppy = Y0 + p.y*k; cx.strokeStyle = '#c8321e'; cx.lineWidth = 1.6; circle(cx, ppx, ppy, 12 + 2.5*Math.sin(time*4)); cx.stroke();
@@ -144,7 +149,8 @@ function drawBigChart(){
     cx.lineTo(-6, -5.5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
   cx.restore(); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(x+.5, y+.5, w-1, h-1);
   cx.textAlign = 'center'; cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f';
-  cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
+  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)'; cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
+  if (!chartPick) cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
   const items = NKEYS.map(k2 => [k2, NAT[k2].land.replace(/^the /, '') + ': ' + standWord(standing[k2])]).concat([[null, 'Home: ' + homeName]]); let tw = 0;
   cx.font = '700 13px "Alegreya Sans", sans-serif'; items.forEach(v => { tw += cx.measureText(v[1]).width + 34; });
   let lx = vw/2 - tw/2 + 8; const ly = y + h + 44; cx.textAlign = 'left';
