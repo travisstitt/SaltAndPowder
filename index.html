@@ -146,6 +146,7 @@ button.primary:hover:not(:disabled){background:#e6b963}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{flex:1}
 .seg button[aria-pressed="true"]{background:var(--brass);color:var(--ink);font-weight:700}
+.seg button[aria-pressed="true"]:hover:not(:disabled){background:#e3b866}
 .ledger .btns{display:flex;gap:6px}
 .ledger .btns button{min-width:66px}
 .ledger .btns{flex-wrap:wrap;justify-content:flex-end;max-width:340px}
@@ -925,7 +926,7 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
 function news(msg){ gaz(msg, 'news'); newsLog.unshift(msg); newsLog.length = Math.min(newsLog.length, 4); if (state === 'play') say('News: ' + msg); }
 function politics(){
   if (wars.size && Math.random() < .35){ const w = [...wars][Math.random()*wars.size|0].split('-'), fl = Math.random() < .5, att = fl ? w[0] : w[1], def = fl ? w[1] : w[0];
-    const own = ports.filter(q => q.nk === def && q !== curPort && q !== ports[0]);
+    const own = ports.filter(q => q.nk === def && q !== curPort && q.name !== homeName);
     if (own.length > 1){ const q = own[Math.random()*own.length|0]; q.nk = att; q.nation = NAT[att]; news(NAT[att].adj + ' forces have taken ' + q.name + ' from ' + NAT[def].land + '.'); return; } }
   const i = Math.random()*4|0, j = (i + 1 + (Math.random()*3|0)) % 4, /* Denmark keeps out of it */ a = NKEYS[i], b = NKEYS[j], k = wkey(a, b);
   if (wars.has(k)){ if (wars.size > 1){ wars.delete(k); news('Peace is signed between ' + NAT[a].land + ' and ' + NAT[b].land + '.'); } }
@@ -1008,7 +1009,7 @@ function newGame(saved){
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
   mission = null; offers = []; tracked = null; fleet = null; standing = { en:10, es:-5, fr:0, nl:0, dk:5 };
   prizePolicy = 'plunder'; roverT = rand(170, 280); formation = 'column'; orders = 'line'; spares = []; laidUp = []; homeName = startName; tavern = []; course = null; autoHelm = false; routeLine = null; fleetTarget = null; paused = false; lastDay = 0;
-  hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = []; courtList = []; navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 }; stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
+  hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; gsTold = false; marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = []; courtList = []; navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 }; stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
   ports.forEach(q => { q.nk = q.home; q.nation = NAT[q.home]; });
   if (saved && saved.p){
@@ -1631,7 +1632,7 @@ function renderPort(focusId){
     if (marque && curPort.nk === marque){ const nx = NAVY[navy.k === marque ? navy.rank + 1 : 1], pts = navy.k === marque ? navy.pts : 0, rk = navy.k === marque ? navy.rank : 0; T('sec', 'The ' + NAT[marque].adj + ' service');
       const perk = ['', 'A bounty of 400 gold.', 'A bounty of 800 gold, and every ' + NAT[marque].adj + ' yard will build you ships of the line.', 'The crown gives you a frigate.', 'The crown gives you a fifty-gun ship, and half your wages are borne on the establishment.'];
       if (nx && pts >= nx[0]) R('Promotion to ' + nx[1], perk[rk + 1], '', [['promote', 'Accept', true, () => { if (navy.k !== marque) navy = { k: marque, pts: 0, rank: 0 }; navy.rank++; const r = navy.rank; if (r === 1) gold += 400; else if (r === 2) gold += 800;
-        else { const d = { cls: r === 3 ? 'frigate' : 'fifty', hf: 1, sails: 100, crew: r === 3 ? 150 : 210, cap: mate() }; if (squad().length < MAXSQ){ const w = waterNear(p.x, p.y, 120); addFleet(d, w[0], w[1], p.h); } else if (laidUp.length < MAXLAID) laidUp.push({ cls: d.cls, hf: 1, crew: d.crew, cap: null, name: shipName() }); else gold += r === 3 ? 4000 : 6500; }
+        else { const d = { cls: r === 3 ? 'frigate' : 'fifty', hf: 1, sails: 100, crew: r === 3 ? 150 : 210, cap: mate() }; if (squad().length < MAXSQ){ const w = waterNear(p.x, p.y, 120); addFleet(d, w[0], w[1], p.h); } else if (laidUp.length < MAXLAID) laidUp.push({ cls: d.cls, hf: 1, sails: 100, crew: d.crew, cap: mate(), name: shipName() }); else gold += r === 3 ? 4000 : 6500; }
         chime(); gaz('The master of the ' + p.name + ' is made ' + NAVY[r][1] + ' in the ' + NAT[marque].adj + ' service.', 'you'); }]]);
       else T('txt', (rk ? NAVY[rk][1] + ' in the ' + NAT[marque].adj + ' service. ' : 'You serve as a privateer. ') + (nx ? 'Lawful prizes and commissions count toward ' + nx[1] + ': ' + pts + ' of ' + nx[0] + '.' : 'There is no higher rank for a sea officer in these waters.')); }
     if (NKEYS.some(k => captives[k] > 0)){ T('sec', 'Prisoners of war');
@@ -2024,7 +2025,7 @@ function update(dt){
   for (let i = ships.length-1; i >= 0; i--){ const s = ships[i];
     if (s.sinking != null){ s.sinking -= dt; if (s.sinking <= 0) ships.splice(i, 1); continue; }
     if (s.gone){ ships.splice(i, 1); continue; }
-    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ ships.splice(i, 1); continue; } /* hull down and gone */
+    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
     if (s.role === 'rover' && !s.surrendered){ s.ttl -= dt; if (s.ttl <= 0 && Math.hypot(s.x - p.x, s.y - p.y) > 1500) s.gone = true; }
     if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN; } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++; else if (s.role === 'hunter') hunters++; else if (s.role === 'patrol') pat[s.nation] = (pat[s.nation] || 0) + 1;
     ai(s, dt);
