@@ -342,6 +342,19 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); g.setCal(102); g.calendarTick(); const a = g.ports.find(q => q.name === 'Louisbourg').nk; g.setCal(157); g.calendarTick(); return { a, fl: g.ports.find(q => q.name === 'St Augustine').nk, no: g.ports.find(q => q.name === 'New Orleans').nk, lb: g.ports.find(q => q.name === 'Louisbourg').nk }; });
   check('history: Louisbourg falls in 1758; at the peace Florida goes to Britain and Louisiana to Spain', r.a === 'en' && r.fl === 'en' && r.no === 'es' && r.lb === 'en', r);
 
+  // ---------- chart in port, fleet on the chart, harbour pace ----------
+  await ev(() => { const g = __sp; T.reset(); g.setPace(2); g.openPort(g.ports[0]); }); r = { slow: await ev(() => __sp.pace) }; await page.click('#portChart'); await page.waitForTimeout(150);
+  r.open = await ev(() => ({ chart: __sp.chartOpen, port: document.getElementById('port').hidden, state: __sp.state })); await page.keyboard.press('Equal'); await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+  r.shut = await ev(() => ({ chart: __sp.chartOpen, port: document.getElementById('port').hidden, state: __sp.state })); await page.keyboard.press('KeyC'); await page.waitForTimeout(100); r.key = await ev(() => __sp.chartOpen);
+  const cz = await ev(() => { const g = __sp, q = g.ports.find(q => q.name === 'Port Antonio'), aw = innerWidth - 32, ah = innerHeight - 14 - 12 - 62; return q.name; }); await page.keyboard.press('Escape');
+  r.back = await ev(() => { const g = __sp; g.closePort(); return { pace: g.pace, state: g.state, chart: g.chartOpen }; });
+  check('port: the chart can be opened and put away without weighing anchor', r.open.chart && r.open.port && r.open.state === 'port' && !r.shut.chart && !r.shut.port && r.shut.state === 'port' && r.key, r);
+  check('port: the world goes by at the slow pace in harbour, and your sailing pace returns when you weigh', r.slow === 0 && r.back.pace === 2 && r.back.state === 'play' && !r.back.chart, r);
+  await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('brig', 0); s.x += 2400; s.y -= 1800; g.openFleet('S0'); }); await page.waitForTimeout(150);
+  r = await ev(() => { const g = __sp, s = g.squad()[0]; return { text: g.whereIs(s), flag: g.whereIs(g.p), row: !!document.getElementById('fc') }; }); await page.click('#fc'); await page.waitForTimeout(200);
+  const fm = await ev(() => { const g = __sp, a = { chart: g.chartOpen, mark: g.chartMark === g.squad()[0], sheet: document.getElementById('fleetSheet').hidden }; g.setChart(false); a.cleared = g.chartMark === null; return a; });
+  check('fleet: each ship says where she lies, and her card opens the chart upon her', /leagues north-east of the flagship/.test(r.text) && /^Your flagship lies/.test(r.flag) && r.row && fm.chart && fm.mark && fm.sheet && fm.cleared, [r, fm]);
+
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
   const perr = []; phone.on('pageerror', e => perr.push(e.message));

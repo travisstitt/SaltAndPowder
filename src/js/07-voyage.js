@@ -1,4 +1,4 @@
-function newGame(saved){ voyage++; dirty(); wrecks.length = 0;
+function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
   ships = []; balls = []; pending = []; crates = []; parts = []; floaters = []; smokes.length = 0; orderSel = null; picking = false;
   if (saved && DIFFS[saved.diff]) diff = saved.diff;
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;

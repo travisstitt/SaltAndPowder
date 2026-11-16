@@ -1,4 +1,4 @@
-function openPort(port){ port.greased = false; { const m = Math.floor(clock/MONTH);
+function openPort(port){ if (paceOut == null){ paceOut = paceIdx; setPace(0, true); } /* in harbour the world goes by slowly; your sailing pace comes back when you weigh */ port.greased = false; { const m = Math.floor(clock/MONTH);
   if (m > lastCall || lastCall === 0) cheer(3); lastCall = m; } payCourt(port); setChart(false);
   state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
@@ -9,7 +9,7 @@ function openPort(port){ port.greased = false; { const m = Math.floor(clock/MONT
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));
   makeOffers(port); autosave();
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
-function closePort(){ courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
+function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true); paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
 /* one row of a ledger: a name, a line of detail, a value, and any number of buttons */
 function uiRow(ul, name, desc, amt, btns, rerender, cls){

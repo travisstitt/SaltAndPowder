@@ -207,6 +207,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 .how{margin-top:.9rem}.how summary{cursor:pointer;font-family:var(--display);font-size:1.25rem;color:var(--brass);padding:.3rem 0}.how summary:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 @media (pointer:coarse){.tools button,.more summary{min-height:40px}}
 @media (max-height:480px){.topbar{flex-wrap:nowrap;padding:4px 10px;gap:4px 12px}.stats{flex-wrap:nowrap;flex:none}.stat .k{display:none}.stats .stat:nth-child(2),.stats .stat:nth-child(3){display:none}.tools{min-width:0}#fleetCol{display:flex;gap:4px}#fleetCol .shipcard{flex:1;min-width:0;padding:3px 5px}#fleetCol .shipcard>*:not(:nth-child(2)){display:none}.tools button,.more summary{min-height:30px}}
+.portfoot{display:flex;gap:8px;margin-top:.6rem}.portfoot .primary{flex:1;margin:0}.portfoot #portChart{flex:none;padding-inline:1.2rem}
 </style>
 
 </head>
@@ -319,7 +320,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     <canvas id="townCanvas" width="1640" height="560" role="img" aria-label="The town seen from above. Use the tabs below to visit the shipyard, market, tavern, governor and your fleet."></canvas>
     <div class="tabrow" id="townTabs" role="tablist" aria-label="Places in town"><button type="button" role="tab" data-tab="yard">Shipyard</button><button type="button" role="tab" data-tab="market">Market</button><button type="button" role="tab" data-tab="tavern">Tavern</button><button type="button" role="tab" data-tab="governor">Governor</button><button type="button" role="tab" data-tab="fleet">Your fleet</button></div>
     <ul class="ledger panel" id="ledger"></ul>
-    <button class="primary" id="leaveBtn" type="button">Weigh anchor</button>
+    <div class="portfoot"><button id="portChart" type="button" title="Open the chart (C)">Chart</button><button class="primary" id="leaveBtn" type="button">Weigh anchor</button></div>
   </div>
 </div>
 

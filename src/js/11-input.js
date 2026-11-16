@@ -10,10 +10,12 @@ function act(name){
     else if (hostile(nearPort.nk) && !nearPort.spec.free && !nearPort.spec.land) shoreAction(nearPort);
     else openPort(nearPort); }
 }
-function setChart(on){ if (on && !chartOpen){ chartV.z = 3; chartV.cx = p.x; chartV.cy = p.y;
-  } /* the chart opens on your own waters; zoom out for the whole of it */ chartOpen = !!on && state === 'play';
-  held.left = held.right = false; $('chartTools').hidden = !(!!on && state === 'play');
-  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
+let chartMark = null; /* a ship of yours picked out on the chart */
+function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
+  if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
+  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok;
+  held.left = held.right = false; $('chartTools').hidden = !chartOpen;
+  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
@@ -21,9 +23,9 @@ addEventListener('keydown', e => {
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && e.code !== 'Escape') return; // typing a name or a save code
   if (menuOpen){ if (e.code === 'Escape' || e.code === 'KeyJ' && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
   if (state === 'fate') return;
-  if (state === 'port' && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV')){ e.code === 'KeyI' ? openManifest() : openFleet('F'); return; }
-  if (state === 'port'){ if (e.code === 'Escape') closePort(); return; }
-  if (state !== 'play') return;
+  if (state === 'port' && !chartOpen && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV' || e.code === 'KeyC')){ e.code === 'KeyI' ? openManifest() : e.code === 'KeyV' ? openFleet('F') : setChart(true); return; }
+  if (state === 'port' && !chartOpen){ if (e.code === 'Escape') closePort(); return; }
+  if (state !== 'play' && !(state === 'port' && chartOpen)) return;
   if (state === 'play' && e.code === 'Escape' && orderSel && !chartOpen && !menuOpen){ if (picking){ picking = false; renderOrders(); } else closeOrders(); e.preventDefault(); return; }
   if (chartOpen){ const c = e.code, st = 260/(chartGeo ? chartGeo.k : .05)/8; e.preventDefault();
     if (c === 'Equal' || c === 'NumpadAdd') chartV.z = clamp(chartV.z*1.3, 1, 5); else if (c === 'Minus' || c === 'NumpadSubtract') chartV.z = clamp(chartV.z/1.3, 1, 5);
@@ -61,7 +63,8 @@ $('shotBtn').addEventListener('click', e => { toggleShot(); e.currentTarget.blur
 $('muteBtn').addEventListener('click', e => { toggleMute(); e.currentTarget.blur(); });
 function store(k, v){ try { localStorage.setItem('sp.' + k, v); } catch (_){ } }
 function recall(k){ try { return localStorage.getItem('sp.' + k); } catch (_){ return null; } }
-function setPace(i){ paceIdx = clamp(i|0, 0, PACES.length-1); $('paceBtn').textContent = 'Pace: ' + PACES[paceIdx][1]; store('pace', paceIdx); }
+let paceOut = null; /* the pace you were sailing at, kept while you lie in port */
+function setPace(i, quiet){ paceIdx = clamp(i|0, 0, PACES.length-1); $('paceBtn').textContent = 'Pace: ' + PACES[paceIdx][1]; if (!quiet) store('pace', paceIdx); }
 function setAssist(on){ assist = !!on; $('aimBtn').textContent = 'Aim: ' + (assist ? 'on' : 'off'); $('aimBtn').setAttribute('aria-pressed', assist); store('aim', assist ? 1 : 0); }
 function setZoom(z){ zoomMul = clamp(z, .3, 2); scale = baseScale*zoomMul; store('zoom', zoomMul.toFixed(2)); }
 addEventListener('wheel', e => { if (state !== 'play' || menuOpen) return; e.preventDefault();
@@ -71,7 +74,7 @@ const spread = () => { const v = [...touches.values()]; return Math.hypot(v[0][0
 let dragged = false, dragAt = null;
 cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, [e.clientX, e.clientY]); dragged = false; dragAt = [e.clientX, e.clientY]; if (touches.size === 2) pinch = spread()/(chartOpen ? chartV.z : zoomMul); });
 cv.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const was = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
-  if (touches.size === 2 && pinch && state === 'play'){ if (chartOpen) chartV.z = clamp(spread()/pinch, 1, 5); else setZoom(spread()/pinch); dragged = true; }
+  if (touches.size === 2 && pinch && (state === 'play' || chartOpen)){ if (chartOpen) chartV.z = clamp(spread()/pinch, 1, 5); else setZoom(spread()/pinch); dragged = true; }
   else if (chartOpen && touches.size === 1 && chartGeo){ if (dragAt && Math.hypot(e.clientX-dragAt[0], e.clientY-dragAt[1]) > 6) dragged = true;
     if (dragged){ chartV.cx -= (e.clientX-was[0])/chartGeo.k; chartV.cy -= (e.clientY-was[1])/chartGeo.k; } } });
 const lift = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = 0; };
@@ -81,6 +84,7 @@ $('zoomInBtn').addEventListener('click', e => { setZoom(zoomMul*1.2); e.currentT
 $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.length); e.currentTarget.blur(); });
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
+$('portChart').addEventListener('click', () => setChart(true));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }

@@ -53,7 +53,17 @@ function drawPic(s){
   const ghost = Object.assign({}, s, { x: 0, y: 0, h: 0, sail: 1, pol: .9, heel: 0, speed: 70, sinking: null, surrendered: false, released: false });
   const main = cx; cx = g; g.save(); g.translate(w/2 - s.t.len*k*.06, h/2 + 4); g.scale(k, k);
   try { drawShip(ghost); } finally { g.restore(); cx = main; }
+  if (miniC && s.x != null && s.owner === 'player'){ /* where she is: a corner of the chart about her */
+    const iw = Math.round(w*.3), ih = Math.round(h*.52), ix = w - iw - 8, iy = h - ih - 8, span = 7000, k2 = iw/span, sc = miniC.width/W, ox = clamp(s.x - span/2, 0, W - span), oy = clamp(s.y - ih/k2/2, 0, H - ih/k2);
+    g.drawImage(miniC, ox*sc, oy*sc, span*sc, ih/k2*sc, ix, iy, iw, ih); g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();
+    for (const q of ports){ if (q.spec.land || q.spec.sz < 2 && q.name !== homeName) continue; const qx = ix + (q.x - ox)*k2, qy = iy + (q.y - oy)*k2; if (qx < ix || qx > ix + iw || qy < iy || qy > iy + ih) continue; g.fillStyle = q.name === homeName ? HOMEC : '#ffd24a'; circle(g, qx, qy, 3); g.fill(); }
+    if (s !== p){ g.fillStyle = '#c8321e'; circle(g, ix + (p.x - ox)*k2, iy + (p.y - oy)*k2, 4); g.fill(); }
+    const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff'; g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke(); g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
+    g.strokeStyle = 'rgba(214,165,78,.9)'; g.lineWidth = 2; g.strokeRect(ix + 1, iy + 1, iw - 2, ih - 2); }
 }
+const PTS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+function whereIs(s){ const off = offWhere(s.x, s.y).replace(/^ /, ''); if (s === p) return 'Your flagship lies ' + off + '.'; const d = Math.hypot(s.x - p.x, s.y - p.y), lg = Math.round(d/DEG*20);
+  return lg < 2 ? 'In company with the flagship, ' + off + '.' : lg + ' leagues ' + PTS[Math.round(Math.atan2(s.y - p.y, s.x - p.x)/(Math.PI/4) + 8) % 8] + ' of the flagship, ' + off + '.'; }
 function openFleet(sel){ if (state !== 'play' && state !== 'port') return; setChart(false); menuOpen = true; held.left = held.right = false; fleetSel = sel || 'F';
   $('fleetSheet').hidden = false; renderFleet(); $('fleetClose').focus({ preventScroll: true }); }
 function renderFleet(focusId){
@@ -81,6 +91,7 @@ function renderFleet(focusId){
     $('shipHead').textContent = s.name + (flag ? ', your flagship, a ' : ', a ') + s.t.cname;
       $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
+    R('Where she is', whereIs(s) + ' Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
     if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
