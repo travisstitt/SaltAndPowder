@@ -1,4 +1,5 @@
 function moveShip(s, turn, dt){
+  if (s.sailCap != null && s.sail > s.sailCap) s.sail = s.sailCap; /* her captain has shortened sail for the weather */
   const a = Math.abs(angd(s.h, wind.dir)); s.pol = polar(a);
   const pol = s === p ? s.pol : Math.max(s.pol, .3);
   const target = s.t.speed*s.speedMul*s.sail*pol*wind.str*windMul()*(.35 + .65*s.sails/100)*(s === p ? pMul() : 1);

@@ -104,7 +104,7 @@ function drawBigChart(){
     const sx = X0 + s.x*k, sy = Y0 + s.y*k;
     if (s.role === 'fleet'){ /* a consort: a white pennant on her heading, with her name */
       cx.save(); cx.translate(sx, sy); cx.rotate(s.h); cx.fillStyle = '#ffffff'; cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5); cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
-      if (s === chartMark || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
+      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
       continue; }
     cx.fillStyle = s.nation ? NAT[s.nation].c1 : '#111111';
       cx.strokeStyle = INK; cx.lineWidth = 1; cx.fillRect(sx - 3, sy - 3, 6, 6); cx.strokeRect(sx - 3, sy - 3, 6, 6); }
@@ -166,7 +166,7 @@ function hud(){
   const hc = p.hull/p.maxHull > .4 ? 'var(--moss)' : 'var(--blood)'; if ($('bHull')._c !== hc){ $('bHull')._c = hc; $('bHull').style.background = hc; }
   setW($('bPort'), 1 - p.rl[0]/(p.reload*crewSlow())); setW($('bStar'), 1 - p.rl[1]/(p.reload*crewSlow()));
   const sq = ships.filter(o => o.role === 'fleet' && o.sinking == null), key = sq.map(o => o.t.name).join('|');
-  if (key !== cardKey){ cardKey = key; cards = []; const col = $('fleetCol'); col.textContent = ''; // one compact card for each consort
+  if (key !== cardKey){ cardKey = key; cards = []; const col = $('fleetCol'); col.textContent = ''; col.classList.toggle('many', sq.length > 4); // one compact card for each consort
     sq.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'shipcard'; b.title = 'Manage this ship';
       const nmE = document.createElement('span'); nmE.className = 'nm'; const t = document.createElement('span'), st = document.createElement('small');
         t.textContent = o.t.name; st.textContent = '★'.repeat(Math.round((o.cap.gun + o.cap.sea)/2));

@@ -92,6 +92,7 @@ function renderFleet(focusId){
       $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
     R('Where she is', whereIs(s) + ' Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
+    if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
     if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
@@ -116,6 +117,12 @@ function renderFleet(focusId){
         ports.slice().sort((a, b2) => a.name < b2.name ? -1 : 1).forEach(q => { const o = document.createElement('option'); o.value = q.name; o.textContent = q.name + (q.name === homeName ? ' (home)' : hostile(q.nk) ? ' (hostile)' : ''); if ((s.task && s.task.port || ports.find(x => x.name === homeName)) === q) o.selected = true; sel.appendChild(o); });
         b.type = 'button'; b.id = 'to_port'; b.textContent = 'Send her'; b.addEventListener('click', () => { const q = ports.find(x => x.name === sel.value); if (q) setTask(s, { type: 'port', port: q }); renderFleet('to_port'); });
         right.appendChild(sel); right.appendChild(b); e.appendChild(sp); e.appendChild(right); ul.appendChild(e); }
+      { const sel = $('taskPort'), pick = () => ports.find(x => x.name === sel.value);
+        R('Independent service', 'Using the port chosen above: cruise off it for three months, blockade it, patrol between it and the port nearest her now, or trade between it and ' + homeName + ' on her own account. Her company keeps a tenth of what she makes.', '', [
+          ['as_cruise', 'Cruise', true, () => assign(s, 'cruise', pick())], ['as_blockade', 'Blockade', true, () => assign(s, 'blockade', pick())], ['as_patrol', 'Patrol', true, () => assign(s, 'patrol', pick())], ['as_trade', 'Trade', true, () => assign(s, 'trade', pick())]]); }
+      ledgerText(ul, 'sec', 'Standing orders');
+      [['wx', 'In a hurricane', 'A good seaman sees it coming sooner.'], ['dmg', 'When damaged', 'She breaks off and makes for the nearest open port.'], ['foe', 'Against warships, when detached', 'Whether she stands or runs.'], ['allow', 'Repairs without asking', 'Above this her captain writes for your leave.'], ['after', 'Once repaired', '']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k]));
+        R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
       if (!here) ledgerText(ul, 'txt', 'She is away from the flagship: repairs, refits, crew and selling wait until she is back in company.');
       const best = spares.slice().sort((a, b) => b.gun + b.sea - a.gun - a.sea).slice(0, 3);
       R('Captain', s.cap.mate ? 'Your first mate commands her. Hire a captain in a tavern.' : 'Capt. ' + s.cap.name + ': gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea + '.', stars(s.cap),

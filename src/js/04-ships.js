@@ -131,5 +131,5 @@ const holdUsed = () => GK.reduce((n, g) => n + hold[g], 0);
 const FORMS = { column:'Line astern', abreast:'Line abreast', wedge:'Wedge' }, ORDERS = { line:'Line of battle', engage:'Engage at will', chase:'General chase', hold:'Hold fire' };
 const FIRST = ['Henry','Anne','Diego','Jean','Pieter','Mary','Edward','Juan','Roche','Laurens','Tobias','Charlotte','Samuel','Isabel','Michel','Cornelis','Grace','Mateo'];
 const LAST = ['Vane','Morrow','Delgado','Le Clerc','de Vries','Hale','Teague','Navarro','Brasil','Kidman','Marlowe','Bonnard','Ashby','Ortega','Grammont','Jol','Pike','Santoro'];
-const MAXSQ = 4, MAXLAID = 8;
+const MAXSQ = 8, MAXLAID = 8;
 let formation = 'column', orders = 'line', spares = [], laidUp = [], homeName = 'Kingston', tavern = [];

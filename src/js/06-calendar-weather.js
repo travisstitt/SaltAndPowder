@@ -22,8 +22,8 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
     if (p.alive){ const x = dt*(p.sail === 1 ? 1.5 : p.sail > 0 ? .65 : .22)*w.k, fl = p.sail === 1 ? 0 : p.maxHull*.1;
       p.sails = Math.max(p.sail === 1 ? 0 : 20, p.sails - dt*(p.sail === 1 ? 5 : p.sail > 0 ? 2 : .5)*w.k);
       if (p.sail === 1 && p.hull - x <= 0) damage(p, x + 1, 0); else if (p.hull > fl) p.hull = Math.max(fl, p.hull - x); }
-    for (const o of ships){ if (o.sinking != null || Math.abs(o.x - p.x) > 3000 || Math.abs(o.y - p.y) > 3000) continue;
-      o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k; }
+    for (const o of ships){ if (o.sinking != null || o.docked || Math.abs(o.x - p.x) > 3000 || Math.abs(o.y - p.y) > 3000) continue;
+      o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
     gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); } }

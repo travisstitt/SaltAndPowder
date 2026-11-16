@@ -8,7 +8,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
     routeLine = null; fleetTarget = null; paused = false; lastDay = 0;
   hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; gsTold = false;
     marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = [];
-    courtList = []; morale = 70; officers = {}; foul = 0; lastCall = 0; rivals = RIVALS.map(() => ({ alive: true, wins: 0 }));
+    courtList = []; dispatches = []; dispNew = 0; shipSeq = 0; dispBadge(); morale = 70; officers = {}; foul = 0; lastCall = 0; rivals = RIVALS.map(() => ({ alive: true, wins: 0 }));
     navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 };
     stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
@@ -21,6 +21,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
       if (Array.isArray(saved.gaz)) gazette = saved.gaz.slice(0, 40).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), t: String(v.t).slice(0, 300), k: v.k === 'you' ? 'you' : 'news' }));
       if (saved.navy && NAT[saved.navy.k]) navy = { k: saved.navy.k, pts: clamp(saved.navy.pts|0, 0, 999), rank: clamp(saved.navy.rank|0, 0, NAVY.length - 1) };
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
+      if (Array.isArray(saved.dispatches)) dispatches = saved.dispatches.slice(0, 30).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), who: String(v.who).slice(0, 60), t: String(v.t).slice(0, 400), id: 0, ask: null }));
       if (saved.morale != null) morale = clamp(+saved.morale || 0, 0, 100); if (saved.officers) Object.keys(OFFICERS).forEach(k => { officers[k] = !!saved.officers[k]; });
         foul = clamp(+saved.foul || 0, 0, 1); if (saved.fouling != null) fouling = !!saved.fouling;
       if (Array.isArray(saved.rivals)) saved.rivals.slice(0, RIVALS.length).forEach((v, i) => { if (v) rivals[i] = { alive: !!v.alive, wins: clamp(v.wins|0, 0, 6) }; });
@@ -61,7 +62,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
   if (calIdx() >= 48) spawnFleet(true, saved && saved.fleetLeg != null ? ((saved.fleetLeg|0) + ROUTE.length - 1) % ROUTE.length : null);
   if (saved && Array.isArray(saved.squad)) saved.squad.slice(0, MAXSQ).forEach((d, i) => { if (d && CLASSES[d.cls]){ const sc = DEG/(+saved.deg || 400), away = d.task && d.x > 100 && d.y > 100 && d.x*sc < W - 100 && d.y*sc < H - 100 && !isLand(d.x*sc, d.y*sc), w = away ? [d.x*sc, d.y*sc] : waterNear(p.x, p.y, 160);
     const s = addFleet(d, w[0], w[1], p.h); if (away){ const q = ports.find(q => q.name === d.task.port);
-      s.task = d.task.type === 'port' && q ? { type: 'port', port: q } : d.task.type === 'hold' ? { type: 'hold' } : { type: 'raid', at: [s.x, s.y] }; } } });
+      s.task = taskFrom(d.task, s); if (d.docked){ const dq = ports.find(x => x.name === d.docked); if (dq){ s.docked = dq; s.x = dq.ox; s.y = dq.oy; s.sail = 0; } } } } });
   setForm(formation); setOrders(orders);
   if (saved && saved.mission){ const sc = DEG/(+saved.deg || 400); restoreMission(Object.assign({}, saved.mission, { sx: saved.mission.sx*sc, sy: saved.mission.sy*sc })); }
   $('shotBtn').textContent = SHOTN[shot];

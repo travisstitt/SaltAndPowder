@@ -1,5 +1,5 @@
 let frozen = false; /* tests stop the clock to compare pictures */
-function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0];
+function frame(t){ toastTick(Math.min(.1, (t - last)/1000 || 0)); const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0];
   last = t; const held2 = chartOpen || menuOpen || paused || frozen; try { if (!held2){ const n = Math.ceil(PACES[paceIdx][0]);
   for (let k = 0; k < n; k++) update(dt/n); } render(held2 ? 0 : dt); hud(); if (state === 'port' && !menuOpen) paintTown();
   } catch (e){ cx.setTransform(1, 0, 0, 1, 0, 0); if (lastErr !== e.message){ lastErr = e.message;
@@ -19,6 +19,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
+  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;
     }, get morale(){ return morale; }, set morale(v){ morale = v; }, get officers(){ return officers;

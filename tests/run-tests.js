@@ -13,7 +13,7 @@ const HELPERS = () => {
   const g = window.__sp;
   window.T = {
     reset(diff){ // a fresh voyage in fair weather, alone on the sea, mid-morning
-      g.seed(20260 + (T.n = (T.n || 0) + 1)); g.setDiff(diff || 'normal'); g.newGame(); g.setCalm(true); g.setWars(['en-es', 'en-fr']); g.state = 'play'; g.setPaused(false); g.setChart(false);
+      g.seed(20260 + (T.n = (T.n || 0) + 1)); g.setDiff(diff || 'normal'); g.newGame(); g.rivals.forEach(v => { v.alive = false; }); g.toastQ.length = 0; g.setCalm(true); g.setWars(['en-es', 'en-fr']); g.state = 'play'; g.setPaused(false); g.setChart(false);
       for (const id of ['title', 'port', 'prize', 'menu', 'manifest', 'fleetSheet', 'over', 'fate']) document.getElementById(id).hidden = true;
       const w = g.weather; w.kind = 'clear'; w.k = 0; w.left = 1e7; w.next = null; g.clock = 60;
       T.clear(4000); },
@@ -94,10 +94,10 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); g.seed(5); T.sea(); g.repute('es', -100); const s = T.consort('brig', 0), m = T.foe('merchant', 'es', 'merchant', 500, 200); m.goods = { cocoa: 12 }; const g0 = g.gold;
     g.setTask(s, { type: 'raid', at: [s.x, s.y], prey: null }); let t = 0; while (!m.released && m.sinking == null && t < 420){ T.clear(5000); s.hull = s.maxHull; T.run(5); t += 5; } return { t, released: m.released, sunk: m.sinking != null, gained: g.gold - g0, cocoa: g.hold.cocoa, word: g.taskWord(s), alive: g.squad().length }; });
   check('orders: a consort sent hunting takes a prize on her own and pays you', r.released && r.gained > 150 && r.cocoa === 12 && r.alive === 1, r);
-  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('sloop', 0), q = g.ports.find(q => q.name === 'Santiago de Cuba'); g.setTask(s, { type: 'port', port: q }); let t = 0; while (!s.task.arrived && t < 1500){ T.run(5); t += 5; }
-    const arrived = !!s.task.arrived, word = g.taskWord(s), d = Math.round(Math.hypot(s.x - q.ox, s.y - q.oy)), hull = Math.round(s.hull); const snap = JSON.parse(JSON.stringify(g.snapshot())); g.loadGame(snap); const s2 = g.squad()[0];
-    const kept = s2 && s2.task && s2.task.type === 'port' && Math.hypot(s2.x - q.ox, s2.y - q.oy) < 400; g.p.x = q.ox + 60; g.p.y = q.oy + 60; T.run(2); return { arrived, word, d, hull, kept, rejoined: !s2.task || s2.task.type === 'fleet', t }; });
-  check('orders: a consort sails alone to a port and waits there', r.arrived && r.d < 200 && r.hull >= 95, r);
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('sloop', 0), q = g.ports.find(q => q.name === 'Santiago de Cuba'); g.setTask(s, { type: 'port', port: q }); let t = 0; while (!s.docked && t < 1500){ T.run(5); t += 5; }
+    const arrived = s.docked === q, word = g.taskWord(s), d = Math.round(Math.hypot(s.x - q.ox, s.y - q.oy)), hull = Math.round(s.hull); const snap = JSON.parse(JSON.stringify(g.snapshot())); g.loadGame(snap); const s2 = g.squad()[0];
+    const kept = s2 && s2.task && s2.task.type === 'port' && s2.docked === g.ports.find(x => x.name === 'Santiago de Cuba') && Math.hypot(s2.x - q.ox, s2.y - q.oy) < 400; g.p.x = q.ox + 60; g.p.y = q.oy + 60; T.run(2); return { arrived, word, d, hull, kept, rejoined: !s2.task || s2.task.type === 'fleet', t }; });
+  check('orders: a consort sails alone to a port, goes in, and lies safe there', r.arrived && r.d < 200 && r.hull >= 95 && /^In port at/.test(r.word), r);
   check('orders: an absent ship keeps her place and orders through a save, and rejoins when you arrive', r.kept && r.rejoined, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); g.wind.dir = g.p.h + .8; g.p.sail = 1; T.run(25); return Math.round(Math.hypot(s.x - g.p.x, s.y - g.p.y)); });
   check('orders: a ship told to hold stays behind', r > 1200, r);
@@ -354,6 +354,27 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp, s = g.squad()[0]; return { text: g.whereIs(s), flag: g.whereIs(g.p), row: !!document.getElementById('fc') }; }); await page.click('#fc'); await page.waitForTimeout(200);
   const fm = await ev(() => { const g = __sp, a = { chart: g.chartOpen, mark: g.chartMark === g.squad()[0], sheet: document.getElementById('fleetSheet').hidden }; g.setChart(false); a.cleared = g.chartMark === null; return a; });
   check('fleet: each ship says where she lies, and her card opens the chart upon her', /leagues north-east of the flagship/.test(r.text) && /^Your flagship lies/.test(r.flag) && r.row && fm.chart && fm.mark && fm.sheet && fm.cleared, [r, fm]);
+
+  // ---------- captains who think for themselves ----------
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('brig', 0), q = g.ports.find(q => q.name === 'Port Antonio'); s.x = q.ox + 500; s.y = q.oy - 300; s.hull = s.maxHull*.25; g.gold = 1000; s.doc.allow = 0; T.clear(3000); let t = 0; while (!s.docked && t < 300){ T.run(2); t += 2; }
+    const in1 = !!s.docked, word = g.taskWord(s), d0 = g.dispatches.slice(), ask = d0.find(v => v.ask === 'repair'), cost = g.repairCost(s); const foe = T.foe('frigate', 'pirate', 'hunter', 0, 0); foe.x = s.x + 150; foe.y = s.y; const h0 = s.hull; T.run(8); const safe = s.hull === h0; foe.gone = true;
+    g.openPaper('dispatches'); const btn = document.querySelector('[id^=dp_back]'); const had = !!btn; if (btn) btn.click(); g.closeMenu(); return { in1, word, broke: d0.some(v => /breaking off/.test(v.t)), ask: !!ask, cost, safe, had, paid: 1000 - g.gold, hull: Math.round(s.hull/s.maxHull*100), out: !s.docked, task: s.task.type, unread: g.dispNew }; });
+  check('captains: a damaged consort breaks off, goes into port and lies safe from attack', r.in1 && /^In port at/.test(r.word) && r.broke && r.safe, r);
+  check('dispatches: her captain writes for leave to repair, and paying sends her back to sea', r.ask && r.had && r.paid === r.cost && r.hull === 100 && r.out && r.unread === 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('brig', 0), q = g.ports.find(q => q.name === 'Port Antonio'); s.x = q.ox + 400; s.y = q.oy - 300; s.hull = s.maxHull*.3; g.gold = 1000; s.doc.allow = 400; s.doc.after = 'join'; T.clear(3000); let t = 0; while (!(s.hull === s.maxHull) && t < 300){ T.run(2); t += 2; }
+    return { mended: s.hull === s.maxHull, paid: 1000 - g.gold, task: s.task.type, asked: g.dispatches.some(v => v.ask) }; });
+  check('allowance: within her allowance the captain repairs without asking and carries on', r.mended && r.paid > 50 && r.task === 'fleet' && !r.asked, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.consort('brig', 0), b = T.consort('sloop', 1); a.cap.sea = 5; b.cap.sea = 1; a.doc.wx = b.doc.wx = 'ride'; g.startHurricane(); T.run(3); const early = [a.sailCap, b.sailCap]; T.run(45); const late = [a.sailCap, b.sailCap];
+    T.reset(); const c = T.consort('brig', 0), q = g.ports.find(q => q.name === 'Port Antonio'); c.cap.sea = 4; c.x = q.ox + 700; c.y = q.oy - 400; T.clear(3000); g.startHurricane(); T.run(4); const runs = c.task && c.task.type === 'port' && c.task.why === 'weather'; let t = 0; while (!c.docked && t < 200){ T.run(2); t += 2; } return { early, late, runs, in1: !!c.docked }; });
+  check('weather: a good seaman shortens sail at the warning, a poor one only when it blows, and one ordered to runs for port', r.early[0] === .5 && r.early[1] == null && r.late[0] === 0 && r.late[1] === 0 && r.runs && r.in1, r);
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('brig', 0), pa = g.ports.find(q => q.name === 'Port Antonio'); g.gold = 2000; g.assign(s, 'trade', pa); const g0 = g.gold; let t = 0; while ((s.task.runs || 0) < 1 && t < 900){ T.clear(4000); s.hull = s.maxHull; T.run(5); t += 5; }
+    const sold = g.dispatches.find(v => /^Sold /.test(v.t)); g.assign(s, 'cruise', pa); const cw = g.taskWord(s), until = s.task.until - g.cal; g.assign(s, 'blockade', pa); const bw = g.taskWord(s); g.assign(s, 'patrol', pa); const pw = g.taskWord(s); const snap = JSON.parse(JSON.stringify(g.snapshot())); g.loadGame(snap); const s2 = g.squad()[0];
+    return { runs: s.task.runs, t, sold: sold && sold.t, cw, until, bw, pw, kept: s2.task && s2.task.label === 'patrol' && s2.task.ends && s2.task.ends[1] === g.ports.find(q => q.name === 'Port Antonio'), doc: s2.doc.after, max: g.MAXSQ }; });
+  check('trade: a consort trades between two ports on her own account and reports her profit', /^Sold \d+ tons/.test(r.sold || ''), r);
+  check('assignments: cruise, blockade and patrol are set, described and kept through a save; the fleet holds eight', /Cruising/.test(r.cw) && r.until === 3 && /Blockading Port Antonio/.test(r.bw) && /On patrol to/.test(r.pw) && r.kept && r.doc === 'station' && r.max === 8, r);
+  r = await ev(() => { const g = __sp; T.reset(); g.toastQ.length = 0; g.toastTick(30); g.say('First notice for the captain to read.'); const a = document.getElementById('toast').textContent; g.say('Second notice, close behind.'); const b = document.getElementById('toast').textContent, q = g.toastQ.length; for (let i = 0; i < 80; i++) g.update(.05); const still = !document.getElementById('toast').classList.contains('off');
+    g.toastTick(3); const c = document.getElementById('toast').textContent; g.toastTick(5); const lasts = !document.getElementById('toast').classList.contains('off'); g.toastTick(12); return { a, b, q, still, c, lasts, gone: document.getElementById('toast').classList.contains('off') }; });
+  check('notices: each stays long enough to read whatever the pace, and a second waits its turn', /^First/.test(r.a) && /^First/.test(r.b) && r.q === 1 && r.still && /^Second/.test(r.c) && r.lasts && r.gone, r);
 
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });

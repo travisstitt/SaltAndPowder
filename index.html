@@ -215,6 +215,8 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 @media (pointer:coarse){.tools button,.more summary{min-height:40px}}
 @media (max-height:480px){.topbar{flex-wrap:nowrap;padding:4px 10px;gap:4px 12px}.stats{flex-wrap:nowrap;flex:none}.stat .k{display:none}.stats .stat:nth-child(2),.stats .stat:nth-child(3){display:none}.tools{min-width:0}#fleetCol{display:flex;gap:4px}#fleetCol .shipcard{flex:1;min-width:0;padding:3px 5px}#fleetCol .shipcard>*:not(:nth-child(2)){display:none}.tools button,.more summary{min-height:30px}}
 .portfoot{display:flex;gap:8px;margin-top:.6rem}.portfoot .primary{flex:1;margin:0}.portfoot #portChart{flex:none;padding-inline:1.2rem}
+.paper .dbtns{display:flex;flex-wrap:wrap;gap:6px;margin:-.2rem 0 .8rem}.paper .dbtns button{background:#3a2614;color:#f2e7c6;border-color:#3a2614;font-family:"Alegreya Sans",sans-serif;font-size:.9rem;padding:4px 10px}.paper .dbtns button:hover:not(:disabled){background:#5a4024}
+#fleetCol.many .shipcard{padding:4px 8px;gap:2px}#fleetCol.many .shipcard>*:nth-child(n+3){display:none}
 </style>
 
 </head>
@@ -239,6 +241,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
       <button id="chartBtn" type="button" title="Chart (C)">Chart</button>
       <button id="fleetBtn" type="button" title="Fleet management (V)">Fleet</button>
       <button id="cargoBtn" type="button" title="Manifest (I)">Manifest</button>
+      <button id="dispBtn" type="button" title="Dispatches from your captains (L)">Dispatches</button>
       <button id="gazBtn" type="button" title="The gazette: news of the war and of you (J)">Gazette</button>
       <button id="menuBtn" type="button" title="Save, load, difficulty (Esc)">Log book</button>
       <span class="sep"></span>
@@ -274,7 +277,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     </div>
     <button id="boardBtn" type="button" hidden>Board</button>
     <button id="dock" class="primary" type="button" hidden>Drop anchor</button>
-    <div class="keys" id="keys"><span class="kl"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>J</kbd> gazette · <kbd>V</kbd> fleet · <kbd>P</kbd> pause for orders · <kbd>N</kbd> helmsman on a set course · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>5</kbd> pace · click one of your ships for her orders · <kbd>Esc</kbd> save and load</span> <button id="keysBtn" type="button" aria-expanded="true">Hide keys</button></div>
+    <div class="keys" id="keys"><span class="kl"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>J</kbd> gazette · <kbd>L</kbd> dispatches · <kbd>V</kbd> fleet · <kbd>P</kbd> pause for orders · <kbd>N</kbd> helmsman on a set course · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>5</kbd> pace · click one of your ships for her orders · <kbd>Esc</kbd> save and load</span> <button id="keysBtn" type="button" aria-expanded="true">Hide keys</button></div>
     <div class="touch">
       <div><button type="button" data-hold="left" aria-label="Turn to port">◀</button><button type="button" data-hold="right" aria-label="Turn to starboard">▶</button></div>
       <div class="col"><button type="button" data-tap="sailUp">More sail</button><button type="button" data-tap="sailDown">Less sail</button></div>
@@ -814,7 +817,7 @@ const holdUsed = () => GK.reduce((n, g) => n + hold[g], 0);
 const FORMS = { column:'Line astern', abreast:'Line abreast', wedge:'Wedge' }, ORDERS = { line:'Line of battle', engage:'Engage at will', chase:'General chase', hold:'Hold fire' };
 const FIRST = ['Henry','Anne','Diego','Jean','Pieter','Mary','Edward','Juan','Roche','Laurens','Tobias','Charlotte','Samuel','Isabel','Michel','Cornelis','Grace','Mateo'];
 const LAST = ['Vane','Morrow','Delgado','Le Clerc','de Vries','Hale','Teague','Navarro','Brasil','Kidman','Marlowe','Bonnard','Ashby','Ortega','Grammont','Jol','Pike','Santoro'];
-const MAXSQ = 4, MAXLAID = 8;
+const MAXSQ = 8, MAXLAID = 8;
 let formation = 'column', orders = 'line', spares = [], laidUp = [], homeName = 'Kingston', tavern = [];
 const squad = () => { if (sqT !== tick || sqN !== ships.length){ sqT = tick; sqN = ships.length;
   sqC = ships.filter(o => o.role === 'fleet' && o.sinking == null); } return sqC; };
@@ -838,17 +841,68 @@ function capXp(o){ const c = o.cap; if (!c || c.gun >= 5) return; c.xp = (c.xp |
 function addFleet(d, x, y, h){ // d: { cls, hf, sails, crew, cap, up }
   const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap); s.up = cleanUp(d.up); s.name = cleanName(d.name); fitConsort(s);
   s.hull = s.maxHull*clamp(+d.hf || 1, .05, 1); s.sails = clamp(d.sails == null ? 100 : +d.sails, 0, 100); s.crew = clamp(d.crew|0 || 10, 1, s.t.crew); s.sail = 1;
-  ships.push(s); dirty(); return s; }
-const fleetData = s => ({ x: Math.round(s.x), y: Math.round(s.y), task: s.task && s.task.type !== 'fleet' ? { type: s.task.type === 'chase' ? 'raid' : s.task.type, port: s.task.port ? s.task.port.name : null } : null, cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up, name: s.name });
+  s.id = ++shipSeq; s.doc = cleanDoc(d.doc); ships.push(s); dirty(); return s; }
+const fleetData = s => ({ x: Math.round(s.x), y: Math.round(s.y), task: taskOut(s), doc: s.doc, docked: s.docked ? s.docked.name : null, cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up, name: s.name });
 const threat = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.surrendered && (o === tracked || o === fleetTarget || o.hitByPlayer || o.announced);
 function trimHold(){ let over = holdUsed() - holdCap(); for (const g of GK){ if (over <= 0) break; const d = Math.min(hold[g], over); hold[g] -= d; over -= d; } }
 function setForm(k){ formation = FORMS[k] ? k : 'column'; $('formBtn').textContent = FORMS[formation]; }
 function setOrders(k){ orders = ORDERS[k] ? k : 'line'; $('orderBtn').textContent = ORDERS[orders]; }
-const inCompany = s => Math.hypot(s.x - p.x, s.y - p.y) < 900;
-const taskWord = s => { const t = s.task; return !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
+let dispatches = [], dispNew = 0, shipSeq = 0;
+function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null }); if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
+  if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
+function dispBadge(){ const b = $('dispBtn'); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); }
+const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station' };
+const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']] };
+const docWord = (k, v) => (DOCS[k].find(o => o[0] === v) || DOCS[k][0])[1];
+const cleanDoc = d => { const o = Object.assign({}, DOC0); if (d) for (const k in DOCS) if (DOCS[k].some(v => v[0] === d[k])) o[k] = d[k]; return o; };
+const admits = q => (!hostile(q.nk) || q.spec.free || q.spec.land) && !iced(q);
+const openPortNear = (s, r) => { let b = null, bd = r; for (const q of ports){ if (!admits(q)) continue; const d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < bd){ bd = d; b = q; } } return b; };
+const repairCost = s => Math.round(Math.max(0, s.maxHull - s.hull) + Math.max(0, 100 - s.sails));
+function afterRepairs(s, how){ how = how || s.doc.after; if (how === 'stay') return; setTask(s, how === 'join' || !s.prev ? { type: 'fleet' } : s.prev); s.prev = null; }
+function payRepairs(s, how){ const c = Math.min(gold, repairCost(s)); gold -= c; mend(s, c); afterRepairs(s, how); return c; }
+function dock(s, port){ /* a consort goes in: safe from weather and the enemy until she sails again */
+  s.docked = port; s.x = port.ox; s.y = port.oy; s.speed = 0; s.sail = 0; s.sailCap = null; s.evade = null; const t = s.task, cost = repairCost(s), why = t && t.why;
+  if (t && t.type === 'trade'){ tradeCall(s, port); if (cost > 8 && cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); } return; }
+  if (cost > 8){ if (cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); dispatch(s, 'In at ' + port.name + (why === 'weather' ? ' out of the weather' : '') + '. Repairs made good for ' + cost + ' gold, within my allowance. ' + docWord('after', s.doc.after) + '.'); if (why !== 'weather') afterRepairs(s); }
+    else dispatch(s, 'In at ' + port.name + ' with hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent and sails at ' + Math.round(s.sails) + '. The yard asks ' + cost + ' gold to make her good. I await your orders.', 'repair'); }
+  else if (why) dispatch(s, 'Safe in at ' + port.name + (why === 'weather' ? ', out of the weather. I shall sail again when it clears.' : '.'));
+  else say('The ' + s.name + ' is in at ' + port.name + ' and lies safe at anchor there.'); }
+function runFor(s, q, why){ if (s.task && s.task.type !== 'port' && s.task.type !== 'fleet') s.prev = s.task; else if (!s.task || s.task.type === 'fleet') s.prev = null; setTask(s, { type: 'port', port: q, flee: true, why });
+  dispatch(s, why === 'weather' ? 'Glass falling. I am running for ' + q.name + '.' : 'Hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent, sails at ' + Math.round(s.sails) + '. I am breaking off for ' + q.name + '.'); }
+function tradeCall(s, port){ const t = s.task, other = t.ends[t.idx ^ 1]; /* sell what she brought, buy what the other end wants */
+  if (t.cargo){ const rev = Math.round(price(port, t.cargo.g)*.9*t.cargo.tons), profit = rev - t.cargo.cost, share = Math.max(0, Math.round(profit*.1)); gold += rev - share; if (profit > 0) plunder += profit - share;
+    dispatch(s, 'Sold ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear' : 'a loss of ' + -profit + ' gold') + (share ? ', ' + share + ' of it to her company.' : '.')); t.cargo = null; t.runs = (t.runs || 0) + 1; }
+  let best = null, bm = 1; for (const g of GK){ if (port.spec.land && port.spec.mk.indexOf(g) < 0) continue; const m = price(other, g)*.9 - price(port, g); if (m > bm){ bm = m; best = g; } }
+  if (best){ const pr = price(port, best), tons = Math.min(s.t.hold, Math.floor(gold*.6/pr)); if (tons > 0){ gold -= tons*pr; t.cargo = { g: best, tons, cost: tons*pr }; } }
+  s.dwell = 14; }
+function think(s){ /* once a second each captain looks at the sky, at his ship and at the enemy, and acts on his standing orders */
+  const D2 = s.doc, sea = s.cap.sea, frac = s.hull/s.maxHull, flee = s.task && s.task.type === 'port' && s.task.flee;
+  const blow = hurr ? hurr.stage === 1 || sea >= 3 : weather.kind === 'storm' && weather.k > (sea >= 3 ? .25 : .65);
+  s.sailCap = blow ? (hurr && hurr.stage === 1 && !flee ? 0 : .5) : null;
+  if (state !== 'play' && inCompany(s)) return;
+  if (hurr && blow && D2.wx === 'port' && !flee){ const q = openPortNear(s, 1300 + sea*500); if (q){ runFor(s, q, 'weather'); return; } }
+  if (D2.dmg > 0 && (frac < D2.dmg || s.sails < 22) && !flee){ const q = openPortNear(s, 1e9); if (q){ runFor(s, q, 'damage'); return; } }
+  s.evade = null; if (D2.foe !== 'any' && s.task && s.task.type !== 'fleet' && Math.hypot(p.x - s.x, p.y - s.y) > 1000){ const mine = s.hull*(s.guns + 1)*(D2.foe === 'equal' ? 1.6 : 1); let bd = 800;
+    for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd && o.hull*(o.guns + 1) > mine){ bd = d; s.evade = o; } } } }
+function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null; return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
+function taskFrom(d, s){ const P = n => ports.find(q => q.name === n), ends = Array.isArray(d.ends) ? d.ends.map(P) : null, okEnds = ends && ends.length === 2 && ends[0] && ends[1];
+  if (d.type === 'port' && P(d.port)) return { type: 'port', port: P(d.port) }; if (d.type === 'hold') return { type: 'hold' };
+  if (d.type === 'trade' && okEnds) return { type: 'trade', ends, idx: d.idx ? 1 : 0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null };
+  const at = Array.isArray(d.at) && d.at[0] > 50 && d.at[1] > 50 && d.at[0] < W - 50 && d.at[1] < H - 50 ? [+d.at[0], +d.at[1]] : [s.x, s.y];
+  return { type: 'raid', at, prey: null, label: ['cruise', 'patrol', 'blockade'].indexOf(d.label) >= 0 ? d.label : undefined, until: d.until ? d.until|0 : undefined, ends: okEnds ? ends : undefined, idx: d.idx ? 1 : 0, port: d.label === 'blockade' ? P(d.port) : undefined }; }
+function assign(s, kind, q){ const here = openPortNear(s, 1e9) || q, home = ports.find(x => x.name === homeName) || q;
+  if (kind === 'cruise') setTask(s, { type: 'raid', label: 'cruise', at: [q.ox, q.oy], prey: null, until: calIdx() + 3 });
+  else if (kind === 'blockade') setTask(s, { type: 'raid', label: 'blockade', at: [q.ox, q.oy], prey: null, port: q });
+  else if (kind === 'patrol') setTask(s, { type: 'raid', label: 'patrol', at: [q.ox, q.oy], prey: null, ends: [here, q], idx: 1 });
+  else if (kind === 'trade'){ if (q === home){ say('Choose a port other than your home port to trade with.'); return; } setTask(s, { type: 'trade', ends: [home, q], idx: Math.hypot(home.ox - s.x, home.oy - s.y) < Math.hypot(q.ox - s.x, q.oy - s.y) ? 0 : 1, cargo: null }); } }
+function fleetSignal(kind){ const sq = squad(); if (kind === 'recall'){ sq.forEach(s => setTask(s, { type: 'fleet' })); say('Signal to all ships: rejoin the flag.'); }
+  else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); }); say('Signal to all ships: make for the nearest open port.'); }
+  else { const q = ports.find(x => x.name === homeName); sq.forEach(s => setTask(s, { type: 'port', port: q })); say('Signal to all ships: rendezvous at ' + homeName + '.'); } }
+const inCompany = s => !s.docked && Math.hypot(s.x - p.x, s.y - p.y) < 900;
+const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? 'Loading at ' : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.ends[t.idx].name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
   : t.flee && !t.arrived ? 'Running for ' + t.port.name
   : t.arrived ? 'Waiting at ' + t.port.name : 'Bound for ' + t.port.name; };
-function setTask(s, t){ s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
+function setTask(s, t){ if (s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
 const fairGame = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.gone && (o === fleetTarget || o.owner === 'pirate' || prize(o) && (hostile(o.nation) || o.hitByPlayer));
   // what a consort may take on her own
 const POLICY = { plunder:'Plunder and release', keep:'Take into the fleet', send:'Send in as prizes', leave:'Leave to the flagship' };
@@ -926,15 +980,20 @@ function renderOrders(){
 }
 function detached(s, dt){ // a consort acting on her own orders
   const t = s.task; let want = s.h; s.speedMul = s.baseMul;
+  if (s.evade && s.evade.sinking == null){ s.sail = 1; return Math.atan2(s.y - s.evade.y, s.x - s.evade.x); } /* too strong for her: she shows her heels */
   if (t.type === 'hold'){ s.sail = 0; }
+  else if (t.type === 'trade'){ const q = t.ends[t.idx], d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true; dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.'); } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
   else if (t.type === 'port'){ const d = Math.hypot(t.port.ox - s.x, t.port.oy - s.y);
-    if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ' and waits for you there.');
+    if (d < 180 && admits(t.port)){ dock(s, t.port); return s.h; }
+    if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ', which is closed to her, and waits outside for you.');
       } if (inCompany(s) && Math.hypot(p.x - s.x, p.y - s.y) < 420){ setTask(s, { type: 'fleet' });
       say('The ' + s.name + ' rejoins the fleet.'); } }
     else { s.sail = 1; want = navTo(s, t.port.ox, t.port.oy, dt); } }
   else { // raid or chase
     if (t.type === 'chase' && (!t.prey || t.prey.sinking != null || t.prey.released || t.prey.gone || ships.indexOf(t.prey) < 0)){ say('The ' + s.name + ' has lost her chase and returns to the fleet.');
       setTask(s, { type: 'fleet' }); return want; }
+    if (t.type === 'raid' && t.until && calIdx() > t.until){ dispatch(s, 'My cruise is out. I am returning to the flag.'); setTask(s, { type: 'fleet' }); return want; }
+    if (t.type === 'raid' && t.ends && !t.prey && Math.hypot(t.at[0] - s.x, t.at[1] - s.y) < 650){ t.idx ^= 1; t.at = [t.ends[t.idx].ox, t.ends[t.idx].oy]; s.loiter = null; }
     if (t.type === 'raid'){ s.scanT -= dt; if (s.scanT <= 0 || t.prey && (t.prey.sinking != null || t.prey.released || t.prey.gone)){ s.scanT = 1.5; t.prey = null; let bd = 2400;
       for (const o of ships){ if (!fairGame(o)) continue; const od = Math.hypot(o.x - s.x, o.y - s.y); if (od < bd){ bd = od; t.prey = o; } } } }
     const o = state === 'play' ? t.prey : null; // while you lie in port your ships neither give nor take fire
@@ -948,6 +1007,10 @@ function detached(s, dt){ // a consort acting on her own orders
   return want;
 }
 function fleetAI(s, dt){
+  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && state === 'play' && (s.dwell -= dt) <= 0){ const t = s.task; t.idx ^= 1; s.h = s.docked.out; s.docked = null; s.sail = 1; }
+    else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' }); say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
+    else if (s.task && s.task.why === 'weather' && !hurr && weather.kind !== 'storm' && repairCost(s) <= 8){ afterRepairs(s, s.prev ? 'station' : 'join'); } return; }
+  s.thinkT = (s.thinkT || 0) - dt; if (s.thinkT <= 0){ s.thinkT = 1; think(s); }
   if (s.task && s.task.type !== 'fleet'){ const want = state === 'play' || !inCompany(s) ? detached(s, dt) : (s.sail = 0, s.h); moveShip(s, clamp(angd(avoid(s, want), s.h)*3, -1, 1), dt); return; }
   const i = s.slot || 1, k = Math.ceil(i/2), sd = i % 2 ? 1 : -1;
   s.off = formation === 'column' ? [-105*i, 0] : formation === 'abreast' ? [0, sd*100*k] : [-80*k, sd*90*k];
@@ -1008,6 +1071,12 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
   if (mode === 'court'){ el('div', 'mast', 'Court of Vice-Admiralty'); el('div', 'dateline', 'Sitting at ' + data.port + ' · ' + dateStr());
     el('p', 'lead', 'Be it known that the following vessels, taken at sea under a lawful commission, are this day condemned as good and lawful prize, and the proceeds ordered paid to their captor.');
     data.list.forEach(v => row(v.n, v.v + ' gold')); row('Paid over this day', data.total + ' gold', 'total'); el('p', 'sig', 'By order of the Judge, and God save the King.'); }
+  else if (mode === 'dispatches'){ dispNew = 0; dispBadge(); el('div', 'mast', 'Dispatches'); el('div', 'dateline', dateStr() + ' · from the captains of your fleet');
+    if (!dispatches.length) el('p', 'lead', 'Nothing has come in. Your captains write when they make port, break off, or have something to report.');
+    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
+      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null;
+      if (v.ask){ const c = repairCost(s), r = el('div', 'dbtns'); [['back', 'Pay ' + c + ' and send her back'], ['join', 'Pay and have her rejoin'], ['stay', 'Pay and keep her in port'], ['', 'Leave her as she is']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'dp_' + (o[0] || 'leave') + i; b2.textContent = o[1]; b2.disabled = !!o[0] && gold < 1;
+        b2.addEventListener('click', () => { v.ask = null; if (o[0]){ const paid = payRepairs(s, o[0] === 'back' ? 'station' : o[0]); v.t += ' [Paid ' + paid + ' gold. ' + (o[0] === 'back' ? 'Sent back to her station.' : o[0] === 'join' ? 'Ordered to rejoin.' : 'Kept in port.') + ']'; } else v.t += ' [Left unrepaired.]'; openPaper('dispatches'); }); r.appendChild(b2); }); } }); }
   else { el('div', 'mast', 'The ' + homeName + ' Gazette'); const ws = [...wars].map(w => NAT[w.slice(0, 2)].land + ' and ' + NAT[w.slice(3)].land).join('; ');
     el('div', 'dateline', dateStr() + ' · ' + (ws ? 'At war: ' + ws : 'The nations are at peace'));
     if (!gazette.length) el('p', 'lead', 'No news has come in yet. The packet is expected.');
@@ -1038,8 +1107,8 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
     if (p.alive){ const x = dt*(p.sail === 1 ? 1.5 : p.sail > 0 ? .65 : .22)*w.k, fl = p.sail === 1 ? 0 : p.maxHull*.1;
       p.sails = Math.max(p.sail === 1 ? 0 : 20, p.sails - dt*(p.sail === 1 ? 5 : p.sail > 0 ? 2 : .5)*w.k);
       if (p.sail === 1 && p.hull - x <= 0) damage(p, x + 1, 0); else if (p.hull > fl) p.hull = Math.max(fl, p.hull - x); }
-    for (const o of ships){ if (o.sinking != null || Math.abs(o.x - p.x) > 3000 || Math.abs(o.y - p.y) > 3000) continue;
-      o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k; }
+    for (const o of ships){ if (o.sinking != null || o.docked || Math.abs(o.x - p.x) > 3000 || Math.abs(o.y - p.y) > 3000) continue;
+      o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
     gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); } }
@@ -1112,7 +1181,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
     routeLine = null; fleetTarget = null; paused = false; lastDay = 0;
   hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; gsTold = false;
     marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = [];
-    courtList = []; morale = 70; officers = {}; foul = 0; lastCall = 0; rivals = RIVALS.map(() => ({ alive: true, wins: 0 }));
+    courtList = []; dispatches = []; dispNew = 0; shipSeq = 0; dispBadge(); morale = 70; officers = {}; foul = 0; lastCall = 0; rivals = RIVALS.map(() => ({ alive: true, wins: 0 }));
     navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 };
     stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
@@ -1125,6 +1194,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
       if (Array.isArray(saved.gaz)) gazette = saved.gaz.slice(0, 40).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), t: String(v.t).slice(0, 300), k: v.k === 'you' ? 'you' : 'news' }));
       if (saved.navy && NAT[saved.navy.k]) navy = { k: saved.navy.k, pts: clamp(saved.navy.pts|0, 0, 999), rank: clamp(saved.navy.rank|0, 0, NAVY.length - 1) };
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
+      if (Array.isArray(saved.dispatches)) dispatches = saved.dispatches.slice(0, 30).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), who: String(v.who).slice(0, 60), t: String(v.t).slice(0, 400), id: 0, ask: null }));
       if (saved.morale != null) morale = clamp(+saved.morale || 0, 0, 100); if (saved.officers) Object.keys(OFFICERS).forEach(k => { officers[k] = !!saved.officers[k]; });
         foul = clamp(+saved.foul || 0, 0, 1); if (saved.fouling != null) fouling = !!saved.fouling;
       if (Array.isArray(saved.rivals)) saved.rivals.slice(0, RIVALS.length).forEach((v, i) => { if (v) rivals[i] = { alive: !!v.alive, wins: clamp(v.wins|0, 0, 6) }; });
@@ -1165,7 +1235,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
   if (calIdx() >= 48) spawnFleet(true, saved && saved.fleetLeg != null ? ((saved.fleetLeg|0) + ROUTE.length - 1) % ROUTE.length : null);
   if (saved && Array.isArray(saved.squad)) saved.squad.slice(0, MAXSQ).forEach((d, i) => { if (d && CLASSES[d.cls]){ const sc = DEG/(+saved.deg || 400), away = d.task && d.x > 100 && d.y > 100 && d.x*sc < W - 100 && d.y*sc < H - 100 && !isLand(d.x*sc, d.y*sc), w = away ? [d.x*sc, d.y*sc] : waterNear(p.x, p.y, 160);
     const s = addFleet(d, w[0], w[1], p.h); if (away){ const q = ports.find(q => q.name === d.task.port);
-      s.task = d.task.type === 'port' && q ? { type: 'port', port: q } : d.task.type === 'hold' ? { type: 'hold' } : { type: 'raid', at: [s.x, s.y] }; } } });
+      s.task = taskFrom(d.task, s); if (d.docked){ const dq = ports.find(x => x.name === d.docked); if (dq){ s.docked = dq; s.x = dq.ox; s.y = dq.oy; s.sail = 0; } } } } });
   setForm(formation); setOrders(orders);
   if (saved && saved.mission){ const sc = DEG/(+saved.deg || 400); restoreMission(Object.assign({}, saved.mission, { sx: saved.mission.sx*sc, sy: saved.mission.sy*sc })); }
   $('shotBtn').textContent = SHOTN[shot];
@@ -1410,6 +1480,7 @@ function streamAt(x, y){ if (y > GS[0][1] + 300 || y < GS[GS.length - 1][1] - 30
   for (let i = 0; i < GS.length - 1; i++){ const a = GS[i], b = GS[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx*dx + dy*dy, t = clamp(((x - a[0])*dx + (y - a[1])*dy)/L2, 0, 1), d = Math.hypot(x - a[0] - dx*t, y - a[1] - dy*t);
     if (d < 280){ const L = Math.sqrt(L2), f = 26*(1 - d/280); return [dx/L*f, dy/L*f]; } } return null; }
 function moveShip(s, turn, dt){
+  if (s.sailCap != null && s.sail > s.sailCap) s.sail = s.sailCap; /* her captain has shortened sail for the weather */
   const a = Math.abs(angd(s.h, wind.dir)); s.pol = polar(a);
   const pol = s === p ? s.pol : Math.max(s.pol, .3);
   const target = s.t.speed*s.speedMul*s.sail*pol*wind.str*windMul()*(.35 + .65*s.sails/100)*(s === p ? pMul() : 1);
@@ -1576,7 +1647,7 @@ function ai(s, dt){
   if (!fights && warship(s) && !s.surrendered && !s.released && !s.grappled){ // look for a quarrel with someone else
     s.scanT -= dt;
     if (s.scanT <= 0){ s.scanT = 1 + rnd(); s.foe = null; let bd = 520;
-      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o) || o.owner === 'player' && state !== 'play') continue;
+      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o) || o.docked || o.owner === 'player' && state !== 'play') continue;
         /* your ships are safe under the fort's guns while you are in port */ const od = Math.hypot(o.x-s.x, o.y-s.y);
         if (od < bd){ bd = od; s.foe = o; } } }
     if (s.foe && (s.foe.sinking != null || s.foe.released || s.foe.surrendered || s.foe.owner === 'player' && state !== 'play' || Math.hypot(s.foe.x-s.x, s.foe.y-s.y) > 720)) s.foe = null;
@@ -1592,7 +1663,7 @@ function ai(s, dt){
     s.sail = 1; want = brg + Math.PI; if (d > 1500) s.gone = true;
   } else if (fights){
     if (!s.announced && d < 700){ s.announced = true; say(an(nm(s)) + ' is bearing down on you.'); }
-    let T = p, bd = d; for (const o of ships) if (o.role === 'fleet' && o.sinking == null){ const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd - 60){ bd = od; T = o; } }
+    let T = p, bd = d; for (const o of ships) if (o.role === 'fleet' && o.sinking == null && !o.docked){ const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd - 60){ bd = od; T = o; } }
     want = attack(s, T.x, T.y, dt, true, T);
   } else if (s.foe){
     want = attack(s, s.foe.x, s.foe.y, dt, false, s.foe);
@@ -1605,7 +1676,7 @@ function ai(s, dt){
     if (s.scanT <= 0){ s.scanT = 1 + rnd(); s.fear = null; let bd = 680*vis();
       if (hot && (s.hitByPlayer || hostile(s.nation)) && d < bd){ bd = d; s.fear = p; }
       for (const o of ships){ if (o === s || o.sinking != null || o.surrendered || o.released) continue;
-        if (o.role === 'fleet' ? !(hot && (s.hitByPlayer || hostile(s.nation))) : !(warship(o) && hostileTo(o, s))) continue;
+        if (o.docked) continue; if (o.role === 'fleet' ? !(hot && (s.hitByPlayer || hostile(s.nation))) : !(warship(o) && hostileTo(o, s))) continue;
         const od = Math.hypot(o.x - s.x, o.y - s.y); if (od < bd){ bd = od; s.fear = o; } } }
     const q = s.dest, home = navTo(s, q.ox, q.oy, dt), f = s.fear;
     if (f && f.sinking == null && Math.hypot(f.x - s.x, f.y - s.y) < 900){ const away = Math.atan2(s.y - f.y, s.x - f.x);
@@ -1656,7 +1727,7 @@ const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', A
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && e.code !== 'Escape') return; // typing a name or a save code
-  if (menuOpen){ if (e.code === 'Escape' || e.code === 'KeyJ' && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
+  if (menuOpen){ if (e.code === 'Escape' || (e.code === 'KeyJ' || e.code === 'KeyL') && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
   if (state === 'fate') return;
   if (state === 'port' && !chartOpen && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV' || e.code === 'KeyC')){ e.code === 'KeyI' ? openManifest() : e.code === 'KeyV' ? openFleet('F') : setChart(true); return; }
   if (state === 'port' && !chartOpen){ if (e.code === 'Escape') closePort(); return; }
@@ -1676,6 +1747,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC' && !e.repeat) setChart(true);
   else if (e.code === 'KeyI' && !e.repeat) openManifest();
   else if (e.code === 'KeyJ' && !e.repeat) openPaper('gazette');
+  else if (e.code === 'KeyL' && !e.repeat) openPaper('dispatches');
   else if (e.code === 'KeyV' && !e.repeat) openFleet('F');
   else if (e.code === 'KeyP' && !e.repeat) setPaused(!paused);
   else if (e.code === 'KeyN' && !e.repeat && course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); }
@@ -1791,6 +1863,7 @@ function openPort(port){ if (paceOut == null){ paceOut = paceIdx; setPace(0, tru
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
   if (course === port){ course = null; autoHelm = false; routeLine = null; } setPaused(false);
+  squad().forEach(s => { if (s.docked === port && (!s.task || s.task.type !== 'trade')) setTask(s, { type: 'fleet' }); }); /* consorts lying here come under your eye again */
   squad().filter(inCompany).forEach((s, i) => { if (s.task && s.task.type === 'port' && s.task.port === port) setTask(s, { type: 'fleet' }); const k = Math.ceil((i+1)/2), sd = i % 2 ? -1 : 1, x = port.ox - Math.sin(port.out)*sd*75*k + Math.cos(port.out)*30, y = port.oy + Math.cos(port.out)*sd*75*k + Math.sin(port.out)*30;
     if (!isLand(x, y)){ s.x = x; s.y = y; } else { s.x = port.ox; s.y = port.oy; } s.h = port.out; s.speed = 0; s.path = null; });
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));
@@ -2224,6 +2297,7 @@ function renderFleet(focusId){
       $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
     R('Where she is', whereIs(s) + ' Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
+    if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
     if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
@@ -2248,6 +2322,12 @@ function renderFleet(focusId){
         ports.slice().sort((a, b2) => a.name < b2.name ? -1 : 1).forEach(q => { const o = document.createElement('option'); o.value = q.name; o.textContent = q.name + (q.name === homeName ? ' (home)' : hostile(q.nk) ? ' (hostile)' : ''); if ((s.task && s.task.port || ports.find(x => x.name === homeName)) === q) o.selected = true; sel.appendChild(o); });
         b.type = 'button'; b.id = 'to_port'; b.textContent = 'Send her'; b.addEventListener('click', () => { const q = ports.find(x => x.name === sel.value); if (q) setTask(s, { type: 'port', port: q }); renderFleet('to_port'); });
         right.appendChild(sel); right.appendChild(b); e.appendChild(sp); e.appendChild(right); ul.appendChild(e); }
+      { const sel = $('taskPort'), pick = () => ports.find(x => x.name === sel.value);
+        R('Independent service', 'Using the port chosen above: cruise off it for three months, blockade it, patrol between it and the port nearest her now, or trade between it and ' + homeName + ' on her own account. Her company keeps a tenth of what she makes.', '', [
+          ['as_cruise', 'Cruise', true, () => assign(s, 'cruise', pick())], ['as_blockade', 'Blockade', true, () => assign(s, 'blockade', pick())], ['as_patrol', 'Patrol', true, () => assign(s, 'patrol', pick())], ['as_trade', 'Trade', true, () => assign(s, 'trade', pick())]]); }
+      ledgerText(ul, 'sec', 'Standing orders');
+      [['wx', 'In a hurricane', 'A good seaman sees it coming sooner.'], ['dmg', 'When damaged', 'She breaks off and makes for the nearest open port.'], ['foe', 'Against warships, when detached', 'Whether she stands or runs.'], ['allow', 'Repairs without asking', 'Above this her captain writes for your leave.'], ['after', 'Once repaired', '']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k]));
+        R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
       if (!here) ledgerText(ul, 'txt', 'She is away from the flagship: repairs, refits, crew and selling wait until she is back in company.');
       const best = spares.slice().sort((a, b) => b.gun + b.sea - a.gun - a.sea).slice(0, 3);
       R('Captain', s.cap.mate ? 'Your first mate commands her. Hire a captain in a tavern.' : 'Capt. ' + s.cap.name + ': gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea + '.', stars(s.cap),
@@ -2282,7 +2362,7 @@ const SLOTS = [['auto', 'Autosave'], ['1', 'Slot 1'], ['2', 'Slot 2'], ['3', 'Sl
 function snapshot(){
   const m = mission; let np = ports[0], nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
   const owners = {}; ports.forEach(q => { if (q.nk !== q.home) owners[q.name] = q.nk; });
-  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats, morale: Math.round(morale), officers, foul: +foul.toFixed(2), fouling, rivals,
+  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats, dispatches: dispatches.slice(0, 30).map(v => ({ d: v.d, who: v.who, t: v.t })), morale: Math.round(morale), officers, foul: +foul.toFixed(2), fouling, rivals,
     p: { x: Math.round(p.x), y: Math.round(p.y), h: +p.h.toFixed(3), hull: Math.round(p.hull), sails: Math.round(p.sails) },
     wind: { dir: +wind.dir.toFixed(3), str: +wind.str.toFixed(2) }, fleetLeg: fleet ? fleet.leg : null,
     mission: m ? { type: m.type, nk: m.nk, title: m.title, reward: m.reward, rep: m.rep, port: m.port && m.port.name, foe: m.foe, need: m.need, have: m.have, cls: m.cls, until: m.until, svc: m.svc,
@@ -2345,6 +2425,7 @@ $('cargoBtn').addEventListener('click', e => { openManifest(); e.currentTarget.b
 function setKeys(open, keep){ $('keys').classList.toggle('shut', !open); $('keysBtn').textContent = open ? 'Hide keys' : 'Keys';
   $('keysBtn').setAttribute('aria-expanded', open); if (keep) store('keys', open ? '1' : '0'); }
 $('keysBtn').addEventListener('click', e => { setKeys($('keys').classList.contains('shut'), true); e.currentTarget.blur(); }); setKeys(recall('keys') !== '0');
+$('dispBtn').addEventListener('click', e => { openPaper('dispatches'); e.currentTarget.blur(); });
 $('gazBtn').addEventListener('click', e => { openPaper('gazette'); e.currentTarget.blur(); }); $('paperClose').addEventListener('click', closeMenu);
 $('holdLine').addEventListener('click', openManifest);
 $('titleLoad').addEventListener('click', openMenu);
@@ -2358,14 +2439,17 @@ $('loadCode').addEventListener('click', () => { const d = decode($('saveCode').v
 
 /* ---------- Toast ---------- */
 let toastT = 0;
-function say(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = 3.6; }
+const toastQ = []; let toastAge = 9;
+function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
+function say(msg){ if (toastT > 0 && toastAge < 1.6 && $('toast').textContent !== msg){ if (toastQ.length < 5) toastQ.push(msg); return; } showToast(msg); }
+function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift()); return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift()); else $('toast').classList.add('off'); } } }
 
 /* ---------- Update ---------- */
 function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2 : mo >= 8 ? 1 : 0; if (sn !== seasonNow){ seasonNow = sn; tiles.clear(); tilesLo.clear(); } }
   wind.timer -= dt;
   if (wind.timer <= 0){ wind.timer = rand(12, 26); wind.tDir = wind.dir + rand(-1.2, 1.2); wind.tStr = rand(.7, 1.3); }
   wind.dir += angd(wind.tDir, wind.dir)*dt*.08; wind.str += (wind.tStr - wind.str)*dt*.1;
-  if (toastT > 0){ toastT -= dt; if (toastT <= 0) $('toast').classList.add('off'); }
+
   for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; q.life -= dt; if (q.life <= 0){ parts.splice(i, 1); continue; }
     q.x += q.vx*dt; q.y += q.vy*dt; if (q.k === 'smoke'){ q.vx = q.vx*.96 + Math.cos(wind.dir)*1.2;
       q.vy = q.vy*.96 + Math.sin(wind.dir)*1.2; } else if (q.k === 'chunk'){ q.vx *= 1 - dt*1.2; q.vy *= 1 - dt*1.2; } }
@@ -2439,12 +2523,12 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
     if (b.mine){ for (const s of ships){ if (s.sinking == null && s.owner !== 'player' && hitShip(b, s)){ hitS = s; struck(s);
       if (b.grape) s.crew = Math.max(0, s.crew - 3 - (rnd()*3|0)); else if (!b.chain && rnd() < .5) s.crew = Math.max(0, s.crew - 1);
       strike(b, s, b.grape ? 1 : b.chain ? 2 : 8, b.grape ? 2 : b.chain ? 12 : 1, 1); done = true; break; } } }
-    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s;
+    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && !s.docked && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s;
       if (ours){ struck(s, true); capXp(b.o); } strike(b, s, b.chain ? 2 : 6, b.chain ? 10 : 2, 1); done = true; break; } } }
     else if (sailing && p.sinking == null && hitShip(b, p)){ hitS = p; p.lastFoe = b.o.nation || 'pirate';
       strike(b, p, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; if (!tracked) engage(b.o);
       if (rnd() < .45 && p.crew > 6) p.crew--; }
-    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ hitS = o;
+    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && !o.docked && hitShip(b, o)){ hitS = o;
       strike(b, o, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; break; } } }
     if (done){ if (hitS) impact(b, hitS); }
     else if (isLand(b.x, b.y)){ done = true; parts.push({ k:'smoke', g:190, x:b.x, y:b.y, vx:0, vy:0, life:.5, max:.5, size:5 }); }
@@ -3158,7 +3242,7 @@ function render(dt){
 
   if (state === 'play' && p.sinking == null){ if (assist) drawAim(); else drawArcs();
     const c = Math.cos(p.h), n = Math.sin(p.h);
-    for (const s of ships){ if (s.role !== 'fleet' || s.sinking != null) continue;
+    for (const s of ships){ if (s.role !== 'fleet' || s.sinking != null || s.docked) continue;
       const inLine = s.off && (!s.task || s.task.type === 'fleet'), tx = inLine ? p.x + c*s.off[0] - n*s.off[1] : s.x, ty = inLine ? p.y + n*s.off[0] + c*s.off[1] : s.y;
         // her station in the formation, if she is sailing in it
       if (inLine && Math.hypot(tx-s.x, ty-s.y) > 70){ cx.setLineDash([4, 6]); cx.strokeStyle = 'rgba(239,230,207,.35)';
@@ -3170,9 +3254,9 @@ function render(dt){
           cx.lineTo(s.x - ch*(hf + 20) + ex, s.y - sh*(hf + 20) + ey); cx.lineTo(s.x - ch*hf, s.y - sh*hf); cx.closePath(); cx.fill();
         cx.strokeStyle = 'rgba(' + col + ',' + (bears ? .5 : .2) + ')'; cx.lineWidth = 1; cx.setLineDash([5, 6]); cx.stroke(); cx.setLineDash([]); } } }
   for (const s of ships) if (s.surrendered && s.sinking == null && s !== prizeShip) drawStruck(s);
-  for (const s of ships) if (s.x > x0-120 && s.x < x1+120 && s.y > y0-120 && s.y < y1+120) drawShip(s);
+  for (const s of ships) if (!s.docked && s.x > x0-120 && s.x < x1+120 && s.y > y0-120 && s.y < y1+120) drawShip(s);
   drawShip(p);
-  for (const s of ships) if (s.x > x0-60 && s.x < x1+60 && s.y > y0-60 && s.y < y1+60) drawBars(s);
+  for (const s of ships) if (!s.docked && s.x > x0-60 && s.x < x1+60 && s.y > y0-60 && s.y < y1+60) drawBars(s);
   for (const s of [tracked, mission && mission.ship, fleetTarget]){ if (!s || s.sinking != null || s.surrendered) continue;
     const r = s.t.len*(s === fleetTarget ? .86 : .74); cx.strokeStyle = s === fleetTarget ? '#ff5a4a' : s === tracked ? s.t.tag : '#7fe0d0';
     cx.lineWidth = s === fleetTarget ? 2.6 : 2;
@@ -3493,7 +3577,7 @@ function drawBigChart(){
     const sx = X0 + s.x*k, sy = Y0 + s.y*k;
     if (s.role === 'fleet'){ /* a consort: a white pennant on her heading, with her name */
       cx.save(); cx.translate(sx, sy); cx.rotate(s.h); cx.fillStyle = '#ffffff'; cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5); cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
-      if (s === chartMark || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
+      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
       continue; }
     cx.fillStyle = s.nation ? NAT[s.nation].c1 : '#111111';
       cx.strokeStyle = INK; cx.lineWidth = 1; cx.fillRect(sx - 3, sy - 3, 6, 6); cx.strokeRect(sx - 3, sy - 3, 6, 6); }
@@ -3555,7 +3639,7 @@ function hud(){
   const hc = p.hull/p.maxHull > .4 ? 'var(--moss)' : 'var(--blood)'; if ($('bHull')._c !== hc){ $('bHull')._c = hc; $('bHull').style.background = hc; }
   setW($('bPort'), 1 - p.rl[0]/(p.reload*crewSlow())); setW($('bStar'), 1 - p.rl[1]/(p.reload*crewSlow()));
   const sq = ships.filter(o => o.role === 'fleet' && o.sinking == null), key = sq.map(o => o.t.name).join('|');
-  if (key !== cardKey){ cardKey = key; cards = []; const col = $('fleetCol'); col.textContent = ''; // one compact card for each consort
+  if (key !== cardKey){ cardKey = key; cards = []; const col = $('fleetCol'); col.textContent = ''; col.classList.toggle('many', sq.length > 4); // one compact card for each consort
     sq.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'shipcard'; b.title = 'Manage this ship';
       const nmE = document.createElement('span'); nmE.className = 'nm'; const t = document.createElement('span'), st = document.createElement('small');
         t.textContent = o.t.name; st.textContent = '★'.repeat(Math.round((o.cap.gun + o.cap.sea)/2));
@@ -3589,7 +3673,7 @@ function hud(){
 let last = 0;
 let lastErr = '';
 let frozen = false; /* tests stop the clock to compare pictures */
-function frame(t){ const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0];
+function frame(t){ toastTick(Math.min(.1, (t - last)/1000 || 0)); const dt = Math.min(.05, (t - last)/1000 || 0)*PACES[paceIdx][0];
   last = t; const held2 = chartOpen || menuOpen || paused || frozen; try { if (!held2){ const n = Math.ceil(PACES[paceIdx][0]);
   for (let k = 0; k < n; k++) update(dt/n); } render(held2 ? 0 : dt); hud(); if (state === 'port' && !menuOpen) paintTown();
   } catch (e){ cx.setTransform(1, 0, 0, 1, 0, 0); if (lastErr !== e.message){ lastErr = e.message;
@@ -3609,6 +3693,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
+  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;
     }, get morale(){ return morale; }, set morale(v){ morale = v; }, get officers(){ return officers;

@@ -76,7 +76,7 @@ function render(dt){
 
   if (state === 'play' && p.sinking == null){ if (assist) drawAim(); else drawArcs();
     const c = Math.cos(p.h), n = Math.sin(p.h);
-    for (const s of ships){ if (s.role !== 'fleet' || s.sinking != null) continue;
+    for (const s of ships){ if (s.role !== 'fleet' || s.sinking != null || s.docked) continue;
       const inLine = s.off && (!s.task || s.task.type === 'fleet'), tx = inLine ? p.x + c*s.off[0] - n*s.off[1] : s.x, ty = inLine ? p.y + n*s.off[0] + c*s.off[1] : s.y;
         // her station in the formation, if she is sailing in it
       if (inLine && Math.hypot(tx-s.x, ty-s.y) > 70){ cx.setLineDash([4, 6]); cx.strokeStyle = 'rgba(239,230,207,.35)';
@@ -88,9 +88,9 @@ function render(dt){
           cx.lineTo(s.x - ch*(hf + 20) + ex, s.y - sh*(hf + 20) + ey); cx.lineTo(s.x - ch*hf, s.y - sh*hf); cx.closePath(); cx.fill();
         cx.strokeStyle = 'rgba(' + col + ',' + (bears ? .5 : .2) + ')'; cx.lineWidth = 1; cx.setLineDash([5, 6]); cx.stroke(); cx.setLineDash([]); } } }
   for (const s of ships) if (s.surrendered && s.sinking == null && s !== prizeShip) drawStruck(s);
-  for (const s of ships) if (s.x > x0-120 && s.x < x1+120 && s.y > y0-120 && s.y < y1+120) drawShip(s);
+  for (const s of ships) if (!s.docked && s.x > x0-120 && s.x < x1+120 && s.y > y0-120 && s.y < y1+120) drawShip(s);
   drawShip(p);
-  for (const s of ships) if (s.x > x0-60 && s.x < x1+60 && s.y > y0-60 && s.y < y1+60) drawBars(s);
+  for (const s of ships) if (!s.docked && s.x > x0-60 && s.x < x1+60 && s.y > y0-60 && s.y < y1+60) drawBars(s);
   for (const s of [tracked, mission && mission.ship, fleetTarget]){ if (!s || s.sinking != null || s.surrendered) continue;
     const r = s.t.len*(s === fleetTarget ? .86 : .74); cx.strokeStyle = s === fleetTarget ? '#ff5a4a' : s === tracked ? s.t.tag : '#7fe0d0';
     cx.lineWidth = s === fleetTarget ? 2.6 : 2;

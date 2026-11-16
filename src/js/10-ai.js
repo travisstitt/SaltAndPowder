@@ -63,7 +63,7 @@ function ai(s, dt){
   if (!fights && warship(s) && !s.surrendered && !s.released && !s.grappled){ // look for a quarrel with someone else
     s.scanT -= dt;
     if (s.scanT <= 0){ s.scanT = 1 + rnd(); s.foe = null; let bd = 520;
-      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o) || o.owner === 'player' && state !== 'play') continue;
+      for (const o of ships){ if (o === s || o.sinking != null || o.released || o.surrendered || !hostileTo(s, o) || o.docked || o.owner === 'player' && state !== 'play') continue;
         /* your ships are safe under the fort's guns while you are in port */ const od = Math.hypot(o.x-s.x, o.y-s.y);
         if (od < bd){ bd = od; s.foe = o; } } }
     if (s.foe && (s.foe.sinking != null || s.foe.released || s.foe.surrendered || s.foe.owner === 'player' && state !== 'play' || Math.hypot(s.foe.x-s.x, s.foe.y-s.y) > 720)) s.foe = null;
@@ -79,7 +79,7 @@ function ai(s, dt){
     s.sail = 1; want = brg + Math.PI; if (d > 1500) s.gone = true;
   } else if (fights){
     if (!s.announced && d < 700){ s.announced = true; say(an(nm(s)) + ' is bearing down on you.'); }
-    let T = p, bd = d; for (const o of ships) if (o.role === 'fleet' && o.sinking == null){ const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd - 60){ bd = od; T = o; } }
+    let T = p, bd = d; for (const o of ships) if (o.role === 'fleet' && o.sinking == null && !o.docked){ const od = Math.hypot(o.x-s.x, o.y-s.y); if (od < bd - 60){ bd = od; T = o; } }
     want = attack(s, T.x, T.y, dt, true, T);
   } else if (s.foe){
     want = attack(s, s.foe.x, s.foe.y, dt, false, s.foe);
@@ -92,7 +92,7 @@ function ai(s, dt){
     if (s.scanT <= 0){ s.scanT = 1 + rnd(); s.fear = null; let bd = 680*vis();
       if (hot && (s.hitByPlayer || hostile(s.nation)) && d < bd){ bd = d; s.fear = p; }
       for (const o of ships){ if (o === s || o.sinking != null || o.surrendered || o.released) continue;
-        if (o.role === 'fleet' ? !(hot && (s.hitByPlayer || hostile(s.nation))) : !(warship(o) && hostileTo(o, s))) continue;
+        if (o.docked) continue; if (o.role === 'fleet' ? !(hot && (s.hitByPlayer || hostile(s.nation))) : !(warship(o) && hostileTo(o, s))) continue;
         const od = Math.hypot(o.x - s.x, o.y - s.y); if (od < bd){ bd = od; s.fear = o; } } }
     const q = s.dest, home = navTo(s, q.ox, q.oy, dt), f = s.fear;
     if (f && f.sinking == null && Math.hypot(f.x - s.x, f.y - s.y) < 900){ const away = Math.atan2(s.y - f.y, s.x - f.x);

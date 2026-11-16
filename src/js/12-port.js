@@ -4,6 +4,7 @@ function openPort(port){ if (paceOut == null){ paceOut = paceIdx; setPace(0, tru
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
   if (course === port){ course = null; autoHelm = false; routeLine = null; } setPaused(false);
+  squad().forEach(s => { if (s.docked === port && (!s.task || s.task.type !== 'trade')) setTask(s, { type: 'fleet' }); }); /* consorts lying here come under your eye again */
   squad().filter(inCompany).forEach((s, i) => { if (s.task && s.task.type === 'port' && s.task.port === port) setTask(s, { type: 'fleet' }); const k = Math.ceil((i+1)/2), sd = i % 2 ? -1 : 1, x = port.ox - Math.sin(port.out)*sd*75*k + Math.cos(port.out)*30, y = port.oy + Math.cos(port.out)*sd*75*k + Math.sin(port.out)*30;
     if (!isLand(x, y)){ s.x = x; s.y = y; } else { s.x = port.ox; s.y = port.oy; } s.h = port.out; s.speed = 0; s.path = null; });
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));

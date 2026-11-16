@@ -1,7 +1,7 @@
 function snapshot(){
   const m = mission; let np = ports[0], nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
   const owners = {}; ports.forEach(q => { if (q.nk !== q.home) owners[q.name] = q.nk; });
-  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats, morale: Math.round(morale), officers, foul: +foul.toFixed(2), fouling, rivals,
+  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats, dispatches: dispatches.slice(0, 30).map(v => ({ d: v.d, who: v.who, t: v.t })), morale: Math.round(morale), officers, foul: +foul.toFixed(2), fouling, rivals,
     p: { x: Math.round(p.x), y: Math.round(p.y), h: +p.h.toFixed(3), hull: Math.round(p.hull), sails: Math.round(p.sails) },
     wind: { dir: +wind.dir.toFixed(3), str: +wind.str.toFixed(2) }, fleetLeg: fleet ? fleet.leg : null,
     mission: m ? { type: m.type, nk: m.nk, title: m.title, reward: m.reward, rep: m.rep, port: m.port && m.port.name, foe: m.foe, need: m.need, have: m.have, cls: m.cls, until: m.until, svc: m.svc,
@@ -64,6 +64,7 @@ $('cargoBtn').addEventListener('click', e => { openManifest(); e.currentTarget.b
 function setKeys(open, keep){ $('keys').classList.toggle('shut', !open); $('keysBtn').textContent = open ? 'Hide keys' : 'Keys';
   $('keysBtn').setAttribute('aria-expanded', open); if (keep) store('keys', open ? '1' : '0'); }
 $('keysBtn').addEventListener('click', e => { setKeys($('keys').classList.contains('shut'), true); e.currentTarget.blur(); }); setKeys(recall('keys') !== '0');
+$('dispBtn').addEventListener('click', e => { openPaper('dispatches'); e.currentTarget.blur(); });
 $('gazBtn').addEventListener('click', e => { openPaper('gazette'); e.currentTarget.blur(); }); $('paperClose').addEventListener('click', closeMenu);
 $('holdLine').addEventListener('click', openManifest);
 $('titleLoad').addEventListener('click', openMenu);
@@ -77,6 +78,9 @@ $('loadCode').addEventListener('click', () => { const d = decode($('saveCode').v
 
 /* ---------- Toast ---------- */
 let toastT = 0;
-function say(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = 3.6; }
+const toastQ = []; let toastAge = 9;
+function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
+function say(msg){ if (toastT > 0 && toastAge < 1.6 && $('toast').textContent !== msg){ if (toastQ.length < 5) toastQ.push(msg); return; } showToast(msg); }
+function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift()); return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift()); else $('toast').classList.add('off'); } } }
 
 /* ---------- Update ---------- */

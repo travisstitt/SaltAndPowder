@@ -26,6 +26,7 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Aim assist on / off | `T` |
 | Fleet formation: line astern / abreast / wedge | `G` |
 | Gazette | `J` |
+| Dispatches from your captains | `L` |
 | Make a passage (8× on a set course) | `6` |
 | Fleet orders: line of battle / engage at will / general chase / hold fire | `H` |
 | Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
@@ -49,7 +50,7 @@ On a touch screen, on-screen buttons replace the keys.
 Three suites, all in headless Chromium (they need Playwright):
 
 - `node tests/rules.js` runs 30 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
-- `node tests/run-tests.js` runs 146 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
+- `node tests/run-tests.js` runs 153 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
 - `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
 
 Every roll of the dice in the game comes from one source that the tests seed, so a failure repeats. The page exposes its test hook only when opened with `#test`.
@@ -93,6 +94,12 @@ The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC
 - **Retiring.** The governor at your home port will let you swallow the anchor: the voyage ends with a reckoning of your years at sea, prizes, rank and fortune.
 - **On the water.** The Gulf Stream shows as lines of weed and bluer streaks setting north-east. Sunk ships leave planks, casks and a boat pulling clear. Lighters ply between the roads and the quay at every town. At night ships carry a glowing stern lantern, the moon lies on the water in clear weather, and the larger ports show a harbour light.
 - **Regional towns.** New England ports are clapboard and shingle, New York keeps its Dutch gables, and Charleston and Savannah are stucco.
+- **Captains who think for themselves.** Each consort's captain looks to his own ship. He shortens sail when a storm or hurricane comes (a good seaman at the warning, a poor one only when it blows), breaks off for the nearest open port when badly damaged, and when detached runs from warships too strong for him. A consort sent to a port goes in and lies safe there, out of the weather and out of reach, until she sails again; she comes out to rejoin when the flagship arrives.
+- **Dispatches** (L). Captains write when they break off, make port, finish a cruise or sell a cargo. Dispatches arrive at once and wait in their own box. A damaged ship in port asks leave to repair: pay and send her back to her station, pay and have her rejoin, pay and keep her in port, or leave her.
+- **Standing orders** for each consort, on her fleet card: run for port or ride out a hurricane; retire at half hull, at a third, or never; avoid stronger warships, fight equals, or fight anything; how much she may spend on repairs without asking; and what she does once repaired.
+- **Independent service.** Besides hunting prizes, a consort can cruise off a port for three months, blockade it, patrol between two ports, or trade between a port and your home port on her own account, buying what sells best at the other end. Her company keeps a tenth. Signals to the whole fleet recall everyone, send everyone to the nearest open port, or call a rendezvous at your home port.
+- **Eight consorts.** The fleet holds eight ships besides the flagship.
+- **Notices** stay on screen long enough to read (six to fourteen seconds by length, by the clock rather than the game pace), and a notice that arrives on the heels of another waits its turn.
 - **Your fleet on the chart.** Each consort is a white pennant with her name. Her card in the fleet screen says where she lies, marks the spot on a corner of the chart beside her picture, and has a button that opens the full chart upon her.
 - **Chart in port.** The chart opens from the port screen (button or C) without weighing anchor; a course set there is kept for when you sail. While you lie in port the world goes by at the slow pace, and your sailing pace returns when you weigh.
 - **Chart extras.** The great trade routes are pricked out on the chart, and the small chart names the nearest ports.

@@ -2,7 +2,7 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
   wind.timer -= dt;
   if (wind.timer <= 0){ wind.timer = rand(12, 26); wind.tDir = wind.dir + rand(-1.2, 1.2); wind.tStr = rand(.7, 1.3); }
   wind.dir += angd(wind.tDir, wind.dir)*dt*.08; wind.str += (wind.tStr - wind.str)*dt*.1;
-  if (toastT > 0){ toastT -= dt; if (toastT <= 0) $('toast').classList.add('off'); }
+
   for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; q.life -= dt; if (q.life <= 0){ parts.splice(i, 1); continue; }
     q.x += q.vx*dt; q.y += q.vy*dt; if (q.k === 'smoke'){ q.vx = q.vx*.96 + Math.cos(wind.dir)*1.2;
       q.vy = q.vy*.96 + Math.sin(wind.dir)*1.2; } else if (q.k === 'chunk'){ q.vx *= 1 - dt*1.2; q.vy *= 1 - dt*1.2; } }
@@ -76,12 +76,12 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
     if (b.mine){ for (const s of ships){ if (s.sinking == null && s.owner !== 'player' && hitShip(b, s)){ hitS = s; struck(s);
       if (b.grape) s.crew = Math.max(0, s.crew - 3 - (rnd()*3|0)); else if (!b.chain && rnd() < .5) s.crew = Math.max(0, s.crew - 1);
       strike(b, s, b.grape ? 1 : b.chain ? 2 : 8, b.grape ? 2 : b.chain ? 12 : 1, 1); done = true; break; } } }
-    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s;
+    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && !s.docked && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s;
       if (ours){ struck(s, true); capXp(b.o); } strike(b, s, b.chain ? 2 : 6, b.chain ? 10 : 2, 1); done = true; break; } } }
     else if (sailing && p.sinking == null && hitShip(b, p)){ hitS = p; p.lastFoe = b.o.nation || 'pirate';
       strike(b, p, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; if (!tracked) engage(b.o);
       if (rnd() < .45 && p.crew > 6) p.crew--; }
-    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ hitS = o;
+    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && !o.docked && hitShip(b, o)){ hitS = o;
       strike(b, o, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; break; } } }
     if (done){ if (hitS) impact(b, hitS); }
     else if (isLand(b.x, b.y)){ done = true; parts.push({ k:'smoke', g:190, x:b.x, y:b.y, vx:0, vy:0, life:.5, max:.5, size:5 }); }

@@ -20,17 +20,68 @@ function capXp(o){ const c = o.cap; if (!c || c.gun >= 5) return; c.xp = (c.xp |
 function addFleet(d, x, y, h){ // d: { cls, hf, sails, crew, cap, up }
   const s = makeShip(CLASSES[d.cls] ? d.cls : 'sloop', 'player', 'fleet', x, y, h); s.cap = cleanCap(d.cap); s.up = cleanUp(d.up); s.name = cleanName(d.name); fitConsort(s);
   s.hull = s.maxHull*clamp(+d.hf || 1, .05, 1); s.sails = clamp(d.sails == null ? 100 : +d.sails, 0, 100); s.crew = clamp(d.crew|0 || 10, 1, s.t.crew); s.sail = 1;
-  ships.push(s); dirty(); return s; }
-const fleetData = s => ({ x: Math.round(s.x), y: Math.round(s.y), task: s.task && s.task.type !== 'fleet' ? { type: s.task.type === 'chase' ? 'raid' : s.task.type, port: s.task.port ? s.task.port.name : null } : null, cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up, name: s.name });
+  s.id = ++shipSeq; s.doc = cleanDoc(d.doc); ships.push(s); dirty(); return s; }
+const fleetData = s => ({ x: Math.round(s.x), y: Math.round(s.y), task: taskOut(s), doc: s.doc, docked: s.docked ? s.docked.name : null, cls: s.cls, hf: +(s.hull/s.maxHull).toFixed(3), sails: Math.round(s.sails), crew: s.crew, cap: s.cap, up: s.up, name: s.name });
 const threat = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.surrendered && (o === tracked || o === fleetTarget || o.hitByPlayer || o.announced);
 function trimHold(){ let over = holdUsed() - holdCap(); for (const g of GK){ if (over <= 0) break; const d = Math.min(hold[g], over); hold[g] -= d; over -= d; } }
 function setForm(k){ formation = FORMS[k] ? k : 'column'; $('formBtn').textContent = FORMS[formation]; }
 function setOrders(k){ orders = ORDERS[k] ? k : 'line'; $('orderBtn').textContent = ORDERS[orders]; }
-const inCompany = s => Math.hypot(s.x - p.x, s.y - p.y) < 900;
-const taskWord = s => { const t = s.task; return !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
+let dispatches = [], dispNew = 0, shipSeq = 0;
+function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null }); if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
+  if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
+function dispBadge(){ const b = $('dispBtn'); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); }
+const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station' };
+const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']] };
+const docWord = (k, v) => (DOCS[k].find(o => o[0] === v) || DOCS[k][0])[1];
+const cleanDoc = d => { const o = Object.assign({}, DOC0); if (d) for (const k in DOCS) if (DOCS[k].some(v => v[0] === d[k])) o[k] = d[k]; return o; };
+const admits = q => (!hostile(q.nk) || q.spec.free || q.spec.land) && !iced(q);
+const openPortNear = (s, r) => { let b = null, bd = r; for (const q of ports){ if (!admits(q)) continue; const d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < bd){ bd = d; b = q; } } return b; };
+const repairCost = s => Math.round(Math.max(0, s.maxHull - s.hull) + Math.max(0, 100 - s.sails));
+function afterRepairs(s, how){ how = how || s.doc.after; if (how === 'stay') return; setTask(s, how === 'join' || !s.prev ? { type: 'fleet' } : s.prev); s.prev = null; }
+function payRepairs(s, how){ const c = Math.min(gold, repairCost(s)); gold -= c; mend(s, c); afterRepairs(s, how); return c; }
+function dock(s, port){ /* a consort goes in: safe from weather and the enemy until she sails again */
+  s.docked = port; s.x = port.ox; s.y = port.oy; s.speed = 0; s.sail = 0; s.sailCap = null; s.evade = null; const t = s.task, cost = repairCost(s), why = t && t.why;
+  if (t && t.type === 'trade'){ tradeCall(s, port); if (cost > 8 && cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); } return; }
+  if (cost > 8){ if (cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); dispatch(s, 'In at ' + port.name + (why === 'weather' ? ' out of the weather' : '') + '. Repairs made good for ' + cost + ' gold, within my allowance. ' + docWord('after', s.doc.after) + '.'); if (why !== 'weather') afterRepairs(s); }
+    else dispatch(s, 'In at ' + port.name + ' with hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent and sails at ' + Math.round(s.sails) + '. The yard asks ' + cost + ' gold to make her good. I await your orders.', 'repair'); }
+  else if (why) dispatch(s, 'Safe in at ' + port.name + (why === 'weather' ? ', out of the weather. I shall sail again when it clears.' : '.'));
+  else say('The ' + s.name + ' is in at ' + port.name + ' and lies safe at anchor there.'); }
+function runFor(s, q, why){ if (s.task && s.task.type !== 'port' && s.task.type !== 'fleet') s.prev = s.task; else if (!s.task || s.task.type === 'fleet') s.prev = null; setTask(s, { type: 'port', port: q, flee: true, why });
+  dispatch(s, why === 'weather' ? 'Glass falling. I am running for ' + q.name + '.' : 'Hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent, sails at ' + Math.round(s.sails) + '. I am breaking off for ' + q.name + '.'); }
+function tradeCall(s, port){ const t = s.task, other = t.ends[t.idx ^ 1]; /* sell what she brought, buy what the other end wants */
+  if (t.cargo){ const rev = Math.round(price(port, t.cargo.g)*.9*t.cargo.tons), profit = rev - t.cargo.cost, share = Math.max(0, Math.round(profit*.1)); gold += rev - share; if (profit > 0) plunder += profit - share;
+    dispatch(s, 'Sold ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear' : 'a loss of ' + -profit + ' gold') + (share ? ', ' + share + ' of it to her company.' : '.')); t.cargo = null; t.runs = (t.runs || 0) + 1; }
+  let best = null, bm = 1; for (const g of GK){ if (port.spec.land && port.spec.mk.indexOf(g) < 0) continue; const m = price(other, g)*.9 - price(port, g); if (m > bm){ bm = m; best = g; } }
+  if (best){ const pr = price(port, best), tons = Math.min(s.t.hold, Math.floor(gold*.6/pr)); if (tons > 0){ gold -= tons*pr; t.cargo = { g: best, tons, cost: tons*pr }; } }
+  s.dwell = 14; }
+function think(s){ /* once a second each captain looks at the sky, at his ship and at the enemy, and acts on his standing orders */
+  const D2 = s.doc, sea = s.cap.sea, frac = s.hull/s.maxHull, flee = s.task && s.task.type === 'port' && s.task.flee;
+  const blow = hurr ? hurr.stage === 1 || sea >= 3 : weather.kind === 'storm' && weather.k > (sea >= 3 ? .25 : .65);
+  s.sailCap = blow ? (hurr && hurr.stage === 1 && !flee ? 0 : .5) : null;
+  if (state !== 'play' && inCompany(s)) return;
+  if (hurr && blow && D2.wx === 'port' && !flee){ const q = openPortNear(s, 1300 + sea*500); if (q){ runFor(s, q, 'weather'); return; } }
+  if (D2.dmg > 0 && (frac < D2.dmg || s.sails < 22) && !flee){ const q = openPortNear(s, 1e9); if (q){ runFor(s, q, 'damage'); return; } }
+  s.evade = null; if (D2.foe !== 'any' && s.task && s.task.type !== 'fleet' && Math.hypot(p.x - s.x, p.y - s.y) > 1000){ const mine = s.hull*(s.guns + 1)*(D2.foe === 'equal' ? 1.6 : 1); let bd = 800;
+    for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd && o.hull*(o.guns + 1) > mine){ bd = d; s.evade = o; } } } }
+function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null; return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
+function taskFrom(d, s){ const P = n => ports.find(q => q.name === n), ends = Array.isArray(d.ends) ? d.ends.map(P) : null, okEnds = ends && ends.length === 2 && ends[0] && ends[1];
+  if (d.type === 'port' && P(d.port)) return { type: 'port', port: P(d.port) }; if (d.type === 'hold') return { type: 'hold' };
+  if (d.type === 'trade' && okEnds) return { type: 'trade', ends, idx: d.idx ? 1 : 0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null };
+  const at = Array.isArray(d.at) && d.at[0] > 50 && d.at[1] > 50 && d.at[0] < W - 50 && d.at[1] < H - 50 ? [+d.at[0], +d.at[1]] : [s.x, s.y];
+  return { type: 'raid', at, prey: null, label: ['cruise', 'patrol', 'blockade'].indexOf(d.label) >= 0 ? d.label : undefined, until: d.until ? d.until|0 : undefined, ends: okEnds ? ends : undefined, idx: d.idx ? 1 : 0, port: d.label === 'blockade' ? P(d.port) : undefined }; }
+function assign(s, kind, q){ const here = openPortNear(s, 1e9) || q, home = ports.find(x => x.name === homeName) || q;
+  if (kind === 'cruise') setTask(s, { type: 'raid', label: 'cruise', at: [q.ox, q.oy], prey: null, until: calIdx() + 3 });
+  else if (kind === 'blockade') setTask(s, { type: 'raid', label: 'blockade', at: [q.ox, q.oy], prey: null, port: q });
+  else if (kind === 'patrol') setTask(s, { type: 'raid', label: 'patrol', at: [q.ox, q.oy], prey: null, ends: [here, q], idx: 1 });
+  else if (kind === 'trade'){ if (q === home){ say('Choose a port other than your home port to trade with.'); return; } setTask(s, { type: 'trade', ends: [home, q], idx: Math.hypot(home.ox - s.x, home.oy - s.y) < Math.hypot(q.ox - s.x, q.oy - s.y) ? 0 : 1, cargo: null }); } }
+function fleetSignal(kind){ const sq = squad(); if (kind === 'recall'){ sq.forEach(s => setTask(s, { type: 'fleet' })); say('Signal to all ships: rejoin the flag.'); }
+  else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); }); say('Signal to all ships: make for the nearest open port.'); }
+  else { const q = ports.find(x => x.name === homeName); sq.forEach(s => setTask(s, { type: 'port', port: q })); say('Signal to all ships: rendezvous at ' + homeName + '.'); } }
+const inCompany = s => !s.docked && Math.hypot(s.x - p.x, s.y - p.y) < 900;
+const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? 'Loading at ' : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.ends[t.idx].name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
   : t.flee && !t.arrived ? 'Running for ' + t.port.name
   : t.arrived ? 'Waiting at ' + t.port.name : 'Bound for ' + t.port.name; };
-function setTask(s, t){ s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
+function setTask(s, t){ if (s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
 const fairGame = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.gone && (o === fleetTarget || o.owner === 'pirate' || prize(o) && (hostile(o.nation) || o.hitByPlayer));
   // what a consort may take on her own
 const POLICY = { plunder:'Plunder and release', keep:'Take into the fleet', send:'Send in as prizes', leave:'Leave to the flagship' };
@@ -108,15 +159,20 @@ function renderOrders(){
 }
 function detached(s, dt){ // a consort acting on her own orders
   const t = s.task; let want = s.h; s.speedMul = s.baseMul;
+  if (s.evade && s.evade.sinking == null){ s.sail = 1; return Math.atan2(s.y - s.evade.y, s.x - s.evade.x); } /* too strong for her: she shows her heels */
   if (t.type === 'hold'){ s.sail = 0; }
+  else if (t.type === 'trade'){ const q = t.ends[t.idx], d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true; dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.'); } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
   else if (t.type === 'port'){ const d = Math.hypot(t.port.ox - s.x, t.port.oy - s.y);
-    if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ' and waits for you there.');
+    if (d < 180 && admits(t.port)){ dock(s, t.port); return s.h; }
+    if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ', which is closed to her, and waits outside for you.');
       } if (inCompany(s) && Math.hypot(p.x - s.x, p.y - s.y) < 420){ setTask(s, { type: 'fleet' });
       say('The ' + s.name + ' rejoins the fleet.'); } }
     else { s.sail = 1; want = navTo(s, t.port.ox, t.port.oy, dt); } }
   else { // raid or chase
     if (t.type === 'chase' && (!t.prey || t.prey.sinking != null || t.prey.released || t.prey.gone || ships.indexOf(t.prey) < 0)){ say('The ' + s.name + ' has lost her chase and returns to the fleet.');
       setTask(s, { type: 'fleet' }); return want; }
+    if (t.type === 'raid' && t.until && calIdx() > t.until){ dispatch(s, 'My cruise is out. I am returning to the flag.'); setTask(s, { type: 'fleet' }); return want; }
+    if (t.type === 'raid' && t.ends && !t.prey && Math.hypot(t.at[0] - s.x, t.at[1] - s.y) < 650){ t.idx ^= 1; t.at = [t.ends[t.idx].ox, t.ends[t.idx].oy]; s.loiter = null; }
     if (t.type === 'raid'){ s.scanT -= dt; if (s.scanT <= 0 || t.prey && (t.prey.sinking != null || t.prey.released || t.prey.gone)){ s.scanT = 1.5; t.prey = null; let bd = 2400;
       for (const o of ships){ if (!fairGame(o)) continue; const od = Math.hypot(o.x - s.x, o.y - s.y); if (od < bd){ bd = od; t.prey = o; } } } }
     const o = state === 'play' ? t.prey : null; // while you lie in port your ships neither give nor take fire
@@ -130,6 +186,10 @@ function detached(s, dt){ // a consort acting on her own orders
   return want;
 }
 function fleetAI(s, dt){
+  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && state === 'play' && (s.dwell -= dt) <= 0){ const t = s.task; t.idx ^= 1; s.h = s.docked.out; s.docked = null; s.sail = 1; }
+    else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' }); say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
+    else if (s.task && s.task.why === 'weather' && !hurr && weather.kind !== 'storm' && repairCost(s) <= 8){ afterRepairs(s, s.prev ? 'station' : 'join'); } return; }
+  s.thinkT = (s.thinkT || 0) - dt; if (s.thinkT <= 0){ s.thinkT = 1; think(s); }
   if (s.task && s.task.type !== 'fleet'){ const want = state === 'play' || !inCompany(s) ? detached(s, dt) : (s.sail = 0, s.h); moveShip(s, clamp(angd(avoid(s, want), s.h)*3, -1, 1), dt); return; }
   const i = s.slot || 1, k = Math.ceil(i/2), sd = i % 2 ? 1 : -1;
   s.off = formation === 'column' ? [-105*i, 0] : formation === 'abreast' ? [0, sd*100*k] : [-80*k, sd*90*k];
@@ -190,6 +250,12 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
   if (mode === 'court'){ el('div', 'mast', 'Court of Vice-Admiralty'); el('div', 'dateline', 'Sitting at ' + data.port + ' · ' + dateStr());
     el('p', 'lead', 'Be it known that the following vessels, taken at sea under a lawful commission, are this day condemned as good and lawful prize, and the proceeds ordered paid to their captor.');
     data.list.forEach(v => row(v.n, v.v + ' gold')); row('Paid over this day', data.total + ' gold', 'total'); el('p', 'sig', 'By order of the Judge, and God save the King.'); }
+  else if (mode === 'dispatches'){ dispNew = 0; dispBadge(); el('div', 'mast', 'Dispatches'); el('div', 'dateline', dateStr() + ' · from the captains of your fleet');
+    if (!dispatches.length) el('p', 'lead', 'Nothing has come in. Your captains write when they make port, break off, or have something to report.');
+    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
+      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null;
+      if (v.ask){ const c = repairCost(s), r = el('div', 'dbtns'); [['back', 'Pay ' + c + ' and send her back'], ['join', 'Pay and have her rejoin'], ['stay', 'Pay and keep her in port'], ['', 'Leave her as she is']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'dp_' + (o[0] || 'leave') + i; b2.textContent = o[1]; b2.disabled = !!o[0] && gold < 1;
+        b2.addEventListener('click', () => { v.ask = null; if (o[0]){ const paid = payRepairs(s, o[0] === 'back' ? 'station' : o[0]); v.t += ' [Paid ' + paid + ' gold. ' + (o[0] === 'back' ? 'Sent back to her station.' : o[0] === 'join' ? 'Ordered to rejoin.' : 'Kept in port.') + ']'; } else v.t += ' [Left unrepaired.]'; openPaper('dispatches'); }); r.appendChild(b2); }); } }); }
   else { el('div', 'mast', 'The ' + homeName + ' Gazette'); const ws = [...wars].map(w => NAT[w.slice(0, 2)].land + ' and ' + NAT[w.slice(3)].land).join('; ');
     el('div', 'dateline', dateStr() + ' · ' + (ws ? 'At war: ' + ws : 'The nations are at peace'));
     if (!gazette.length) el('p', 'lead', 'No news has come in yet. The packet is expected.');
