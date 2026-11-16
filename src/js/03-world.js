@@ -149,9 +149,11 @@ const at = (m, x, y) => x < 0 || y < 0 || x >= W || y >= H ? 1 : m[(y/RES|0)*MW 
 const isLand = (x, y) => at(landM, x, y), isNear = (x, y) => at(nearM, x, y);
 /* at this scale the mouths of the great bays close up, so pilot channels are kept clear through them */
 const CHANNELS = [[[-75.75, 36.95], [-76.0, 36.97], [-76.12, 37.05], [-76.14, 37.6], [-76.22, 38.3], [-76.36, 38.85], [-76.4, 39.15]], [[-76.05, 36.97], [-76.3, 36.96]], [[-76.14, 37.2], [-76.42, 37.24]], [[-74.8, 38.75], [-75.03, 38.87], [-75.2, 39.1], [-75.4, 39.33]]];
-const onChannel = (x, y, r) => { for (const ch of CHANNELS) for (let i = 0; i < ch.length - 1; i++){ const ax = X(ch[i][0]), ay = Y(ch[i][1]), bx = X(ch[i+1][0]), by = Y(ch[i+1][1]), dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax)*dx + (y - ay)*dy)/(dx*dx + dy*dy))); if (Math.hypot(x - ax - dx*t, y - ay - dy*t) < r) return true; } return false; };
+const onChannel = (x, y, r) => { for (const ch of CHANNELS) for (let i = 0; i < ch.length - 1; i++){ const ax = X(ch[i][0]), ay = Y(ch[i][1]), bx = X(ch[i+1][0]), by = Y(ch[i+1][1]), dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax)*dx + (y - ay)*dy)/(dx*dx + dy*dy)));
+  if (Math.hypot(x - ax - dx*t, y - ay - dy*t) < r) return true; } return false; };
 { let x0 = 1e9, y0 = 1e9, x1 = 0, y1 = 0; CHANNELS.forEach(ch => ch.forEach(v => { x0 = Math.min(x0, X(v[0])); x1 = Math.max(x1, X(v[0])); y0 = Math.min(y0, Y(v[1])); y1 = Math.max(y1, Y(v[1])); }));
-  for (let j = Math.floor((y0 - 100)/RES); j <= (y1 + 100)/RES; j++) for (let i = Math.floor((x0 - 100)/RES); i <= (x1 + 100)/RES; i++){ const k = j*MW + i; if (nearM[k] && !landM[k] && onChannel((i + .5)*RES, (j + .5)*RES, 80)) nearM[k] = 0; } }
+  for (let j = Math.floor((y0 - 100)/RES); j <= (y1 + 100)/RES; j++) for (let i = Math.floor((x0 - 100)/RES); i <= (x1 + 100)/RES; i++){ const k = j*MW + i;
+    if (nearM[k] && !landM[k] && onChannel((i + .5)*RES, (j + .5)*RES, 80)) nearM[k] = 0; } }
 const shore = (x, y) => at(landM, x, y) || at(landM, x+26, y) || at(landM, x-26, y) || at(landM, x, y+26) || at(landM, x, y-26);
 
 /* ports: snap each town to the nearest coast and face it out to sea */

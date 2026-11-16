@@ -18,7 +18,9 @@ function decode(t){ try { const d = JSON.parse(decodeURIComponent(escape(atob(St
 function summary(d){ const c = CLASSES[d.cls] ? CLASSES[d.cls].cname : 'sloop', when = new Date(d.t || 0);
   return (d.rank || 'Swab') + ' · ' + c + ' · ' + (d.gold|0) + ' gold · near ' + (d.where || 'Kingston') + ' · ' + (DIFFS[d.diff] ? DIFFS[d.diff].name : 'Normal') + ' · ' +
     when.toLocaleDateString([], { month:'short', day:'numeric' }) + ' ' + when.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
-function loadGame(d){ closeMenu(); setPaused(false); $('title').hidden = true; $('over').hidden = true; $('port').hidden = true; initAudio(); const oldLog = !!(d && d.p && d.cal0 == null); newGame(d); setDiff(diff); state = 'play';
+function loadGame(d){ closeMenu(); setPaused(false); $('title').hidden = true; $('over').hidden = true;
+  $('port').hidden = true; initAudio(); const oldLog = !!(d && d.p && d.cal0 == null);
+  newGame(d); setDiff(diff); state = 'play';
   if (oldLog) later(() => say('This log was kept under the old rules. The calendar restarts in January 1756 and the wars now follow history.'), 3900);
   say('Voyage resumed near ' + (d.where || 'Kingston') + '. Other ships have moved on since you saved.'); }
 function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
@@ -26,14 +28,18 @@ function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
   document.querySelectorAll('.diffNote').forEach(e => { e.textContent = D().name + ': ' + D().note; }); }
 function refreshTitle(){ const l = latest(); $('contBtn').hidden = !l; if (l) $('contBtn').textContent = 'Continue: ' + summary(l); }
 function openMenu(){ setChart(false); menuOpen = true; held.left = held.right = false; $('menu').hidden = false; $('saveCode').value = ''; renderMenu(); $('menuClose').focus(); }
-function closeMenu(){ menuOpen = false; $('menu').hidden = true; $('manifest').hidden = true; $('fleetSheet').hidden = true; $('paper').hidden = true; if (!$('ask').hidden){ $('ask').hidden = true; const f = askDefault; askDefault = null; if (f) f(); } if (state === 'port') renderPort(); refreshTitle(); document.activeElement && document.activeElement.blur(); }
+function closeMenu(){ menuOpen = false; $('menu').hidden = true; $('manifest').hidden = true;
+  $('fleetSheet').hidden = true; $('paper').hidden = true; if (!$('ask').hidden){ $('ask').hidden = true;
+  const f = askDefault; askDefault = null; if (f) f(); } if (state === 'port') renderPort();
+  refreshTitle(); document.activeElement && document.activeElement.blur(); }
 function renderMenu(focusId, note){
   const ok = canSave(), live = state === 'play' || state === 'port';
   $('menuNote').textContent = note || (!live ? 'Start or load a voyage to save it.' : ok ? 'The game also saves by itself each time you enter or leave a port.' : 'You cannot save with shot in the air or an enemy closing. Shake her off first.');
   const ul = $('slots'); ul.textContent = '';
   SLOTS.forEach(v => { const d = readSlot(v[0]), e = document.createElement('li'), sp = document.createElement('span'), sm = document.createElement('small'), bs = document.createElement('span');
     sp.textContent = v[1]; sm.textContent = d ? summary(d) : 'Empty'; sp.appendChild(sm); bs.className = 'btns';
-    const btn = (id, label, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label; b.disabled = !on; b.addEventListener('click', fn); bs.appendChild(b); };
+    const btn = (id, label, on, fn) => { const b = document.createElement('button');
+      b.type = 'button'; b.id = id; b.textContent = label; b.disabled = !on; b.addEventListener('click', fn); bs.appendChild(b); };
     if (v[0] !== 'auto') btn('sv_' + v[0], 'Save', ok, () => { const w = writeSlot(v[0]); renderMenu('sv_' + v[0], w ? 'Saved to ' + v[1] + '.' : 'This browser would not keep the save. Use the save code below instead.'); });
     btn('ld_' + v[0], 'Load', !!d, () => loadGame(d));
     e.appendChild(sp); e.appendChild(bs); ul.appendChild(e); });
@@ -43,17 +49,20 @@ function renderMenu(focusId, note){
 document.querySelectorAll('[data-diff]').forEach(b => b.addEventListener('click', () => setDiff(b.dataset.diff)));
 const ERAS = { 0:'January 1750. The long peace: trade, smuggle, hunt the last pirates. War is six years off.', 72:'January 1756. Britain and France are a few months from open war, and Spain will follow in 1762.', 108:'January 1759. Britain and France are at war and the governors are signing letters of marque.' };
 const STARTS = { Kingston:'Kingston, Jamaica: the sugar islands, Spanish trade to windward, the plate fleet to leeward.', Charleston:'Charleston, Carolina: rice and indigo, with Spanish Florida a day\'s sail south.', 'New York':'New York: flour for the islands, and more privateers than any port in America.', Boston:'Boston: rum, fish and masts, with Louisbourg and the French fishery to the north.' };
-function setStart(v){ startName = STARTS[v] ? v : 'Kingston'; document.querySelectorAll('[data-start]').forEach(b => b.setAttribute('aria-pressed', b.dataset.start === startName)); $('startNote').textContent = STARTS[startName]; }
+function setStart(v){ startName = STARTS[v] ? v : 'Kingston'; document.querySelectorAll('[data-start]').forEach(b => b.setAttribute('aria-pressed', b.dataset.start === startName));
+  $('startNote').textContent = STARTS[startName]; }
 document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => setStart(b.dataset.start))); setStart('Kingston');
 function setFoul(v){ fouling = !!v; store('foul', fouling ? '1' : '0'); const b = $('foulBtn'); b.setAttribute('aria-pressed', fouling); b.textContent = 'Hull fouling: ' + (fouling ? 'on' : 'off'); }
 $('foulBtn').addEventListener('click', () => setFoul(!fouling)); setFoul(recall('foul') === '1');
-function setEra(v){ startCal = ERAS[v] ? +v : 72; document.querySelectorAll('[data-era]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.era === startCal)); $('eraNote').textContent = ERAS[startCal]; }
+function setEra(v){ startCal = ERAS[v] ? +v : 72; document.querySelectorAll('[data-era]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.era === startCal));
+  $('eraNote').textContent = ERAS[startCal]; }
 document.querySelectorAll('[data-era]').forEach(b => b.addEventListener('click', () => setEra(b.dataset.era))); setEra(72);
 $('menuBtn').addEventListener('click', e => { openMenu(); e.currentTarget.blur(); });
 $('menuClose').addEventListener('click', closeMenu);
 $('manifestClose').addEventListener('click', closeMenu);
 $('cargoBtn').addEventListener('click', e => { openManifest(); e.currentTarget.blur(); });
-function setKeys(open, keep){ $('keys').classList.toggle('shut', !open); $('keysBtn').textContent = open ? 'Hide keys' : 'Keys'; $('keysBtn').setAttribute('aria-expanded', open); if (keep) store('keys', open ? '1' : '0'); }
+function setKeys(open, keep){ $('keys').classList.toggle('shut', !open); $('keysBtn').textContent = open ? 'Hide keys' : 'Keys';
+  $('keysBtn').setAttribute('aria-expanded', open); if (keep) store('keys', open ? '1' : '0'); }
 $('keysBtn').addEventListener('click', e => { setKeys($('keys').classList.contains('shut'), true); e.currentTarget.blur(); }); setKeys(recall('keys') !== '0');
 $('gazBtn').addEventListener('click', e => { openPaper('gazette'); e.currentTarget.blur(); }); $('paperClose').addEventListener('click', closeMenu);
 $('holdLine').addEventListener('click', openManifest);

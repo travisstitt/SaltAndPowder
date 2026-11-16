@@ -1,7 +1,8 @@
 (() => {
 'use strict';
 const TAU = Math.PI * 2, DEG = 900, KX = .891, LON0 = -98, LAT1 = 47.2, W = 31676, H = 35460, RANGE = 300, BALL_V = 540, BOARD_R = 90;
-const PACES = [[.5, 'Slow'], [.7, 'Steady'], [1, 'Brisk'], [1.6, 'Swift'], [3, 'Passage'], [8, 'Make passage']]; /* the last is for open water under the helmsman, and drops back when anything comes in sight */
+const PACES = [[.5, 'Slow'], [.7, 'Steady'], [1, 'Brisk'], [1.6, 'Swift'], [3, 'Passage'], [8, 'Make passage']];
+  /* the last is for open water under the helmsman, and drops back when anything comes in sight */
 const DIFFS = {
   easy:   { name:'Easy',   dmg:.6,  spread:.17, reload:6,   hunt:1.4, maxH:2, loot:1.25, rep:.7,  purse:300, note:'Enemies shoot wide and reload slowly, you take less damage, prizes pay a quarter more, and you start with 300 gold.' },
   normal: { name:'Normal', dmg:1,   spread:.12, reload:5,   hunt:1,   maxH:4, loot:1,    rep:1,   purse:0,   note:'The game as designed.' },

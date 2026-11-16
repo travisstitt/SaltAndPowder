@@ -26,6 +26,7 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Aim assist on / off | `T` |
 | Fleet formation: line astern / abreast / wedge | `G` |
 | Gazette | `J` |
+| Make a passage (8× on a set course) | `6` |
 | Fleet orders: line of battle / engage at will / general chase / hold fire | `H` |
 | Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
 | Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
@@ -47,7 +48,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 Three suites, all in headless Chromium (they need Playwright):
 
-- `node tests/rules.js` runs 22 fast checks in about two seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
+- `node tests/rules.js` runs 30 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
 - `node tests/run-tests.js` runs 143 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
 - `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
 
@@ -61,12 +62,20 @@ The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC
 
 ## How it plays
 
-- **The map** runs from the Spanish Main north to Louisbourg on Cape Breton, and from Veracruz east to Barbados and Bermuda: the Caribbean, the Gulf of Mexico, Florida, the Carolinas, the Chesapeake and Delaware capes, New York, New England and Nova Scotia. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 900 units to the degree of latitude, on a projection that is true at 27° N. The Chesapeake and Delaware bays are too narrow to sail at this scale, so Norfolk and Philadelphia stand at their capes.
-- **Ports.** There are 106, in four sizes. Cities (Boston, New York, Philadelphia, Charleston, Kingston, Havana, Cap-Français and others) and towns have a governor, a yard, a prize court and letters of marque. Small ports have a magistrate who has only dispatches to send. Landings, more than forty of them from Canso to Bonaire, are fishing villages, plantation wharves and logwood camps: a few goods, a careenage, no governor, no customs officer, and they never turn anyone away, whatever flag is hunting you. Havana, English Harbour and Halifax are royal dockyards. St Eustatius, Charlotte Amalie and Monte Cristi are free ports.
+- **The map** runs from the Spanish Main north to Louisbourg on Cape Breton, and from Veracruz east to Barbados and Bermuda: the Caribbean, the Gulf of Mexico, Florida, the Carolinas, the Chesapeake and Delaware capes, New York, New England and Nova Scotia. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 900 units to the degree of latitude, on a projection that is true at 27° N. Pilot channels are kept open through the mouths of the Chesapeake and the Delaware, so Norfolk, Yorktown, Annapolis and Philadelphia lie inside their bays.
+- **Ports.** There are 108, in four sizes. Cities (Boston, New York, Philadelphia, Charleston, Kingston, Havana, Cap-Français and others) and towns have a governor, a yard, a prize court and letters of marque. Small ports have a magistrate who has only dispatches to send. Landings, more than forty of them from Canso to Bonaire, are fishing villages, plantation wharves and logwood camps: a few goods, a careenage, no governor, no customs officer, and they never turn anyone away, whatever flag is hunting you. Havana, English Harbour and Halifax are royal dockyards. St Eustatius, Charlotte Amalie and Monte Cristi are free ports.
 - **Five flags.** Denmark holds St Thomas and St Croix and is neutral throughout.
 - **Home port.** A new voyage can start from Kingston, Charleston, New York or Boston.
 - **The northern trade.** Four more goods: salt fish, flour and provisions, rice, and naval stores. The mainland feeds the sugar islands and takes molasses home for rum. Monte Cristi, a Spanish landing on the French border of Hispaniola, pays a smuggler's price for flour and fish.
 - **Traffic.** The sea is peopled around you: up to about thirty merchantmen within some 70 leagues, more off the great ports and few in mid-ocean, with ships beyond the horizon forgotten and new ones raised on the routes. Besides West Indiamen, snows and convoys there are coasting schooners and sloops between the small ports, fishing boats off the landings, and fast packets whose mail bags are worth taking.
+- **Making a passage.** A sixth pace (key 6) runs the clock at eight times for open water under the helmsman. It drops back by itself when a hostile sail or any ship close aboard appears, when the weather turns, or at landfall.
+- **The ship's company.** The hands have a mood: prize money, pay and a run ashore lift it; long cruises, lost fights and unpaid wages sink it. A contented crew serves the guns faster, and a sullen one deserts. Taverns in the larger towns offer a sailing master, a gunner, a surgeon and a boatswain, each with a standing benefit, and each can be lost to raking fire.
+- **Careening (optional).** With hull fouling switched on at the title screen, weed slowly takes up to 18 per cent off your speed until you careen at any port or landing.
+- **Shore actions.** A port that is closed to you can be attacked from boats: cut a merchantman out of the anchorage at night, or land and raid a small port or landing. Odds depend on your numbers, the forts, darkness and weather.
+- **Rivals.** Four named captains, French, Spanish, British and a pirate, cruise their home waters, appear in the gazette as they take prizes, grow more dangerous with success, and carry a reward. (The names are invented.)
+- **Trading with the enemy.** In wartime a British cruiser will stop a British trader carrying flour or fish near French or neutral free ports: bribe, run or lose the cargo.
+- **Winter.** From December to March, Louisbourg, Canso, Halifax and Annapolis Royal are shut by ice, the northern trade thins, and the land north of the Delaware lies under snow. Autumn colours the northern woods from September.
+- **French and Spanish service.** France offers the relief of Louisbourg and a cruise against the Jamaica trade; Spain, from 1762, a cruise off Jamaica and the defence of Havana.
 - **Sea conditions.** The Gulf Stream sets north-east at about two knots through the Florida Straits and up the coast past Hatteras. Fog is commoner north of New York, and winter brings gales north of the Carolinas.
 - **On the chart** ports are marked with their flags. Cities are always named; towns, small ports and landings are named as you zoom in.
 - **Wind** shifts over time. You cannot sail into it; a broad reach is fastest. The compass shows the wind, your point of sail and your speed.
@@ -82,6 +91,9 @@ The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC
 - **Operations of the war.** Holding the right commission, governors offer dated operations: the blockade of Cap-Français (1757 to 1761), the troop convoy to Martinique (early 1762), the siege of Louisbourg (spring 1758), the siege or the defence of Havana (summer 1762), and breaking a British blockade for France. Dispatches may also be for Europe, handed to a packet at the eastern edge of the chart.
 - **The gazette** (J) keeps the dated news of the war and of your own doings. The prize court reads out each condemnation on its own sheet.
 - **Retiring.** The governor at your home port will let you swallow the anchor: the voyage ends with a reckoning of your years at sea, prizes, rank and fortune.
+- **On the water.** The Gulf Stream shows as lines of weed and bluer streaks setting north-east. Sunk ships leave planks, casks and a boat pulling clear. Lighters ply between the roads and the quay at every town. At night ships carry a glowing stern lantern, the moon lies on the water in clear weather, and the larger ports show a harbour light.
+- **Regional towns.** New England ports are clapboard and shingle, New York keeps its Dutch gables, and Charleston and Savannah are stucco.
+- **Chart extras.** The great trade routes are pricked out on the chart, and the small chart names the nearest ports.
 - **Flags and paint.** Ships and forts fly the flags of the 1750s: the British red ensign, the Spanish Burgundy cross, the white Bourbon ensign of France and the Dutch tricolour; a privateer flies her patron's. Warships have varnished sides, a black wale and gilded sterns, and open their gun ports when they clear for action. The four flags under the compass are tied in red where nations are at war.
 - **Shipyard.** Yards sell sloops, Bermuda sloops, schooners, snows, brigs and frigates; the royal dockyards also sell fifty-gun ships and seventy-fours, the two-deckers of the line. Each has its own speed, handling, guns and hull. Your old ship is taken in part exchange and your refits carry over.
 - **Commissions.** Governors offer paid work: carry dispatches to another port, raid an enemy nation's trade, hunt a wanted pirate, or board a Spanish plate ship.

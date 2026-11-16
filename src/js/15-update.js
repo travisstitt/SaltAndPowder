@@ -1,13 +1,18 @@
-function update(dt){ tick++;
+function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2 : mo >= 8 ? 1 : 0; if (sn !== seasonNow){ seasonNow = sn; tiles.clear(); tilesLo.clear(); } }
   wind.timer -= dt;
   if (wind.timer <= 0){ wind.timer = rand(12, 26); wind.tDir = wind.dir + rand(-1.2, 1.2); wind.tStr = rand(.7, 1.3); }
   wind.dir += angd(wind.tDir, wind.dir)*dt*.08; wind.str += (wind.tStr - wind.str)*dt*.1;
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) $('toast').classList.add('off'); }
   for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; q.life -= dt; if (q.life <= 0){ parts.splice(i, 1); continue; }
-    q.x += q.vx*dt; q.y += q.vy*dt; if (q.k === 'smoke'){ q.vx = q.vx*.96 + Math.cos(wind.dir)*1.2; q.vy = q.vy*.96 + Math.sin(wind.dir)*1.2; } else if (q.k === 'chunk'){ q.vx *= 1 - dt*1.2; q.vy *= 1 - dt*1.2; } }
-  for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; if (q.k === 'chunk' && q.life < .06 && !q.wet){ q.wet = true; parts.push({ k:'splash', x: q.x, y: q.y, vx: 0, vy: 0, life: .45, max: .45, size: 2.6 }); } }
-  { const wx = Math.cos(wind.dir)*11*wind.str*windMul(), wy = Math.sin(wind.dir)*11*wind.str*windMul(), fast = weather.kind === 'storm' || weather.kind === 'rain' ? 1 + 2*weather.k : 1; // wind and rain clear the smoke
-    for (let i = smokes.length-1; i >= 0; i--){ const q = smokes[i]; q.life -= dt*fast; if (q.life <= 0){ smokes.splice(i, 1); continue; } q.vx *= 1 - dt*.9; q.vy *= 1 - dt*.9; q.x += (q.vx + wx)*dt; q.y += (q.vy + wy)*dt; } }
+    q.x += q.vx*dt; q.y += q.vy*dt; if (q.k === 'smoke'){ q.vx = q.vx*.96 + Math.cos(wind.dir)*1.2;
+      q.vy = q.vy*.96 + Math.sin(wind.dir)*1.2; } else if (q.k === 'chunk'){ q.vx *= 1 - dt*1.2; q.vy *= 1 - dt*1.2; } }
+  for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; if (q.k === 'chunk' && q.life < .06 && !q.wet){ q.wet = true;
+    parts.push({ k:'splash', x: q.x, y: q.y, vx: 0, vy: 0, life: .45, max: .45, size: 2.6 }); } }
+  { const wx = Math.cos(wind.dir)*11*wind.str*windMul(), wy = Math.sin(wind.dir)*11*wind.str*windMul(), fast = weather.kind === 'storm' || weather.kind === 'rain' ? 1 + 2*weather.k : 1;
+    // wind and rain clear the smoke
+    for (let i = smokes.length-1; i >= 0; i--){ const q = smokes[i]; q.life -= dt*fast;
+      if (q.life <= 0){ smokes.splice(i, 1); continue; } q.vx *= 1 - dt*.9; q.vy *= 1 - dt*.9;
+      q.x += (q.vx + wx)*dt; q.y += (q.vy + wy)*dt; } }
   for (const s of ships) ailing(s, dt); ailing(p, dt);
   if (parts.length > 1600) parts.splice(0, parts.length - 1600);
   shake *= Math.pow(.02, dt);
@@ -15,20 +20,26 @@ function update(dt){ tick++;
   const sailing = state === 'play';
   clock += dt; weatherTick(dt); polT -= dt; if (polT <= 0){ polT = rand(220, 380); if (calIdx() > 166) politics(); }
 
+  for (let i = wrecks.length - 1; i >= 0; i--){ const w = wrecks[i]; w.t -= dt; w.x += Math.cos(wind.dir)*3*dt; w.y += Math.sin(wind.dir)*3*dt; if (w.t <= 0) wrecks.splice(i, 1); }
   if (sailing && officers.bosun && p.sails < 100 && p.sails > 8 && !tracked) p.sails = Math.min(100, p.sails + dt*.12);
   if (sailing && clock > 150 && clock - dt <= 150 && recall('keys') == null) setKeys(false); /* by now the keys are learned; the legend folds itself away */
-  if (paceIdx === 5 && sailing){ const why = !course || !autoHelm ? 'The helmsman needs a course to make a passage.' : weather.kind === 'storm' || hurr ? 'Weather coming on. Back to a brisk pace.' : ships.some(o => o.owner !== 'player' && !o.released && o.sinking == null && (Math.hypot(o.x - p.x, o.y - p.y) < 380 || (o.owner === 'pirate' || hostile(o.nation) || o.provoked) && warship(o) && Math.hypot(o.x - p.x, o.y - p.y) < 1700)) ? 'Sail in sight. Back to a brisk pace.' : Math.hypot(course.ox - p.x, course.oy - p.y) < 900 ? 'Landfall. Back to a brisk pace.' : ''; if (why){ setPace(2); say(why); } }
-  if (paceIdx === 4 && sailing && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x - p.x, o.y - p.y) < 1100)){ setPace(1); say('Enemy in sight. Back to a steady pace.'); }
+  if (paceIdx === 5 && sailing){ const why = !course || !autoHelm ? 'The helmsman needs a course to make a passage.' : weather.kind === 'storm' || hurr ? 'Weather coming on. Back to a brisk pace.' : ships.some(o => o.owner !== 'player' && !o.released && o.sinking == null && (Math.hypot(o.x - p.x, o.y - p.y) < 380 || (o.owner === 'pirate' || hostile(o.nation) || o.provoked) && warship(o) && Math.hypot(o.x - p.x, o.y - p.y) < 1700)) ? 'Sail in sight. Back to a brisk pace.' : Math.hypot(course.ox - p.x, course.oy - p.y) < 900 ? 'Landfall. Back to a brisk pace.' : '';
+    if (why){ setPace(2); say(why); } }
+  if (paceIdx === 4 && sailing && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x - p.x, o.y - p.y) < 1100)){ setPace(1);
+    say('Enemy in sight. Back to a steady pace.'); }
   const day = Math.floor(clock/MONTH); if (day > lastDay){ lastDay = day; monthTick(day); }
   if (fleetTarget && (fleetTarget.sinking != null || fleetTarget.released || fleetTarget.surrendered || fleetTarget.gone || ships.indexOf(fleetTarget) < 0)) fleetTarget = null;
   let helm = (held.right ? 1 : 0) - (held.left ? 1 : 0);
   if (sailing && course && p.alive){
     if (autoHelm && helm){ autoHelm = false; say('You have the helm. The course for ' + course.name + ' stays marked; press N to hand her back.'); }
-    if (autoHelm && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x-p.x, o.y-p.y) < 650)){ autoHelm = false; say('Enemy closing. You have the helm.'); }
+    if (autoHelm && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x-p.x, o.y-p.y) < 650)){ autoHelm = false;
+      say('Enemy closing. You have the helm.'); }
     routeT -= dt; if (routeT <= 0){ routeT = 3; routeLine = findPath(p.x, p.y, course.ox, course.oy); }
-    if (Math.hypot(course.ox-p.x, course.oy-p.y) < 210){ say('Arrived off ' + course.name + '. Drop anchor when you are ready.'); if (autoHelm) p.sail = 0; course = null; autoHelm = false; routeLine = null; }
+    if (Math.hypot(course.ox-p.x, course.oy-p.y) < 210){ say('Arrived off ' + course.name + '. Drop anchor when you are ready.');
+      if (autoHelm) p.sail = 0; course = null; autoHelm = false; routeLine = null; }
     else if (autoHelm && !melee){ const want = avoid(p, sailable(p, navTo(p, course.ox, course.oy, dt), dt)); helm = clamp(angd(want, p.h)*3, -1, 1);
-      { const c = Math.cos(p.h), n = Math.sin(p.h); if (shore(p.x + c*100, p.y + n*100) || shore(p.x + c*50, p.y + n*50)) p.speed = Math.min(p.speed, 50); } } /* close in with the land the helmsman backs his topsails rather than risk her bottom */
+      { const c = Math.cos(p.h), n = Math.sin(p.h); if (shore(p.x + c*100, p.y + n*100) || shore(p.x + c*50, p.y + n*50)) p.speed = Math.min(p.speed, 50);
+        } } /* close in with the land the helmsman backs his topsails rather than risk her bottom */
   }
   if (sailing){ if (p.sinking == null) moveShip(p, melee ? 0 : helm, dt);
     else { p.sinking -= dt; overT -= dt; if (overT <= 0) openFate(); }
@@ -38,12 +49,16 @@ function update(dt){ tick++;
   for (let i = ships.length-1; i >= 0; i--){ const s = ships[i];
     if (s.sinking != null){ s.sinking -= dt; if (s.sinking <= 0) ships.splice(i, 1); continue; }
     if (s.gone){ ships.splice(i, 1); continue; }
-    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
+    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true;
+      ships.splice(i, 1); continue; } /* hull down and gone */
     if (s.role === 'rover' && !s.surrendered){ s.ttl -= dt; if (s.ttl <= 0 && Math.hypot(s.x - p.x, s.y - p.y) > 1500) s.gone = true; }
-    if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN; } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++; else if (s.role === 'hunter') hunters++; else if (s.role === 'patrol') pat[s.nation] = (pat[s.nation] || 0) + 1;
+    if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN;
+      } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++;
+      else if (s.role === 'hunter') hunters++; else if (s.role === 'patrol') pat[s.nation] = (pat[s.nation] || 0) + 1;
     ai(s, dt);
   }
-  trafT -= dt; if (trafT <= 0){ trafT = .35; let np = 0, small = 0; for (const q of ports){ const d = dP(q); if (d < BUBBLE){ np += q.spec.land ? .6 : q.spec.sz >= 2 ? 1.6 : 1; if (q.spec.sz < 2 && d < 4200) small++; } }
+  trafT -= dt; if (trafT <= 0){ trafT = .35; let np = 0, small = 0; for (const q of ports){ const d = dP(q);
+    if (d < BUBBLE){ np += q.spec.land ? .6 : q.spec.sz >= 2 ? 1.6 : 1; if (q.spec.sz < 2 && d < 4200) small++; } }
     spawnRival(); trafWant = Math.round(clamp(4 + np*1.7, 4, 32)); if (merchants < trafWant) spawnMerchant(false); if (fishers < Math.min(7, small)) spawnFisher(); }
   patrolT -= dt; if (patrolT <= 0){ patrolT = 10; NKEYS.forEach(k => { let n = 0; for (const q of ports) if (q.nk === k && !q.spec.land && dP(q) < BUBBLE) n++; if ((pat[k] || 0) < Math.min(3, Math.ceil(n/3))) spawnPatrol(k, false); }); }
   driftT -= dt; if (driftT <= 0){ driftT = 40; NKEYS.forEach(k => { if (standing[k] < 0) repute(k, 1); }); }
@@ -61,9 +76,13 @@ function update(dt){ tick++;
     if (b.mine){ for (const s of ships){ if (s.sinking == null && s.owner !== 'player' && hitShip(b, s)){ hitS = s; struck(s);
       if (b.grape) s.crew = Math.max(0, s.crew - 3 - (rnd()*3|0)); else if (!b.chain && rnd() < .5) s.crew = Math.max(0, s.crew - 1);
       strike(b, s, b.grape ? 1 : b.chain ? 2 : 8, b.grape ? 2 : b.chain ? 12 : 1, 1); done = true; break; } } }
-    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s; if (ours){ struck(s, true); capXp(b.o); } strike(b, s, b.chain ? 2 : 6, b.chain ? 10 : 2, 1); done = true; break; } } }
-    else if (sailing && p.sinking == null && hitShip(b, p)){ hitS = p; p.lastFoe = b.o.nation || 'pirate'; strike(b, p, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; if (!tracked) engage(b.o); if (rnd() < .45 && p.crew > 6) p.crew--; }
-    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ hitS = o; strike(b, o, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; break; } } }
+    else if (!b.vp){ const ours = b.o.owner === 'player'; for (const s of ships){ if (s !== b.o && s.sinking == null && s.owner !== b.o.owner && !(ours && (s.surrendered || s.released)) && !(s.owner === 'player' && !sailing) && !(b.o.owner === 'player' && !sailing) && hitShip(b, s)){ hitS = s;
+      if (ours){ struck(s, true); capXp(b.o); } strike(b, s, b.chain ? 2 : 6, b.chain ? 10 : 2, 1); done = true; break; } } }
+    else if (sailing && p.sinking == null && hitShip(b, p)){ hitS = p; p.lastFoe = b.o.nation || 'pirate';
+      strike(b, p, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; if (!tracked) engage(b.o);
+      if (rnd() < .45 && p.crew > 6) p.crew--; }
+    else if (b.vp && sailing){ for (const o of ships){ if (o.role === 'fleet' && o.sinking == null && hitShip(b, o)){ hitS = o;
+      strike(b, o, b.chain ? 2 : 6, b.chain ? 5 : 2, D().dmg); done = true; break; } } }
     if (done){ if (hitS) impact(b, hitS); }
     else if (isLand(b.x, b.y)){ done = true; parts.push({ k:'smoke', g:190, x:b.x, y:b.y, vx:0, vy:0, life:.5, max:.5, size:5 }); }
     else if (b.life <= 0){ done = true; parts.push({ k:'splash', x:b.x, y:b.y, vx:0, vy:0, life:.6, max:.6, size:4.5 }); parts.push({ k:'ring', x:b.x, y:b.y, vx:0, vy:0, life:.9, max:.9, size:5 });
@@ -79,12 +98,14 @@ function update(dt){ tick++;
     if (m.arrived >= m.need){ say('The transports are safe in the bay at Fort-Royal.'); complete(); }
     else if (alive + m.arrived < m.need){ say('Too many transports are lost. The governor will hear of it.'); repute(m.nk, -6); mission = null; }
     else if (m.raidT > 0 && (m.raidT -= dt) <= 0){ const t = m.ships.find(q => !q.gone && q.sinking == null); if (t){ const a = Math.atan2(m.dest.oy - t.y, m.dest.ox - t.x);
-      for (const c of (plunder > 2500 ? ['frigate', 'brig'] : ['brig', 'sloop'])){ const w = waterNear(t.x + Math.cos(a)*950, t.y + Math.sin(a)*950, 200), e = makeShip(c, 'fr', 'patrol', w[0], w[1], a + Math.PI); e.provoked = true; ships.push(e); } if (sailing) say('Lookout: French cruisers ahead, standing for the convoy.'); } } }
+      for (const c of (plunder > 2500 ? ['frigate', 'brig'] : ['brig', 'sloop'])){ const w = waterNear(t.x + Math.cos(a)*950, t.y + Math.sin(a)*950, 200), e = makeShip(c, 'fr', 'patrol', w[0], w[1], a + Math.PI);
+        e.provoked = true; ships.push(e); } if (sailing) say('Lookout: French cruisers ahead, standing for the convoy.'); } } }
   if (sailing && mission && mission.type === 'away' && p.alive && Math.hypot(mission.x - p.x, mission.y - p.y) < 300){ say('The ' + mission.name + ' packet takes your dispatches aboard.'); complete(); }
   if (sailing){ nearPort = null; if (p.alive) for (const q of ports) if (Math.hypot(q.x-p.x, q.y-p.y) < 170 || Math.hypot(q.ox-p.x, q.oy-p.y) < 110){ nearPort = q; break; } }
 }
 function boardable(){ if (melee || !p.alive) return null; let best = null, bd = 85;
-  for (const s of ships){ if (s.sinking != null || s.released || s.surrendered || s.owner === 'player') continue; const d = Math.hypot(s.x-p.x, s.y-p.y); if (d < bd){ bd = d; best = s; } } return best; }
+  for (const s of ships){ if (s.sinking != null || s.released || s.surrendered || s.owner === 'player') continue;
+    const d = Math.hypot(s.x-p.x, s.y-p.y); if (d < bd){ bd = d; best = s; } } return best; }
 function grapple(){ const s = boardable(), n = searchable(); if (n && (!s || s === n)){ search(n); return; } if (!s) return;
   struck(s); melee = { s, t: 0, pc0: p.crew, ec0: Math.max(1, s.crew) }; s.grappled = true; p.grappled = true; p.speed = 0; s.speed = 0;
   say('Grapnels away! Your crew boards the ' + nm(s) + '.'); }

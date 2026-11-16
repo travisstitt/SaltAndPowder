@@ -5,7 +5,8 @@ function makeOffers(port){
   const t = others[Math.min(others.length-1, 1 + (rnd()*12|0))];
   if (t){ const d = Math.hypot(t.ox-port.ox, t.oy-port.oy);
     const aw = { en:['Falmouth', 31], es:['Cádiz', 27], fr:['Brest', 35], nl:['Amsterdam', 33], dk:['Copenhagen', 29] }[k];
-    if (aw && rnd() < .3){ const w = waterNear(W - 260, Y(aw[1]), 150), d2 = Math.hypot(w[0]-port.ox, w[1]-port.oy); o.push({ type:'away', nk:k, name:aw[0], x:w[0], y:w[1], title:'Carry dispatches for ' + aw[0], text:'The ' + aw[0] + ' packet for Europe lies to at the eastern edge of the chart, ' + Math.round(d2/DEG*20) + ' leagues away. Hand the letters over at sea.', reward: Math.round((160 + d2*.13)/10)*10, rep:8 }); }
+    if (aw && rnd() < .3){ const w = waterNear(W - 260, Y(aw[1]), 150), d2 = Math.hypot(w[0]-port.ox, w[1]-port.oy);
+      o.push({ type:'away', nk:k, name:aw[0], x:w[0], y:w[1], title:'Carry dispatches for ' + aw[0], text:'The ' + aw[0] + ' packet for Europe lies to at the eastern edge of the chart, ' + Math.round(d2/DEG*20) + ' leagues away. Hand the letters over at sea.', reward: Math.round((160 + d2*.13)/10)*10, rep:8 }); }
     else o.push({ type:'deliver', nk:k, port:t, title:'Carry dispatches to ' + t.name, text:'Sealed letters for the governor at ' + t.name + ', ' + Math.round(d/DEG*20) + ' leagues away. Paid on arrival.', reward: Math.round((100 + d*.11)/10)*10, rep:6 }); }
   const cls = ['cutter', 'schooner', 'brig'][Math.min(2, Math.floor(plunder/1500))];
   o.push(foe && rnd() < .5
@@ -26,7 +27,9 @@ function makeOffers(port){
   offers = o;
 }
 function spawnQuarry(w){ const s = makeShip(mission.cls, 'pirate', 'quarry', w[0], w[1], rnd()*TAU); s.home = w; s.t.name = 'Wanted pirate ' + s.t.cname; ships.push(s); mission.ship = s; }
-function transport(x, y, h, dest){ const t = makeShip('merchant', 'en', 'merchant', x, y, h); t.dest = dest; t.transport = true; t.t.name = 'British troop transport'; t.cargo = 0; t.goods = null; ships.push(t); return t; }
+function transport(x, y, h, dest){ const t = makeShip('merchant', 'en', 'merchant', x, y, h);
+  t.dest = dest; t.transport = true; t.t.name = 'British troop transport'; t.cargo = 0;
+  t.goods = null; ships.push(t); return t; }
 function accept(i){
   mission = offers[i]; offers = [];
   if (mission.type === 'escort'){ const from = curPort || ports[0], dest = ports.find(q => q.name === 'Fort-Royal'); mission.dest = dest; mission.raidT = 75; mission.ships = [];
@@ -43,8 +46,10 @@ function restoreMission(m){
   else if (m.type === 'pirate' && CLASSES[m.cls]){ mission = Object.assign(base, { cls: m.cls, from: ports[0] });
     spawnQuarry(m.sx > 100 && m.sy > 100 && m.sx < W-100 && m.sy < H-100 && !isNear(m.sx, m.sy) ? [+m.sx, +m.sy] : waterNear(p.x, p.y, 1500)); }
   else if (m.type === 'treasure') mission = base;
-  else if (m.type === 'siege' && NAT[m.foe]){ const q = ports.find(q => q.name === m.port); if (q) mission = Object.assign(base, { foe: m.foe, port: q, need: (m.need|0) || 2, have: m.have|0, until: m.until|0, svc: clamp(m.svc|0, 0, 10) }); }
-  else if (m.type === 'escort' && Array.isArray(m.tr) && m.tr.length){ const dest = ports.find(q => q.name === 'Fort-Royal'); mission = Object.assign(base, { need: 2, arrived: clamp(m.arrived|0, 0, 3), until: m.until|0, svc: clamp(m.svc|0, 0, 10), dest, raidT: 0, ships: [] });
+  else if (m.type === 'siege' && NAT[m.foe]){ const q = ports.find(q => q.name === m.port);
+    if (q) mission = Object.assign(base, { foe: m.foe, port: q, need: (m.need|0) || 2, have: m.have|0, until: m.until|0, svc: clamp(m.svc|0, 0, 10) }); }
+  else if (m.type === 'escort' && Array.isArray(m.tr) && m.tr.length){ const dest = ports.find(q => q.name === 'Fort-Royal');
+    mission = Object.assign(base, { need: 2, arrived: clamp(m.arrived|0, 0, 3), until: m.until|0, svc: clamp(m.svc|0, 0, 10), dest, raidT: 0, ships: [] });
     m.tr.slice(0, 3).forEach(v => { let x = +v[0], y = +v[1]; if (!(x > 50 && y > 50 && x < W-50 && y < H-50) || isLand(x, y)){ const w = waterNear(p.x, p.y, 300); x = w[0]; y = w[1]; } mission.ships.push(transport(x, y, 0, dest)); }); }
   else if (m.type === 'away' && m.ax > 0 && m.ay > 0) mission = Object.assign(base, { name: String(m.name || 'the').slice(0, 30), x: clamp(+m.ax, 50, W-50), y: clamp(+m.ay, 50, H-50) });
 }
@@ -59,12 +64,17 @@ function missionTarget(){ const m = mission; if (!m) return null;
   if (m.type === 'pirate' && m.ship && m.ship.sinking == null) return { x: m.ship.x, y: m.ship.y, name:'Wanted pirate', s: m.ship };
   if (m.type === 'treasure' && fleet && fleet.lead) return { x: fleet.lead.x, y: fleet.lead.y, name:'Treasure fleet', s: fleet.lead };
   return null; }
-function complete(){ const m = mission; mission = null; earn(m.reward, p.x, p.y); repute(m.nk, m.rep); chime(); if (m.nk === marque) svc(m.svc || 1); gaz('The ' + p.name + ' has discharged a commission for ' + NAT[m.nk].land + ': ' + m.title.toLowerCase() + '.', 'you');
+function complete(){ const m = mission; mission = null; earn(m.reward, p.x, p.y);
+  repute(m.nk, m.rep); chime(); if (m.nk === marque) svc(m.svc || 1); gaz('The ' + p.name + ' has discharged a commission for ' + NAT[m.nk].land + ': ' + m.title.toLowerCase() + '.', 'you');
   say('Commission fulfilled for ' + NAT[m.nk].land + ': ' + m.reward + ' gold paid.'); }
 function onPrize(s, boarded){
   { const law = s.owner === 'pirate' || lawful(s); boarded ? stats.taken++ : stats.sunk++; law ? stats.lawful++ : stats.unlawful++;
-    if (s.rival != null && rivals[s.rival] && rivals[s.rival].alive){ const R0 = RIVALS[s.rival], v = rivals[s.rival], prize2 = 600 + 250*v.wins; v.alive = false; earn(prize2, s.x, s.y); cheer(10); if (lawful(s) || s.owner === 'pirate') svc(4); gaz(R0.name + ' and the ' + R0.ship + ' are ' + (boarded ? 'taken' : 'sunk') + ' by the ' + p.name + offWhere(s.x, s.y) + ', after ' + v.wins + ' prizes.', 'you'); later(() => say('That was ' + R0.name + '. The merchants of every port he troubled have put up ' + prize2 + ' gold for you.'), 2600); }
-    if (s.packet && boarded){ earn(150, s.x, s.y); if (lawful(s)){ svc(1); repute(marque, 2); } later(() => say('Her mail bags hold dispatches worth 150 gold' + (lawful(s) ? ', and the governor will be glad of them.' : '.')), 2800); }
+    if (s.rival != null && rivals[s.rival] && rivals[s.rival].alive){ const R0 = RIVALS[s.rival], v = rivals[s.rival], prize2 = 600 + 250*v.wins;
+      v.alive = false; earn(prize2, s.x, s.y); cheer(10); if (lawful(s) || s.owner === 'pirate') svc(4);
+      gaz(R0.name + ' and the ' + R0.ship + ' are ' + (boarded ? 'taken' : 'sunk') + ' by the ' + p.name + offWhere(s.x, s.y) + ', after ' + v.wins + ' prizes.', 'you');
+      later(() => say('That was ' + R0.name + '. The merchants of every port he troubled have put up ' + prize2 + ' gold for you.'), 2600); }
+    if (s.packet && boarded){ earn(150, s.x, s.y); if (lawful(s)){ svc(1); repute(marque, 2);
+      } later(() => say('Her mail bags hold dispatches worth 150 gold' + (lawful(s) ? ', and the governor will be glad of them.' : '.')), 2800); }
     if (lawful(s)) svc(s.role === 'treasure' ? 4 : s.role === 'merchant' ? 1 : s.t.hull >= 230 ? 3 : 2); }
   gaz('The ' + nm(s) + (boarded ? ' was taken by the ' : ' was sunk by the ') + p.name + (squad().length ? ' and her consorts' : '') + offWhere(s.x, s.y) + '.', 'you');
   if (!s.nation) NKEYS.forEach(k => repute(k, 2)); else offend(s, boarded ? 8 : 12);
@@ -76,7 +86,7 @@ function onPrize(s, boarded){
 }
 
 const GS = [[-83.6, 24.0], [-80.7, 24.4], [-79.6, 26.2], [-79.7, 28.5], [-79.3, 31], [-77, 33.6], [-74.8, 35.4], [-71, 37.5], [-65, 39.6], [-59, 41]].map(v => [X(v[0]), Y(v[1])]);
-let gsTold = false;
+let gsTold = false; const wrecks = [];
 function streamAt(x, y){ if (y > GS[0][1] + 300 || y < GS[GS.length - 1][1] - 300) return null; /* the Stream sets north-east at two knots and more */
   for (let i = 0; i < GS.length - 1; i++){ const a = GS[i], b = GS[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx*dx + dy*dy, t = clamp(((x - a[0])*dx + (y - a[1])*dy)/L2, 0, 1), d = Math.hypot(x - a[0] - dx*t, y - a[1] - dy*t);
     if (d < 280){ const L = Math.sqrt(L2), f = 26*(1 - d/280); return [dx/L*f, dy/L*f]; } } return null; }

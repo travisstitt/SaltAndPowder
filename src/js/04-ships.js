@@ -20,24 +20,37 @@ function livery(cls, owner, role){
   const n = NAT[owner];
   if (role === 'treasure') return { hullC:'#7a3220', hullD:'#3e160d', trim:'#f0d070', band:'#e2b534', deck:'#c9a36c', sailC:'#f8f1dd', seam:n.c2, flag:[n.c1, n.c2], tag:'#ffe07a', chests:true };
   if (role === 'merchant') return { hullC:'#a87f4e', hullD:'#6b4a26', trim:'#3a2613', band:n.c1, deck:'#d6b17c', sailC:'#f8f1dd', seam:n.c1, flag:[n.c1, n.c2], tag:n.tag };
-  return { hullC:'#bd8f50', hullD:'#6f4a22', trim:'#ecca6c', band:n.c1, wale:true, deck:'#c9a877', sailC:'#f5f8fa', seam:n.c1, flag:[n.c1, n.c2], tag:n.tag }; /* varnished sides, a black wale, upper works in the national colour */
+  return { hullC:'#bd8f50', hullD:'#6f4a22', trim:'#ecca6c', band:n.c1, wale:true, deck:'#c9a877', sailC:'#f5f8fa', seam:n.c1, flag:[n.c1, n.c2], tag:n.tag };
+    /* varnished sides, a black wale, upper works in the national colour */
 }
 const ENS = { en:'#c8102e', es:'#f4f1e6', fr:'#f6f3ea', nl:'#f2f2f2', dk:'#c8102e' };
 function drawEnsign(g, k, pts, w){ /* a waving ensign along a polyline: red ensign, Burgundy cross, Bourbon white, Dutch tricolour */
   const n = pts.length - 1, ang = Math.atan2(pts[n][1] - pts[0][1], pts[n][0] - pts[0][0]), nx = -Math.sin(ang), ny = Math.cos(ang);
-  const line = (a, b, wd, col, off) => { g.strokeStyle = col; g.lineWidth = wd; g.lineJoin = 'round'; g.beginPath(); for (let j = a; j <= b; j++){ const x = pts[j][0] + nx*off, y = pts[j][1] + ny*off; j === a ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke(); };
+  const line = (a, b, wd, col, off) => { g.strokeStyle = col; g.lineWidth = wd; g.lineJoin = 'round';
+    g.beginPath(); for (let j = a; j <= b; j++){ const x = pts[j][0] + nx*off, y = pts[j][1] + ny*off;
+    j === a ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke(); };
   line(0, n, w + 2, 'rgba(8,25,30,.55)', 0); line(0, n, w, ENS[k], 0);
   if (k === 'nl'){ line(0, n, w/3, '#b3261e', -w/3); line(0, n, w/3, '#2a4f9c', w/3); }
   else if (k === 'en'){ line(0, 2, w/2, '#1f3a7a', -w/4); line(0, 2, w/7, '#f2f2f2', -w/4); }
-  else if (k === 'dk'){ line(0, n, w/4.5, '#f2f2f2', 0); g.strokeStyle = '#f2f2f2'; g.lineWidth = w/4; g.beginPath(); g.moveTo(pts[1][0] + nx*w/2, pts[1][1] + ny*w/2); g.lineTo(pts[1][0] - nx*w/2, pts[1][1] - ny*w/2); g.stroke(); }
-  else if (k === 'es'){ g.strokeStyle = '#b3261e'; g.lineWidth = Math.max(1.2, w/5); g.beginPath(); for (const sd of [-1, 1]){ g.moveTo(pts[1][0] + nx*sd*w*.4, pts[1][1] + ny*sd*w*.4); g.lineTo(pts[n-1][0] - nx*sd*w*.4, pts[n-1][1] - ny*sd*w*.4); } g.stroke(); }
+  else if (k === 'dk'){ line(0, n, w/4.5, '#f2f2f2', 0); g.strokeStyle = '#f2f2f2';
+    g.lineWidth = w/4; g.beginPath(); g.moveTo(pts[1][0] + nx*w/2, pts[1][1] + ny*w/2);
+    g.lineTo(pts[1][0] - nx*w/2, pts[1][1] - ny*w/2); g.stroke(); }
+  else if (k === 'es'){ g.strokeStyle = '#b3261e'; g.lineWidth = Math.max(1.2, w/5);
+    g.beginPath(); for (const sd of [-1, 1]){ g.moveTo(pts[1][0] + nx*sd*w*.4, pts[1][1] + ny*sd*w*.4);
+    g.lineTo(pts[n-1][0] - nx*sd*w*.4, pts[n-1][1] - ny*sd*w*.4); } g.stroke(); }
   else if (k === 'fr'){ g.fillStyle = '#d4a92a'; for (let j = 1; j < n; j++){ circle(g, pts[j][0], pts[j][1], Math.max(1, w*.17)); g.fill(); } } }
 function flagRect(g, k, x, y, w, h){ g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.fillStyle = ENS[k] || '#111'; g.fillRect(x, y, w, h);
   if (k === 'nl'){ g.fillStyle = '#b3261e'; g.fillRect(x, y, w, h/3); g.fillStyle = '#2a4f9c'; g.fillRect(x, y + h*2/3, w, h/3); }
-  else if (k === 'en'){ const cw = w*.46, hh = h*.52, cross = () => { g.beginPath(); g.moveTo(x + cw/2, y); g.lineTo(x + cw/2, y + hh); g.moveTo(x, y + hh/2); g.lineTo(x + cw, y + hh/2); g.stroke(); };
-    g.fillStyle = '#1f3a7a'; g.fillRect(x, y, cw, hh); g.strokeStyle = '#f2f2f2'; g.lineWidth = h*.1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + cw, y + hh); g.moveTo(x + cw, y); g.lineTo(x, y + hh); g.stroke(); g.lineWidth = h*.16; cross(); g.strokeStyle = '#c8102e'; g.lineWidth = h*.08; cross(); }
+  else if (k === 'en'){ const cw = w*.46, hh = h*.52, cross = () => { g.beginPath();
+    g.moveTo(x + cw/2, y); g.lineTo(x + cw/2, y + hh); g.moveTo(x, y + hh/2); g.lineTo(x + cw, y + hh/2); g.stroke(); };
+    g.fillStyle = '#1f3a7a'; g.fillRect(x, y, cw, hh); g.strokeStyle = '#f2f2f2';
+      g.lineWidth = h*.1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + cw, y + hh); g.moveTo(x + cw, y);
+      g.lineTo(x, y + hh); g.stroke(); g.lineWidth = h*.16; cross(); g.strokeStyle = '#c8102e';
+      g.lineWidth = h*.08; cross(); }
   else if (k === 'dk'){ g.fillStyle = '#f2f2f2'; g.fillRect(x, y + h*.4, w, h*.2); g.fillRect(x + w*.28, y, h*.2, h); }
-  else if (k === 'es'){ g.strokeStyle = '#b3261e'; g.lineWidth = h*.17; g.beginPath(); g.moveTo(x + w*.12, y + h*.1); g.lineTo(x + w*.88, y + h*.9); g.moveTo(x + w*.88, y + h*.1); g.lineTo(x + w*.12, y + h*.9); g.stroke(); }
+  else if (k === 'es'){ g.strokeStyle = '#b3261e'; g.lineWidth = h*.17; g.beginPath();
+    g.moveTo(x + w*.12, y + h*.1); g.lineTo(x + w*.88, y + h*.9); g.moveTo(x + w*.88, y + h*.1);
+    g.lineTo(x + w*.12, y + h*.9); g.stroke(); }
   else if (k === 'fr'){ g.fillStyle = '#d4a92a'; for (const v of [[.3, .32], [.7, .32], [.5, .7]]){ circle(g, x + w*v[0], y + h*v[1], h*.11); g.fill(); } }
   g.restore(); g.strokeStyle = 'rgba(20,12,6,.75)'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, h - 1); }
 const prize = s => s.role === 'merchant' || s.role === 'treasure';
@@ -63,7 +76,7 @@ function makeShip(cls, owner, role, x, y, h){
 let assist = true, paceIdx = 1, chartOpen = false;
 let state = 'title', p, ships, balls, pending, crates, parts, floaters;
 let gold, plunder, shot, up, hunterT, curPort, nearPort, shake = 0, rankIdx = 0, overT = 0;
-const RANKS = [[0,'Master'],[500,'Privateersman'],[1500,'Captain'],[3500,'Sea Wolf'],[6500,'Scourge of the Islands'],[10000,'Terror of the Caribbean']];
+const RANKS = [[0,'Master'],[500,'Privateersman'],[1500,'Captain'],[3500,'Rover'],[6500,'Scourge of the Islands'],[10000,'Terror of the West Indies']];
 const rankFor = v => { let i = 0; while (i+1 < RANKS.length && v >= RANKS[i+1][0]) i++; return i; };
 
 const GOODS = { molasses:['Molasses', 10], sugar:['Sugar', 14], tobacco:['Tobacco', 20], rum:['Rum', 26], coffee:['Coffee', 30], cocoa:['Cocoa', 32], cloth:['Cloth and hardware', 40], indigo:['Indigo', 46], fish:['Salt fish', 12], flour:['Flour and provisions', 16], rice:['Rice', 22], naval:['Naval stores', 28] }, GK = Object.keys(GOODS);
@@ -87,23 +100,28 @@ const EVENTS = [
   [151, 'Havana has fallen to Pocock and Albemarle after a two-month siege.', () => { setOwner('Havana', 'en'); }],
   [157, 'Peace is signed at Paris. Havana, Martinique and Guadeloupe are handed back; Florida, Mobile and the neutral islands go to Britain, and Louisiana to Spain. Every letter of marque is void.', () => { wars.clear(); setOwner('Fort-Royal', 'fr'); setOwner('Havana', 'es'); setOwner('Basse-Terre', 'fr'); ['St Augustine', 'Pensacola', 'Mobile', 'Saint-Georges', 'Roseau', 'Kingstown', 'Scarborough'].forEach(n => setOwner(n, 'en')); setOwner('New Orleans', 'es'); voidMarque(); later(() => { if (state === 'play') say('The war is over. You may retire at your home port governor\'s, or sail on.'); }, 4300); }]];
 function voidMarque(){ marque = null; }
-function calendarTick(){ while (calDone < EVENTS.length && EVENTS[calDone][0] <= calIdx()){ const e = EVENTS[calDone++]; if (e[2]) e[2](); gazDate = MONTHS[e[0] % 12] + ' ' + (1750 + Math.floor(e[0]/12)); news(e[1]); gazDate = null; if (curPort && state === 'port') renderPort(); }
+function calendarTick(){ while (calDone < EVENTS.length && EVENTS[calDone][0] <= calIdx()){ const e = EVENTS[calDone++];
+  if (e[2]) e[2](); gazDate = MONTHS[e[0] % 12] + ' ' + (1750 + Math.floor(e[0]/12));
+  news(e[1]); gazDate = null; if (curPort && state === 'port') renderPort(); }
   if (marque && !foesOf(marque).length){ marque = null; say('Peace: your letter of marque is void. Any ship you take now is piracy.'); } }
 function monthTick(m){ payWages(m); calendarTick();
   if (m - lastCall >= 2) cheer(-3); /* long at sea */ if (fouling && state === 'play') foul = Math.min(1, foul + .04);
   if (officers.surgeon && p.crew < p.t.crew) p.crew = Math.min(p.t.crew, p.crew + 2);
   if (morale < 25 && p.crew > 12){ const n = Math.max(1, Math.round(p.crew*.08)); p.crew -= n; say('The hands are ' + moraleWord() + '. ' + n + ' have run.'); }
   rivalTick();
-  if (mission && mission.until && calIdx() > mission.until){ say('Too late: the commission "' + mission.title + '" has lapsed.'); if (mission.ships) mission.ships.forEach(t => { t.transport = false; }); mission = null; }
+  if (mission && mission.until && calIdx() > mission.until){ say('Too late: the commission "' + mission.title + '" has lapsed.');
+    if (mission.ships) mission.ships.forEach(t => { t.transport = false; }); mission = null; }
   if (!fleet && calIdx() >= 48) spawnFleet(false);
   const mo = calMon(); if (mo >= 5 && mo <= 10 && !calm && !hurr && hurrYear !== calYear() && rnd() < .3) startHurricane(); }
 /* privateering: with a letter of marque the ships of your patron's enemies are lawful prize; anything else is piracy */
 const lawful = s => !!marque && (s.owner === 'pirate' || atWar(marque, s.nation));
 function sendIn(o, hf){ const base = CLASSES[o.cls].value*.35*hf;
-  if (lawful(o)){ const v = Math.round(base*1.3); courtDue += v; courtList.push({ n: cap1(nm(o)) + (o.name ? ' ' + o.name : ''), v }); if (courtList.length > 30) courtList.shift(); return 'A lawful prize: the court will condemn her for ' + v + ' gold, paid at any ' + NAT[marque].adj + ' port or your home port.'; }
+  if (lawful(o)){ const v = Math.round(base*1.3); courtDue += v; courtList.push({ n: cap1(nm(o)) + (o.name ? ' ' + o.name : ''), v });
+    if (courtList.length > 30) courtList.shift(); return 'A lawful prize: the court will condemn her for ' + v + ' gold, paid at any ' + NAT[marque].adj + ' port or your home port.'; }
   if (o.owner === 'pirate'){ const v = Math.round(base); gold += v; return 'A pirate hull, sold for ' + v + ' gold.'; }
   const v = Math.round(base*.6); gold += v; return 'No court will condemn her, so she is sold quietly for ' + v + ' gold.'; }
-function payCourt(port){ if (courtDue > 0 && (port.name === homeName || marque && port.nk === marque && port.spec.sz >= 2)){ const v = courtDue, list = courtList.length ? courtList : [{ n: 'Prizes sent in', v }]; courtDue = 0; courtList = []; gold += v; plunder += v; gaz('The prize court at ' + port.name + ' condemned ' + list.length + ' prize' + (list.length > 1 ? 's' : '') + ' and paid over ' + v + ' gold.', 'you');
+function payCourt(port){ if (courtDue > 0 && (port.name === homeName || marque && port.nk === marque && port.spec.sz >= 2)){ const v = courtDue, list = courtList.length ? courtList : [{ n: 'Prizes sent in', v }];
+  courtDue = 0; courtList = []; gold += v; plunder += v; gaz('The prize court at ' + port.name + ' condemned ' + list.length + ' prize' + (list.length > 1 ? 's' : '') + ' and paid over ' + v + ' gold.', 'you');
     const tok = ++courtTok; later(() => { if (state === 'port' && curPort === port && tok === courtTok) openPaper('court', { port: port.name, list, total: v }); else say('The prize court has condemned your prizes: ' + v + ' gold paid over.'); }, 350); } }
 const wkey = (a, b) => a < b ? a + '-' + b : b + '-' + a;
 const atWar = (a, b) => !!a && !!b && a !== b && wars.has(wkey(a, b));

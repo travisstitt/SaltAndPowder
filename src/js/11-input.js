@@ -10,7 +10,10 @@ function act(name){
     else if (hostile(nearPort.nk) && !nearPort.spec.free && !nearPort.spec.land) shoreAction(nearPort);
     else openPort(nearPort); }
 }
-function setChart(on){ if (on && !chartOpen){ chartV.z = 3; chartV.cx = p.x; chartV.cy = p.y; } /* the chart opens on your own waters; zoom out for the whole of it */ chartOpen = !!on && state === 'play'; held.left = held.right = false; $('chartTools').hidden = !(!!on && state === 'play'); $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
+function setChart(on){ if (on && !chartOpen){ chartV.z = 3; chartV.cx = p.x; chartV.cy = p.y;
+  } /* the chart opens on your own waters; zoom out for the whole of it */ chartOpen = !!on && state === 'play';
+  held.left = held.right = false; $('chartTools').hidden = !(!!on && state === 'play');
+  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
@@ -24,7 +27,8 @@ addEventListener('keydown', e => {
   if (state === 'play' && e.code === 'Escape' && orderSel && !chartOpen && !menuOpen){ if (picking){ picking = false; renderOrders(); } else closeOrders(); e.preventDefault(); return; }
   if (chartOpen){ const c = e.code, st = 260/(chartGeo ? chartGeo.k : .05)/8; e.preventDefault();
     if (c === 'Equal' || c === 'NumpadAdd') chartV.z = clamp(chartV.z*1.3, 1, 5); else if (c === 'Minus' || c === 'NumpadSubtract') chartV.z = clamp(chartV.z/1.3, 1, 5);
-    else if (c === 'ArrowLeft' || c === 'KeyA') chartV.cx -= st; else if (c === 'ArrowRight' || c === 'KeyD') chartV.cx += st; else if (c === 'ArrowUp' || c === 'KeyW') chartV.cy -= st; else if (c === 'ArrowDown' || c === 'KeyS') chartV.cy += st;
+    else if (c === 'ArrowLeft' || c === 'KeyA') chartV.cx -= st; else if (c === 'ArrowRight' || c === 'KeyD') chartV.cx += st;
+      else if (c === 'ArrowUp' || c === 'KeyW') chartV.cy -= st; else if (c === 'ArrowDown' || c === 'KeyS') chartV.cy += st;
     else if (c === 'Escape' || c === 'KeyC' || c === 'Enter') setChart(false);
     return; }
   if (KEYS[e.code]){ held[KEYS[e.code]] = true; e.preventDefault(); }
@@ -85,12 +89,15 @@ cv.addEventListener('click', e => {
   const m = chartRect();
   if (state !== 'play') return;
   if (e.clientX >= m.x && e.clientX <= m.x + m.w && e.clientY >= m.y && e.clientY <= m.y + m.h){ setChart(true); return; }
-  const wx = (e.clientX - vw/2)/scale + camNow.x, wy = (e.clientY - vh/2)/scale + camNow.y; let hit = null, bd = 70, mine = null, bm = 60; // a click on one of your ships opens her orders; on an enemy, names her the target
+  const wx = (e.clientX - vw/2)/scale + camNow.x, wy = (e.clientY - vh/2)/scale + camNow.y;
+    let hit = null, bd = 70, mine = null, bm = 60; // a click on one of your ships opens her orders; on an enemy, names her the target
   for (const o of [p].concat(squad())){ const d = Math.hypot(o.x-wx, o.y-wy); if (d < bm){ bm = d; mine = o; } }
   for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.released || o.surrendered) continue; const d = Math.hypot(o.x-wx, o.y-wy); if (d < bd){ bd = d; hit = o; } }
-  if (picking && orderSel && orderSel !== p){ if (hit){ setTask(orderSel, { type: 'chase', prey: hit, at: [orderSel.x, orderSel.y] }); say('The ' + orderSel.name + ' will engage the ' + nm(hit) + '.'); picking = false; renderOrders(); } return; }
+  if (picking && orderSel && orderSel !== p){ if (hit){ setTask(orderSel, { type: 'chase', prey: hit, at: [orderSel.x, orderSel.y] });
+    say('The ' + orderSel.name + ' will engage the ' + nm(hit) + '.'); picking = false; renderOrders(); } return; }
   if (mine && (!hit || bm <= bd)){ openOrders(mine); return; }
-  if (hit){ fleetTarget = hit; engage(hit); say(squad().length ? 'Signal to the fleet: engage the ' + nm(hit) + '.' : 'You mark the ' + nm(hit) + ' as your chase.'); if (orderSel) renderOrders(); } });
+  if (hit){ fleetTarget = hit; engage(hit); say(squad().length ? 'Signal to the fleet: engage the ' + nm(hit) + '.' : 'You mark the ' + nm(hit) + ' as your chase.');
+    if (orderSel) renderOrders(); } });
 $('ordClose').addEventListener('click', closeOrders);
 $('czIn').addEventListener('click', () => { chartV.z = clamp(chartV.z*1.4, 1, 5); });
 $('czOut').addEventListener('click', () => { chartV.z = clamp(chartV.z/1.4, 1, 5); });

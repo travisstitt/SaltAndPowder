@@ -7,9 +7,11 @@ function manifestOf(s, all){ // what she carries, dearest first, and how much of
   GK.slice().sort((a, b) => GOODS[b][1] - GOODS[a][1]).forEach(g => { const n = s.goods && s.goods[g] || 0; if (!n) return; const take = Math.min(n, space); space -= take; out.push({ g, n, take }); });
   return out; }
 function takeCargo(s, all){ const c = prizeLoot(s), m = manifestOf(s, all); let tons = 0; s.cargo = 0; earn(c, s.x, s.y);
-  const share = Math.round(c*.06*squad().length); if (share){ gold -= share; later(() => say('Your captains and their crews take ' + share + ' gold of the prize in shares.'), 2600); } m.forEach(v => { hold[v.g] += v.take; tons += v.take; }); s.goods = null; return [c, tons]; }
+  const share = Math.round(c*.06*squad().length); if (share){ gold -= share; later(() => say('Your captains and their crews take ' + share + ' gold of the prize in shares.'), 2600);
+    } m.forEach(v => { hold[v.g] += v.take; tons += v.take; }); s.goods = null; return [c, tons]; }
 function settlePrize(how){ dirty();
-  if (prizeShip.nation && prizeShip.role !== 'merchant' && prizeShip.role !== 'treasure') captives[prizeShip.nation] = Math.min(9, captives[prizeShip.nation] + (prizeShip.t.hull >= 230 ? 2 : 1)); /* her officers give their parole */
+  if (prizeShip.nation && prizeShip.role !== 'merchant' && prizeShip.role !== 'treasure') captives[prizeShip.nation] = Math.min(9, captives[prizeShip.nation] + (prizeShip.t.hull >= 230 ? 2 : 1));
+    /* her officers give their parole */
   const s = prizeShip, name = nm(s), got = takeCargo(s, how === 'keep' || how === 'fleet'), tail = got[1] ? ' and ' + got[1] + ' tons of goods' : '';
   if (how === 'fleet'){ const need = Math.max(0, Math.ceil(s.t.crew*.3) - s.crew), cap = spares.length ? spares.sort((a, b) => b.gun + b.sea - a.gun - a.sea).shift() : mate();
     p.crew -= need; addFleet({ cls: s.cls, hf: s.hull/s.maxHull, sails: Math.max(30, s.sails), crew: s.crew + need, cap }, s.x, s.y, s.h); s.gone = true;
@@ -50,7 +52,9 @@ function renderPrize(){
   $('pz_fleet').disabled = n >= MAXSQ || p.crew - need < 10;
 }
 /* the ship's manifest: everything aboard at a glance */
-function openManifest(){ if (state !== 'play' && state !== 'port') return; setChart(false); menuOpen = true; held.left = held.right = false; renderManifest(); $('manifest').hidden = false; $('manifestClose').focus({ preventScroll: true }); $('manifest').firstElementChild.scrollTop = 0; }
+function openManifest(){ if (state !== 'play' && state !== 'port') return; setChart(false);
+  menuOpen = true; held.left = held.right = false; renderManifest(); $('manifest').hidden = false;
+  $('manifestClose').focus({ preventScroll: true }); $('manifest').firstElementChild.scrollTop = 0; }
 function renderManifest(){
   const ul = $('manifestList'); ul.textContent = ''; const used = holdUsed(); let worth = 0;
   ledgerText(ul, 'sec', 'Cargo: ' + used + ' of ' + holdCap() + ' tons');
@@ -97,10 +101,14 @@ function hitShip(b, s){
 }
 /* the flagship is gone: shift your flag, take to the boat, beg a governor, or end it */
 let fateTried = {}, fateText = '';
-function openFate(text){ state = 'fate'; endMelee(); closeOrders(); setPaused(false); fateTried = {}; fateText = text || ''; renderFate(); $('fate').hidden = false; const b = $('fateBtns').querySelector('button:not(:disabled)'); if (b) b.focus(); }
+function openFate(text){ state = 'fate'; endMelee(); closeOrders(); setPaused(false);
+  fateTried = {}; fateText = text || ''; renderFate(); $('fate').hidden = false; const b = $('fateBtns').querySelector('button:not(:disabled)'); if (b) b.focus(); }
 const fateOdds = k => clamp(.3 + standing[k]/70, .05, .92);
-function afterFate(msg){ $('fate').hidden = true; state = 'play'; hold = emptyHold(); tracked = null; fleetTarget = null; course = null; autoHelm = false; routeLine = null; balls.length = 0; pending.length = 0;
-  ships.forEach(o => { if (o.owner !== 'player'){ o.announced = false; o.hitByPlayer = false; o.provoked = false; if (o.role === 'hunter' && Math.hypot(o.x - p.x, o.y - p.y) < 1800) o.gone = true; } }); hunterT = 45; p.sail = 0; say(msg); document.activeElement && document.activeElement.blur(); }
+function afterFate(msg){ $('fate').hidden = true; state = 'play'; hold = emptyHold();
+  tracked = null; fleetTarget = null; course = null; autoHelm = false; routeLine = null;
+  balls.length = 0; pending.length = 0;
+  ships.forEach(o => { if (o.owner !== 'player'){ o.announced = false; o.hitByPlayer = false; o.provoked = false; if (o.role === 'hunter' && Math.hypot(o.x - p.x, o.y - p.y) < 1800) o.gone = true; } });
+    hunterT = 45; p.sail = 0; say(msg); document.activeElement && document.activeElement.blur(); }
 function renderFate(){
   const cap = p.lastFoe && NAT[p.lastFoe] ? 'the ' + NAT[p.lastFoe].adj : 'pirates', sq = squad();
   $('fateTitle').textContent = 'The ' + p.name + ' is lost';
@@ -108,15 +116,21 @@ function renderFate(){
   const box = $('fateBtns'); box.textContent = '';
   const R = (id, name, desc, label, on, fn) => uiRow(box, name, desc, '', [[id, label, on, fn]], () => { if (state === 'fate') renderFate(); });
   sq.slice().sort((a, b) => b.hull - a.hull).slice(0, 2).forEach((o, i) => R('ft_flag' + i, 'Shift your flag to the ' + o.name, 'Her boats pick you up. The ' + o.t.cname + ' becomes your flagship, with her crew of ' + o.crew + '. Your cargo aboard the flagship is lost.', 'Board her', true, () => {
-    const d = fleetData(o), x = o.x, y = o.y, h = o.h; ships.splice(ships.indexOf(o), 1); up = cleanUp(d.up); p = makeShip(d.cls, 'player', 'player', x, y, h); refit(); p.hull = p.maxHull*d.hf; p.sails = d.sails; p.crew = d.crew; p.name = cleanName(d.name);
+    const d = fleetData(o), x = o.x, y = o.y, h = o.h; ships.splice(ships.indexOf(o), 1);
+      up = cleanUp(d.up); p = makeShip(d.cls, 'player', 'player', x, y, h); refit(); p.hull = p.maxHull*d.hf;
+      p.sails = d.sails; p.crew = d.crew; p.name = cleanName(d.name);
     afterFate('You hoist your flag in the ' + p.name + '. The fight is not over.'); trimHold(); }));
   R('ft_boat', 'Take to the longboat', 'Marooned on the open sea with eight hands, a sail and a compass. You keep a third of your gold and none of your cargo. Reach a port and a yard will find you a sloop.', 'Cast off', true, () => {
-    const w = isLand(p.x, p.y) ? waterNear(p.x, p.y, 200) : [p.x, p.y]; gold = Math.floor(gold/3); up = { guns:0, hull:0, sail:0, drill:0 }; p = makeShip('boat', 'player', 'player', w[0], w[1], p.h); refit(); p.crew = 8; p.name = 'Longboat';
+    const w = isLand(p.x, p.y) ? waterNear(p.x, p.y, 200) : [p.x, p.y]; gold = Math.floor(gold/3);
+      up = { guns:0, hull:0, sail:0, drill:0 }; p = makeShip('boat', 'player', 'player', w[0], w[1], p.h);
+      refit(); p.crew = 8; p.name = 'Longboat';
     afterFate('You are adrift in the longboat. Make sail for the nearest port.'); });
   NKEYS.forEach(k => { const odds = fateOdds(k), tried = fateTried[k];
     R('ft_' + k, 'Write to the governor of ' + NAT[k].land.replace(/^the /, ''), tried ? 'He has declined to speak for you.' : 'You are taken prisoner and petition for your release. ' + NAT[k].land.replace(/^t/, 'T') + ' counts you ' + standWord(standing[k]).toLowerCase() + ': he is ' + (odds > .65 ? 'likely' : odds > .35 ? 'as likely as not' : 'unlikely') + ' to help. Freedom costs four tenths of your gold and three days.', tried ? 'Declined' : 'Send the letter', !tried, () => {
       if (rnd() < odds){ const own = ports.filter(q => q.nk === k).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0] || ports[0];
-        gold = Math.floor(gold*.6); up = { guns:0, hull:0, sail:0, drill:0 }; p = makeShip('sloop', 'player', 'player', own.ox, own.oy, own.out); refit(); p.hull = p.maxHull*.7; p.sails = 80; p.crew = 20; clock += DAY*3; lastDay = Math.floor((clock/DAY*24 + 8)/24); standing[k] = clamp(standing[k] - 6, -100, 100);
+        gold = Math.floor(gold*.6); up = { guns:0, hull:0, sail:0, drill:0 }; p = makeShip('sloop', 'player', 'player', own.ox, own.oy, own.out);
+          refit(); p.hull = p.maxHull*.7; p.sails = 80; p.crew = 20; clock += DAY*3; lastDay = Math.floor((clock/DAY*24 + 8)/24);
+          standing[k] = clamp(standing[k] - 6, -100, 100);
         afterFate('The governor of ' + NAT[k].land.replace(/^the /, '') + ' has spoken for you. Three days on, you are set down at ' + own.name + ' with a worn sloop and twenty hands.'); }
       else fateTried[k] = true; }); });
   R('ft_end', 'End the voyage here', 'Let the sea have the last word, and see how you are remembered.', 'End it', true, () => { $('fate').hidden = true; gameOver(fateText); });
