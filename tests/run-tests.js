@@ -13,7 +13,7 @@ const HELPERS = () => {
   const g = window.__sp;
   window.T = {
     reset(diff){ // a fresh voyage in fair weather, alone on the sea, mid-morning
-      g.setDiff(diff || 'normal'); g.newGame(); g.state = 'play'; g.setPaused(false); g.setChart(false);
+      g.setDiff(diff || 'normal'); g.newGame(); g.setCalm(true); g.setWars(['en-es', 'en-fr']); g.state = 'play'; g.setPaused(false); g.setChart(false);
       for (const id of ['title', 'port', 'prize', 'menu', 'manifest', 'fleetSheet', 'over', 'fate']) document.getElementById(id).hidden = true;
       const w = g.weather; w.kind = 'clear'; w.k = 0; w.left = 1e7; w.next = null; g.clock = 60;
       T.clear(4000); },
@@ -39,7 +39,7 @@ const HELPERS = () => {
   // ---------- boot and world ----------
   let r = await ev(() => { const g = __sp; return { ports: g.ports.length, landAnchors: g.ports.filter(q => g.isLand(q.ox, q.oy)).map(q => q.name), ships: g.ships.length, fleet: !!(g.fleet && g.fleet.lead),
     roles: g.ships.reduce((o, s) => { o[s.role] = (o[s.role] || 0) + 1; return o; }, {}), onLand: g.ships.filter(s => g.isLand(s.x, s.y)).length }; });
-  check('boot: 21 ports', r.ports === 21, r.ports);
+  check('boot: 23 ports', r.ports === 23, r.ports);
   check('boot: every port anchorage is in water', r.landAnchors.length === 0, r.landAnchors);
   check('boot: merchants, patrols and treasure fleet present', r.roles.merchant >= 12 && r.roles.patrol >= 8 && r.fleet && r.roles.treasure === 2, r.roles);
   check('boot: no ship starts on land', r.onLand === 0, r.onLand);
@@ -54,10 +54,10 @@ const HELPERS = () => {
   check('sailing: stops with sails furled', r.furled < 3, r.furled);
 
   // ---------- gunnery, reputation, surrender ----------
-  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const m = T.foe('merchant', 'es', 'merchant', 0, 150), es0 = g.standing.es, en0 = g.standing.en; g.fire(g.p, 1); T.run(1.5);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const m = T.foe('merchant', 'es', 'merchant', 0, 150), es0 = g.standing.es, en0 = g.standing.en; g.fire(g.p, 1); T.run(1.5);
     return { hull: m.hull, max: m.maxHull, es: g.standing.es - es0, en: g.standing.en - en0, tracked: g.tracked === m, hit: m.hitByPlayer }; });
   check('gunnery: a starboard broadside hits a ship abeam', r.hull < r.max && r.hit, r);
-  check('gunnery: attacking Spain angers her and pleases her enemies', r.es < 0 && r.en > 0, r);
+  check('gunnery: under a British letter, attacking Spain angers her and pleases Britain', r.es < 0 && r.en > 0, r);
   check('gunnery: the ship fired on becomes the chase', r.tracked);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('merchant', 'es', 'merchant', 0, 200), b = T.foe('brig', 'es', 'patrol', 300, 400), c = T.foe('brig', 'pirate', 'quarry', -300, 400);
     g.struck(a); g.damage(a, a.maxHull*.65, 0); g.struck(b); g.damage(b, 1, 95); g.struck(c); c.crew = 3; g.damage(c, 1, 0); return [a.surrendered, b.surrendered, c.surrendered]; });
@@ -74,9 +74,9 @@ const HELPERS = () => {
   check('prize: send her in costs 8 hands and pays', r.send[0] === -8 && r.send[1] && r.send[2], r.send);
   check('prize: add her to your fleet', r.fleet === 1 && r.fleetCls === 'sloop', r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('cutter', 'pirate', 'quarry', 0, 50); a.crew = 6; g.p.crew = 60; g.grapple(); const m = !!g.melee; T.run(8); const win = g.state; if (g.state === 'prize') g.settlePrize('loot');
-    T.reset(); T.sea(); const b = T.foe('galleon', 'es', 'patrol', 0, 60); b.crew = 300; g.p.crew = 40; g.grapple(); T.run(12); return { m, win, lose: g.state, crew: g.p.crew, melee: !!g.melee }; });
+    T.reset(); T.sea(); const b = T.foe('fifty', 'es', 'patrol', 0, 60); b.crew = 300; g.p.crew = 40; g.grapple(); T.run(12); return { m, win, lose: g.state, crew: g.p.crew, melee: !!g.melee }; });
   check('melee: boarding starts a fight', r.m); check('melee: a weak crew is taken', r.win === 'prize', r.win);
-  check('melee: boarding a galleon with 40 hands fails and costs crew', (r.lose === 'play' || r.lose === 'fate') && r.crew < 40 && !r.melee, r);
+  check('melee: boarding a fifty-gun ship with 40 hands fails and costs crew', (r.lose === 'play' || r.lose === 'fate') && r.crew < 40 && !r.melee, r);
 
   // ---------- fleet ----------
   r = await ev(() => { const g = __sp; T.reset(); T.consort('sloop', 0); const a = T.foe('brig', 'pirate', 'hunter', 200, 150), b = T.foe('cutter', 'pirate', 'hunter', -200, 180);
@@ -115,7 +115,7 @@ const HELPERS = () => {
   check('fleet: a consort in the line plunders a struck ship and picks up flotsam for you', r.released && r.crates === 0 && r.gained === 180 + 77 && r.cocoa === 9 && r.state === 'play', r);
   r = await ev(() => { const g = __sp, out = {}; for (const k of ['send', 'keep', 'leave']){ T.reset(); T.sea(); g.setPolicy(k); T.consort('brig', 0); const m = T.foe('merchant', 'es', 'merchant', -220, 260); m.cargo = 100; g.struck(m); g.damage(m, m.maxHull*.65, 0); const g0 = g.gold; T.run(40);
       out[k] = { gone: !!m.gone || g.ships.indexOf(m) < 0, struck: m.surrendered, squad: g.squad().length, gained: g.gold - g0 }; } g.setPolicy('plunder'); return out; });
-  check('fleet: the standing order for prizes is obeyed (send in, take into the fleet, leave to the flagship)', r.send.gone && r.send.gained > 150 && r.keep.squad === 2 && r.leave.struck && r.leave.squad === 1 && r.leave.gained === 0, r);
+  check('fleet: the standing order for prizes is obeyed (send in, take into the fleet, leave to the flagship)', r.send.gone && r.send.gained > 100 && r.keep.squad === 2 && r.leave.struck && r.leave.squad === 1 && r.leave.gained === 0, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); let pirates = 0, seen = 0; for (let i = 0; i < 240; i++){ for (let t = 0; t < 5; t += .05) g.update(.05); const n = g.ships.filter(s => s.owner === 'pirate' && Math.hypot(s.x - g.p.x, s.y - g.p.y) < 2500).length; pirates = Math.max(pirates, n); if (n) seen++; if (g.state !== 'play') break; }
     return { pirates, share: +(seen/240).toFixed(2), state: g.state, hunters: g.ships.filter(s => s.role === 'hunter').length }; });
   check('pirates: in twenty minutes at sea they appear, but never more than two and no hunters chase a captain at peace', r.pirates >= 1 && r.pirates <= 2 && r.hunters === 0, r);
@@ -147,7 +147,7 @@ const HELPERS = () => {
   } catch (e){ ok = false; why = e.message.split('\n')[0]; }
   check('port: every button in the walkthrough was clickable', ok, why);
 
-  for (const name of ['Port Royal', 'Havana', 'Fort-Royal', 'Willemstad', 'Tortuga']){
+  for (const name of ['Kingston', 'Havana', 'Fort-Royal', 'Willemstad', 'Cap-Français', 'English Harbour', 'St Eustatius']){
     await ev(n => { const g = __sp; T.reset(); g.openPort(g.ports.find(q => q.name === n)); }, name); await page.waitForTimeout(250);
     const spots = await ev(() => { const c = document.getElementById('townCanvas').getBoundingClientRect(); return __sp.townSpots.map(s => [s.id, c.x + (s.x + s.w/2)/1640*c.width, c.y + (s.y + s.h/2)/560*c.height]); });
     const m = spots.find(s => s[0] === 'market'); if (m) await page.mouse.click(m[1], m[2]); await page.waitForTimeout(80);
@@ -166,7 +166,7 @@ const HELPERS = () => {
     g.loadGame(g.readSlot('1')); const a = { okW, gold: g.gold, cocoa: g.hold.cocoa, crew: g.p.crew, name: g.p.name, squad: g.squad().length, course: g.course && g.course.name, state: g.state };
     const code = g.encode(g.snapshot()), d = g.decode(code); a.code = !!d && d.gold === 1234; a.garbage = g.decode('not a code') === null;
     const old = g.snapshot(); old.deg = 400; old.p.x = 8460; old.p.y = 4200; g.loadGame(old); a.oldOnLand = g.isLand(g.p.x, g.p.y); return a; });
-  check('saving: a slot restores gold, cargo, crew, name, fleet and course', r.okW && r.gold === 1234 && r.cocoa === 7 && r.crew === 33 && r.name === 'Saved Ship' && r.squad === 1 && r.course === 'Tortuga' && r.state === 'play', r);
+  check('saving: a slot restores gold, cargo, crew, name, fleet and course', r.okW && r.gold === 1234 && r.cocoa === 7 && r.crew === 33 && r.name === 'Saved Ship' && r.squad === 1 && r.course === 'Cap-Français' && r.state === 'play', r);
   check('saving: save codes round-trip and bad codes are refused', r.code && r.garbage, r);
   check('saving: a save from the smaller map loads in open water', r.oldOnLand === 0 || r.oldOnLand === false, r.oldOnLand);
 
@@ -174,7 +174,7 @@ const HELPERS = () => {
   for (const dest of ['Santiago de Cuba', 'Cartagena', 'Nassau', 'Havana']){
     r = await ev(name => { const g = __sp; T.reset(); g.setCourse(g.ports.find(q => q.name === name)); let t = 0; while (g.course && t < 2400 && g.state === 'play'){ T.run(5); t += 5; }
       return { arrived: !g.course, t, hull: Math.round(g.p.hull), land: g.isLand(g.p.x, g.p.y), d: Math.round(Math.hypot(g.p.x - g.ports.find(q => q.name === name).ox, g.p.y - g.ports.find(q => q.name === name).oy)) }; }, dest);
-    check('helmsman: Port Royal to ' + dest + ' without grounding', r.arrived && r.hull >= 95 && !r.land, r);
+    check('helmsman: Kingston to ' + dest + ' without grounding', r.arrived && r.hull >= 95 && !r.land, r);
   }
 
   // ---------- the world left to itself ----------
@@ -187,8 +187,8 @@ const HELPERS = () => {
   check('politics: after sixty events every nation still holds a port and someone is at war', r.wars >= 1 && ['en', 'es', 'fr', 'nl'].every(k => r.own[k] >= 1), r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const w = g.weather; w.kind = 'storm'; w.k = 1; g.p.sail = 1; T.run(15); const torn = g.p.sails; g.p.sails = 100; g.p.sail = .5; T.run(10); return { torn, reefed: g.p.sails }; });
   check('weather: a storm tears full sail but spares battle sails', r.torn < 95 && r.reefed === 100, r);
-  r = await ev(() => { const g = __sp; T.reset(); T.consort('brig', 0); g.gold = 1000; const w = g.wageBill(); g.payWages(5); const paid = 1000 - g.gold; g.gold = 0; const c0 = g.p.crew; g.payWages(6); return { w, paid, deserted: c0 - g.p.crew, free: (() => { g.gold = 50; g.payWages(2); return g.gold; })() }; });
-  check('wages: paid in full, desertion when broke, none in the first days', r.paid === r.w && r.deserted > 0 && r.free === 50, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.consort('brig', 0); g.gold = 1000; const w = g.wageBill(); g.payWages(5); const paid = 1000 - g.gold; g.gold = 0; const c0 = g.p.crew; g.payWages(6); return { w, paid, deserted: c0 - g.p.crew, free: (() => { g.gold = 50; g.payWages(0); return g.gold; })() }; });
+  check('wages: paid in full, desertion when broke, none in the first month', r.paid === r.w && r.deserted > 0 && r.free === 50, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.gold = 900; g.sink(g.p); T.run(4); return g.state; });
   check('flagship lost: you are offered a choice', r === 'fate', r);
   await page.click('#ft_boat'); r = await ev(() => { const g = __sp; return [g.state, g.p.cls, g.gold, g.p.crew, g.p.alive]; }); check('flagship lost: marooned in the longboat with a third of your gold', r[0] === 'play' && r[1] === 'boat' && r[2] === 300 && r[3] === 8 && r[4], r);
@@ -207,7 +207,7 @@ const HELPERS = () => {
   await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('brig', 0); g.wind.dir = g.wind.tDir = g.p.h + .8; });
   await page.keyboard.press('KeyW'); await page.keyboard.press('KeyW'); await page.keyboard.down('KeyD'); await page.waitForTimeout(900); await page.keyboard.up('KeyD');
   r = await ev(() => [__sp.p.sail, __sp.p.h]); check('keys: W makes sail and D turns', r[0] === 1 && r[1] > .1, r);
-  await page.keyboard.press('KeyR'); r = await page.textContent('#shotBtn'); check('keys: R changes shot', r === 'Chain shot', r);
+  await page.keyboard.press('KeyR'); r = await page.textContent('#shotBtn'); check('keys: R changes shot', r === 'Double shot', r);
   await page.keyboard.press('Space'); await page.waitForTimeout(400); check('keys: Space fires', (await ev(() => __sp.p.rl[0] > 0 && __sp.p.rl[1] > 0)));
   await page.keyboard.press('KeyG'); await page.keyboard.press('KeyH'); r = [await page.textContent('#formBtn'), await page.textContent('#orderBtn')]; check('keys: G and H change formation and orders', r[0] === 'Line abreast' && r[1] === 'Engage at will', r);
   await page.keyboard.press('KeyP'); const c1 = await ev(() => __sp.clock); await page.waitForTimeout(500); r = await ev(() => [__sp.paused, __sp.clock]); check('keys: P pauses the sea', r[0] && r[1] === c1, r); await page.keyboard.press('KeyP');
@@ -230,6 +230,49 @@ const HELPERS = () => {
   const hit = await ev(() => { const g = __sp, a = g.ships.find(s => s._t && s.sinking == null); if (!a) return null; return [innerWidth/2 + (a.x - g.p.x - Math.cos(g.p.h)*30)*1.63, innerHeight/2 + (a.y - g.p.y - Math.sin(g.p.h)*30)*1.63]; });
   if (hit && hit[0] > 250 && hit[0] < 1100 && hit[1] > 90 && hit[1] < 640){ await page.mouse.click(hit[0], hit[1]); await page.waitForTimeout(150); check('targets: clicking an enemy names her the fleet\'s target', !!(await ev(() => __sp.fleetTarget))); }
   check('drawing: a night action in storm and fog raises no errors', errCount() === e0, errors.slice(e0));
+
+  // ---------- the 1750s ----------
+  r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); const a = { date: g.date, wars0: g.wars.length }; g.setCal(76); g.calendarTick(); a.w1756 = g.wars.slice(); g.setCal(144); g.calendarTick(); a.w1762 = g.wars.length;
+    g.setCal(151); g.calendarTick(); a.havana = g.ports.find(q => q.name === 'Havana').nk; g.setMarque('en'); g.setCal(157); g.calendarTick(); a.peace = g.wars.length; a.back = g.ports.find(q => q.name === 'Havana').nk; a.marque = g.marque; return a; });
+  check('calendar: a voyage begins in January 1756, at peace', r.date === 'January 1756' && r.wars0 === 0, r);
+  check('calendar: Britain and France go to war in May 1756 and Spain joins in 1762', r.w1756.length === 1 && r.w1756[0] === 'en-fr' && r.w1762 === 2, r);
+  check('calendar: Havana falls in 1762 and is handed back at the peace, which voids letters of marque', r.havana === 'en' && r.back === 'es' && r.peace === 0 && r.marque === null, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const m = T.foe('merchant', 'nl', 'merchant', 0, 150), s0 = Object.assign({}, g.standing); g.fire(g.p, 1); T.run(1.5); return { nl: g.standing.nl - s0.nl, en: g.standing.en - s0.en, fr: g.standing.fr - s0.fr }; });
+  check('piracy: firing on a neutral without a commission is marked by every nation', r.nl < 0 && r.en < 0 && r.fr < 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const a = T.foe('brig', 'fr', 'patrol', 0, 150), b = T.foe('brig', 'nl', 'patrol', 0, -150), g0 = g.gold; const n1 = g.sendIn(a, 1), due = g.courtDue, n2 = g.sendIn(b, 1), quiet = g.gold - g0;
+    g.openPort(g.ports[0]); const paid = g.gold - g0 - quiet; g.closePort(); return { lawA: g.lawful(a), lawB: g.lawful(b), due, quiet, paid, left: g.courtDue }; });
+  check('prize court: a lawful prize is condemned for more and paid at a friendly port; an unlawful one sells cheap', r.lawA && !r.lawB && r.due > r.quiet*2 && r.paid === r.due && r.left === 0, r);
+  await ev(() => { const g = __sp; T.reset(); g.gold = 500; g.openPort(g.ports[0]); }); await page.click('[data-tab=governor]'); await page.click('#marque');
+  r = await ev(() => { const g = __sp, a = { m: g.marque, gold: g.gold }; g.closePort(); return a; });
+  check('governor: a letter of marque is bought in wartime', r.m === 'en' && r.gold === 350, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('frigate', 'fr', 'patrol', 0, 150), b = T.foe('frigate', 'fr', 'patrol', 0, -150); a.h = g.p.h + Math.PI/2; b.h = g.p.h;
+    g.strike({ a: g.p.h + Math.PI/2, x: a.x, y: a.y }, a, 8, 1, 1); g.strike({ a: g.p.h - Math.PI/2, x: b.x, y: b.y }, b, 8, 1, 1); const c = T.foe('frigate', 'fr', 'patrol', 300, 0); c.h = g.p.h + Math.PI/2; g.strike({ a: g.p.h, dbl: true, x: c.x, y: c.y }, c, 8, 1, 1);
+    return { raked: a.maxHull - a.hull, beam: b.maxHull - b.hull, flag: a.raked === 1 && !b.raked, dbl: c.maxHull - c.hull }; });
+  check('raking: shot down the length of her deck does far more harm than a beam hit', r.raked > r.beam*1.6 && r.flag && r.dbl > r.beam*1.6, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.toggleShot(); const kind = document.getElementById('shotBtn').textContent; const far = T.foe('merchant', 'es', 'merchant', 0, 230), near = T.foe('merchant', 'es', 'merchant', 0, -120); g.fire(g.p, 1); g.fire(g.p, -1); const rl = g.p.rl[1]; T.run(1.5);
+    g.toggleShot(); g.toggleShot(); g.toggleShot(); return { kind, far: far.maxHull - far.hull, near: near.maxHull - near.hull, rl, back: document.getElementById('shotBtn').textContent }; });
+  check('double shot: short range, heavy damage, slow to load', r.kind === 'Double shot' && r.far === 0 && r.near > 20 && r.rl > 4.5 && r.back === 'Round shot', r);
+  r = await ev(() => { const g = __sp, C = g.classes; T.reset(); g.gold = 99999; g.openPort(g.ports.find(q => q.name === 'Kingston')); const k = !!document.getElementById('y_seventyfour'), f = !!document.getElementById('y_frigate'); g.closePort();
+    g.openPort(g.ports.find(q => q.name === 'English Harbour')); const e = !!document.getElementById('y_seventyfour'); document.getElementById('y_seventyfour').click(); const cls = g.p.cls, guns = g.p.guns; g.closePort();
+    return { k, f, e, cls, guns, galleon: !!C.galleon, names: [['sloop', 'en', 'patrol'], ['merchant', 'en', 'merchant'], ['fifty', 'es', 'treasure']].map(v => { const q = g.mk(v[0], v[1], v[2], g.p.x, g.p.y, 0); q.gone = true; return q.t.name; }) }; });
+  check('ships: seventy-fours are sold only at a royal dockyard; the galleon is gone', !r.k && r.f && r.e && r.cls === 'seventyfour' && r.guns === 15 && !r.galleon, r);
+  check('ships: period names for sloops of war, West Indiamen and plate ships', r.names[0] === 'British sloop of war' && r.names[1] === 'British West Indiaman' && r.names[2] === 'Spanish plate ship', r);
+  r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); const n = g.ports.map(q => q.name), tr = g.ships.filter(s => s.role === 'treasure'), ve = g.ports.find(q => q.name === 'Veracruz'), ha = g.ports.find(q => q.name === 'Havana');
+    const near = tr.every(s => Math.min(Math.hypot(s.x - ve.ox, s.y - ve.oy), Math.hypot(s.x - ha.ox, s.y - ha.oy)) < 600), esc = g.ships.filter(s => s.role === 'escort').map(s => s.cls);
+    return { n: n.length, has: ['Kingston', 'Cap-Français', 'Port-au-Prince', 'English Harbour', 'St Eustatius'].every(x => n.indexOf(x) >= 0), old: n.indexOf('Tortuga') >= 0 || n.indexOf('Port Royal') >= 0, tr: tr.length, near, esc, goods: g.goodsKeys.length }; });
+  check('ports: the 1750s towns are on the chart and the buccaneer havens are gone', r.n === 23 && r.has && !r.old, r);
+  check('plate fleet: two plate ships sail between Veracruz and Havana under a frigate escort', r.tr === 2 && r.near && r.esc.indexOf('frigate') >= 0, r);
+  check('goods: coffee, indigo and molasses are traded', r.goods === 8, r);
+  r = await ev(() => { const g = __sp; T.reset(); const st = g.ports.find(q => q.name === 'St Eustatius'), ha = g.ports.find(q => q.name === 'Havana'), ki = g.ports[0]; g.standing.nl = -60; g.p.x = st.ox; g.p.y = st.oy; g.update(.01); g.tap('dock'); const free = g.state === 'port'; if (free) g.closePort();
+    return { free, smug: g.price(ha, 'cloth') > g.price(ki, 'cloth')*2 }; });
+  check('free port: St Eustatius trades with anyone, and cloth smuggled into Havana pays double', r.free && r.smug, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('brig', 0); g.p.sail = 1; g.startHurricane(); const warn = g.hurr && g.hurr.stage === 0; T.run(45); const on = !!g.weather.hur; g.p.hull = g.p.maxHull; g.p.sails = 100; g.p.sail = 1; T.run(12); const full = { hull: g.p.maxHull - g.p.hull, sails: 100 - g.p.sails };
+    g.p.sail = 0; g.p.hull = g.p.maxHull; T.run(12); const bare = g.p.maxHull - g.p.hull; g.p.hull = g.p.maxHull; T.run(90); return { warn, on, full, bare, over: !g.hurr && !g.weather.hur, alive: g.p.alive, squad: g.squad().length }; });
+  check('hurricane: a warning, then a blow that punishes full sail far more than bare poles, then it passes', r.warn && r.on && r.full.hull > r.bare*3 && r.full.sails > 20 && r.over && r.squad === 1, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('frigate', 0); const s = g.squad()[0], f = T.foe('merchant', 'fr', 'merchant', 1300, 0); f.announced = true; f.hitByPlayer = true; f.sails = 20; g.setOrders('chase'); const d0 = Math.hypot(f.x - s.x, f.y - s.y); T.run(30); return { d0, d1: Math.hypot(f.x - s.x, f.y - s.y), ord: document.getElementById('orderBtn').textContent }; });
+  check('general chase: consorts break the line to run down a distant enemy', r.ord === 'General chase' && r.d1 < r.d0 - 300, r);
+  r = await ev(() => { const g = __sp; T.reset(); const d = g.snapshot(); d.cls = 'galleon'; d.home = 'Port Royal'; delete d.cal0; d.wars = ['es-nl']; g.loadGame(d); const a = { cls: g.p.cls, home: g.home, wars: g.wars.length }; T.reset(); g.setMarque('en'); g.setCal(100); const e = g.snapshot(); g.loadGame(e); a.cal = g.cal; a.m = g.marque; return a; });
+  check('saving: old saves are brought into the 1750s, and new ones keep the date and the commission', r.cls === 'fifty' && r.home === 'Kingston' && r.wars === 0 && r.cal === 100 && r.m === 'en', r);
 
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
