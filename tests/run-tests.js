@@ -14,7 +14,7 @@ const HELPERS = () => {
   window.T = {
     reset(diff){ // a fresh voyage in fair weather, alone on the sea, mid-morning
       g.setDiff(diff || 'normal'); g.newGame(); g.state = 'play'; g.setPaused(false); g.setChart(false);
-      for (const id of ['title', 'port', 'prize', 'menu', 'manifest', 'fleetSheet', 'over']) document.getElementById(id).hidden = true;
+      for (const id of ['title', 'port', 'prize', 'menu', 'manifest', 'fleetSheet', 'over', 'fate']) document.getElementById(id).hidden = true;
       const w = g.weather; w.kind = 'clear'; w.k = 0; w.left = 1e7; w.next = null; g.clock = 60;
       T.clear(4000); },
     clear(r){ g.ships.forEach(s => { if (s.owner !== 'player' && !s._t && Math.hypot(s.x - g.p.x, s.y - g.p.y) < r) s.gone = true; }); g.update(.001); },
@@ -76,7 +76,7 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('cutter', 'pirate', 'quarry', 0, 50); a.crew = 6; g.p.crew = 60; g.grapple(); const m = !!g.melee; T.run(8); const win = g.state; if (g.state === 'prize') g.settlePrize('loot');
     T.reset(); T.sea(); const b = T.foe('galleon', 'es', 'patrol', 0, 60); b.crew = 300; g.p.crew = 40; g.grapple(); T.run(12); return { m, win, lose: g.state, crew: g.p.crew, melee: !!g.melee }; });
   check('melee: boarding starts a fight', r.m); check('melee: a weak crew is taken', r.win === 'prize', r.win);
-  check('melee: boarding a galleon with 40 hands fails and costs crew', (r.lose === 'play' || r.lose === 'over') && r.crew < 40 && !r.melee, r);
+  check('melee: boarding a galleon with 40 hands fails and costs crew', (r.lose === 'play' || r.lose === 'fate') && r.crew < 40 && !r.melee, r);
 
   // ---------- fleet ----------
   r = await ev(() => { const g = __sp; T.reset(); T.consort('sloop', 0); const a = T.foe('brig', 'pirate', 'hunter', 200, 150), b = T.foe('cutter', 'pirate', 'hunter', -200, 180);
@@ -101,6 +101,13 @@ const HELPERS = () => {
   check('orders: an absent ship keeps her place and orders through a save, and rejoins when you arrive', r.kept && r.rejoined, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); g.wind.dir = g.p.h + .8; g.p.sail = 1; T.run(25); return Math.round(Math.hypot(s.x - g.p.x, s.y - g.p.y)); });
   check('orders: a ship told to hold stays behind', r > 1200, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.consort('sloop', 0); const s = g.squad()[0]; g.setTask(s, { type: 'raid', at: [s.x + 3000, s.y], prey: null }); s.x += 3000; const a = T.foe('brig', 'pirate', 'hunter', 3000, 150); a._t = true; g.openPort(g.ports[0]); g.ashore(120); const hull = s.hull, ahull = a.hull; g.closePort(); return { hull, max: s.maxHull, ahull, amax: a.maxHull }; });
+  check('safe harbour: while you are in port even a distant consort neither takes nor gives fire', r.hull === r.max && r.ahull === r.amax, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('merchant', 'es', 'merchant', 0, 150); for (let i = 0; i < 6; i++){ g.p.rl[0] = g.p.rl[1] = 0; g.fire(g.p, 1); T.run(.6); } const n = g.smokes.length; a.gone = true; g.balls.length = 0; T.run(40); return { n, later: g.smokes.length }; });
+  check('gunsmoke: hangs after firing in proportion to the guns, then clears', r.n >= 18 && r.later < r.n*.4, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('brig', 0), e = T.foe('brig', 'pirate', 'hunter', 400, 300); g.openOrders(s); const open = !document.getElementById('orders').hidden; document.getElementById('o_foe0').click(); const chase = s.task && s.task.type === 'chase' && s.task.prey === e;
+    document.getElementById('o_flee').click(); const flee = s.task.type === 'port' && s.task.flee; document.getElementById('o_shot').click(); const shot = s.shot; document.getElementById('o_strike').click(); const armed = g.squad().length === 1; document.getElementById('o_strike').click(); return { open, chase, flee, shot, armed, gone: g.squad().length === 0, closed: document.getElementById('orders').hidden }; });
+  check('combat orders: engage a sighted enemy, flee, change shot, and strike colours with a confirm', r.open && r.chase && r.flee && r.shot === 'chain' && r.armed && r.gone && r.closed, r);
   { const e1 = errCount(); await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); T.consort('brig', 1); }); await page.waitForTimeout(900); check('orders: drawing a fleet with one ship detached raises no errors', errCount() === e1, errors.slice(e1)); }
 
   // ---------- port, through the real buttons ----------
@@ -167,8 +174,17 @@ const HELPERS = () => {
   check('weather: a storm tears full sail but spares battle sails', r.torn < 95 && r.reefed === 100, r);
   r = await ev(() => { const g = __sp; T.reset(); T.consort('brig', 0); g.gold = 1000; const w = g.wageBill(); g.payWages(5); const paid = 1000 - g.gold; g.gold = 0; const c0 = g.p.crew; g.payWages(6); return { w, paid, deserted: c0 - g.p.crew, free: (() => { g.gold = 50; g.payWages(2); return g.gold; })() }; });
   check('wages: paid in full, desertion when broke, none in the first days', r.paid === r.w && r.deserted > 0 && r.free === 50, r);
-  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.sink(g.p); T.run(4); return g.state; });
-  check('game over: a sunk flagship ends the voyage', r === 'over', r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.gold = 900; g.sink(g.p); T.run(4); return g.state; });
+  check('flagship lost: you are offered a choice', r === 'fate', r);
+  await page.click('#ft_boat'); r = await ev(() => { const g = __sp; return [g.state, g.p.cls, g.gold, g.p.crew, g.p.alive]; }); check('flagship lost: marooned in the longboat with a third of your gold', r[0] === 'play' && r[1] === 'boat' && r[2] === 300 && r[3] === 8 && r[4], r);
+  r = await ev(() => { const g = __sp; T.run(8); g.wind.dir = g.p.h + .8; g.p.sail = 1; T.run(8); return [g.state, Math.round(g.p.speed)]; }); check('flagship lost: the longboat sails', r[0] === 'play' && r[1] > 30, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('brig', 0); g.sink(g.p); T.run(4); return g.state; }); await page.click('#ft_flag0');
+  r = await ev(() => { const g = __sp; return [g.state, g.p.cls, g.squad().length]; }); check('flagship lost: shift your flag to a consort', r[0] === 'play' && r[1] === 'brig' && r[2] === 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.gold = 1000; g.repute('en', 200); g.sink(g.p); T.run(4); return g.state; });
+  { let freed = false; for (let i = 0; i < 30 && !freed; i++){ if (await ev(() => __sp.state) !== 'fate'){ freed = true; break; } if (await page.$('#ft_en:not([disabled])')) await page.click('#ft_en'); else { await ev(() => __sp.openFate()); } }
+    r = await ev(() => { const g = __sp; return [g.state, g.p.cls, g.gold, g.isLand(g.p.x, g.p.y)]; }); check('flagship lost: a friendly governor wins your release', r[0] === 'play' && r[1] === 'sloop' && r[2] <= 600 && !r[3], r); }
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.sink(g.p); T.run(4); return g.state; }); await page.click('#ft_end'); r = await ev(() => __sp.state);
+  check('game over: ending the voyage from the choice', r === 'over', r);
   await page.click('#againBtn'); check('game over: sail again starts a new voyage', (await ev(() => __sp.state)) === 'play');
 
   // ---------- keyboard and screens in real time ----------

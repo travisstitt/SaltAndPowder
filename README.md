@@ -28,7 +28,8 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Fleet orders: line of battle / engage at will / hold fire | `H` |
 | Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
 | Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
-| Game pace: slow / steady / brisk / swift | `1` / `2` / `3` / `4` |
+| Game pace: slow / steady / brisk / swift / passage | `1` to `5` |
+| Combat orders for one ship | click her on the sea or on her card |
 | Log book: save, load, difficulty | `Esc` or `L` |
 | Mute | `M` |
 
@@ -43,11 +44,11 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## Tests
 
-`node tests/run-tests.js` runs 85 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
+`node tests/run-tests.js` runs 93 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
 
 ## How it plays
 
-- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 640 units to the degree, so a ship is small against the land and narrow channels are sailable. Tortuga and New Providence are drawn about twice life size so their towns fit, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
+- **The map** is the Caribbean, from Veracruz to Barbados and from Florida to the Spanish Main. Coastlines are Natural Earth 1:10m data (public domain), simplified. The world is 900 units to the degree, so a ship is small against the land and narrow channels are sailable. Tortuga and New Providence are drawn about twice life size so their towns fit, Tortuga is nudged north to keep its channel open, and Maracaibo sits at the mouth of its lake rather than inside the strait.
 - **Ports** are 21 towns of the period in their real locations: Port Royal, Havana, Santiago de Cuba, Tortuga, Petit-Goave, Santo Domingo, San Juan, Nassau, Veracruz, Campeche, Trujillo, Portobelo, Cartagena, Santa Marta, Maracaibo, Willemstad, La Guaira, Cumana, Bridgetown, Fort-Royal and Basseterre. They show as yellow marks on the chart, and a pointer at the screen edge leads to the nearest one.
 - **Wind** shifts over time. You cannot sail into it; a broad reach is fastest. The compass shows the wind, your point of sail and your speed.
 - **Guns** fire sideways from each beam and reload separately. Round shot breaks hulls; chain shot shreds sails; grape shot, at short range, cuts down crew. With aim assist on, shaded lanes show where each broadside will fall and turn green when it will hit a moving target.
@@ -63,7 +64,7 @@ On a touch screen, on-screen buttons replace the keys.
 - **Fleet.** A captured ship can join your fleet; up to four consorts sail with you and fight beside you. Their holds add to yours. In port you can repair them, refit each one separately, sell them to free a place in the fleet, appoint captains, or hoist your flag in one and make her your own ship.
 - **Captains.** Each consort needs a captain. Taverns offer captains for hire, rated 1 to 5 for gunnery (faster, truer broadsides) and seamanship (speed). A captured ship's officer sometimes offers to serve. With no spare captain your first mate takes her, at the lowest rating.
 - **Crew from prizes.** Up to half of a captured ship's survivors will sign on with you. A ship added to your fleet keeps her own crew, topped up from yours if she is short.
-- **Safe in port.** While you are in port your consorts lie under the fort's guns and cannot be attacked.
+- **Safe harbour.** While you are in port the world sails on, but neither you nor any ship of yours can take damage, and your ships do not fire.
 - **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
 - **Orders for one ship.** In fleet management any consort can be sent off alone: to hunt prizes (hostile merchantmen, pirates and ships you have marked), to chase your marked ship, to hold where she is, or to sail to a named port and wait. She boards what strikes to her and sends you the gold and goods, less a tenth for her company, and rejoins when you meet her or call her back.
 - **Command.** Choose a formation and standing orders. In line of battle consorts keep station and fire as the enemy bears; engage at will sends each after the nearest enemy; hold fire keeps them back. With aim assist on, each consort's lines of fire are drawn and turn green when a target is in them. Hunters come in squadrons against a fleet.
@@ -74,6 +75,9 @@ On a touch screen, on-screen buttons replace the keys.
 - **Trade.** Five goods (sugar, tobacco, rum, cocoa, cloth) are cheap where they are made and dear where they are wanted. Each class has a hold; captured merchantmen carry goods as well as gold.
 - **Politics.** Wars and peace between the four nations change over time, and ports change hands. Warships attack ships of nations they are at war with, and everyone fights pirates, whether or not you are there.
 - **Day, night and weather.** A day lasts five minutes. At night ports and ships show lights and you are harder to spot. Squalls freshen the wind, fog hides you from hunters, and storms tear the canvas of a ship under full sail.
+- **Shot that shows.** A hit bursts in flame and throws timber or torn canvas into the sea, where it splashes; round shot can start fires that burn for a while. Every gun fired leaves smoke that hangs, drifts downwind and thickens with the firing until it hides the ships and spoils everyone's aim. Wind and rain clear it.
+- **Combat orders.** Click one of your ships, on the sea or on her card, for a panel at the lower left: engage a ship you pick or one from the list of enemies in sight, engage your mark, hunt prizes, rejoin the line, hold, flee to the nearest safe port, change her shot, or strike her colours to save her captain. Clicking your flagship gives signals to the whole fleet.
+- **Losing the flagship** is no longer the end. You may shift your flag to a consort, take to the longboat with eight hands and a third of your gold, petition a governor for your release (friendlier nations are likelier to help), or end the voyage.
 - **Motion.** Ships heel to the wind and out of their turns, roll from the recoil of a broadside, pitch harder in a storm, throw spray at speed, and shiver their canvas in irons. Wrecks leave planks afloat.
 - **Towns** are each laid out differently: cathedral cities behind walls at Havana, Cartagena, Santo Domingo and Veracruz, gabled Dutch houses at Willemstad, thatched huts at Tortuga and Nassau.
 - **Hunters** come after you as your plunder grows: pirates at first, and the navy of any nation you have made an enemy.
@@ -82,6 +86,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 - **Saves** are kept in the browser's local storage: an autosave written each time you enter or leave a port, plus three manual slots in the log book. You cannot save with shot in the air or an enemy closing.
 - **Save codes.** The log book can copy the current voyage as a text code and load a pasted one, to keep a voyage outside the browser or move it to another device.
+- **Passage pace** runs the sea at three times speed for long crossings and drops back to steady when an enemy closes.
 - **What is saved:** your ship, your fleet, laid-up ships, captains and home port, crew, cargo, refits, gold, plunder, standing with each nation, wars and port owners, the clock and weather, position, wind, commission and the treasure fleet's leg. Other ships are placed afresh on loading.
 - **Difficulty** is Easy, Normal or Hard, chosen on the title screen and changeable in the log book. It scales enemy accuracy and reload, damage you take, how soon and how many hunters come, prize money, and how fast nations anger.
 
