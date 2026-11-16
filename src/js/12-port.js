@@ -30,6 +30,8 @@ function renderPort(focusId){
   paintTown();
   const ul = $('ledger'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderPort), T = (cls, t) => ledgerText(ul, cls, t);
+  if (hurr){ T('sec', hurr.stage ? 'A hurricane is blowing' : 'A hurricane is coming'); /* in harbour you are safe; this passes the time until it is over */
+    R('Wait out the hurricane', (hurr.stage ? 'It is on the coast now. ' : 'The glass is falling and a long swell is running in. ') + 'Lie here at anchor, with topmasts struck, until it has passed. Nothing can touch you in port; the world outside is not so lucky.', '', [['waitHurr', 'Wait it out', true, () => { let n = 0; while (hurr && n++ < 40) ashore(10); if (!hurr) later(() => say('The hurricane has blown itself out. The sky is clearing over ' + curPort.name + '.'), 60); }]]); }
   if (portTab === 'yard'){
     const all = [p].concat(squad().filter(inCompany)), total = all.reduce((n, s) => n + hurt(s), 0), pay = Math.min(total, gold);
     T('sec', 'Shipwright');

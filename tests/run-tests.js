@@ -396,6 +396,11 @@ const HELPERS = () => {
   check('trader: loads nothing where no cargo would pay, and picks a paying cargo where one exists', r.none && r.to === 'Santiago de Cuba' && r.margin > 0, r);
   check('trader: when her stock runs low she lies in port and writes for funds, and sending them sets her trading again', r.ask && /Waiting for funds/.test(r.word) && r.had && r.sent === 240 && r.funds === 250 && !r.need, r);
 
+  await ev(() => { const g = __sp; T.reset(); g.openPort(g.ports[0]); }); r = { before: await ev(() => !!document.getElementById('waitHurr')) }; await ev(() => __sp.startHurricane()); await page.waitForTimeout(100);
+  r.offered = await ev(() => !!document.getElementById('waitHurr')); const h0 = await ev(() => ({ hull: __sp.p.hull, sails: __sp.p.sails, cal: __sp.clock })); await page.click('#waitHurr'); await page.waitForTimeout(150);
+  r.after = await ev(h0 => { const g = __sp, a = { over: !g.hurr && !g.weather.hur, safe: g.p.hull === h0.hull && g.p.sails === h0.sails, passed: g.clock - h0.cal, state: g.state, gone: !document.getElementById('waitHurr') }; g.closePort(); return a; }, h0);
+  check('port: in a hurricane you can wait it out at anchor, unharmed, and the offer goes when it has passed', !r.before && r.offered && r.after.over && r.after.safe && r.after.passed >= 60 && r.after.state === 'port' && r.after.gone, r);
+
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
   const perr = []; phone.on('pageerror', e => perr.push(e.message));

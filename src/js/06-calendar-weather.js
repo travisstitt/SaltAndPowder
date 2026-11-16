@@ -13,7 +13,7 @@ const darkness = () => clamp((.12 - sunAt())/.5, 0, 1)*.6;
 const windMul = () => 1 + (weather.hur ? .95 : WX[weather.kind][1])*weather.k;
 const vis = () => clamp(1 - darkness()*.45 - WX[weather.kind][2]*weather.k, .35, 1);
 function startHurricane(){ if (hurr) return; hurr = { stage: 0, t: 40, x: p.x + 2500, y: p.y + 900, vx: -2500/40, vy: -900/40 }; hurrYear = calYear();
-  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.'); }
+  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.'); if (state === 'port' && !menuOpen && !chartOpen) renderPort(); }
 function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*dt*(hurr.stage ? .35 : 1); hurr.y += hurr.vy*dt*(hurr.stage ? .35 : 1);
   if (hurr.stage === 0){ if (hurr.t <= 0){ hurr.stage = 1; hurr.t = rand(60, 90);
     w.kind = 'storm'; w.next = null; w.k = Math.max(w.k, .35); w.hur = true; if (state === 'play') say('The hurricane is on you. Bare poles, and keep her head to the sea.'); } return; }
@@ -26,7 +26,7 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
       o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
-    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); } }
+    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
 function weatherTick(dt){
   const w = weather; w.left -= dt; if (hurr) hurricaneTick(dt);
   if (w.left <= 0 && !w.next){ const r = rnd(); const lat = p ? LAT1 - p.y/DEG : 20, mo = calMon(), fogB = lat > 39 ? .16 : 0, galeB = lat > 34 && (mo >= 10 || mo <= 2) ? .13 : 0;
