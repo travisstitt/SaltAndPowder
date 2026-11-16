@@ -1,7 +1,8 @@
 let vw = 0, vh = 0, dpr = 1, scale = 1, pad = { t:12, r:16, b:12, l:16 }, time = 0, vignette = null, miniC = null;
 const MINI = 9000; /* the small chart spans this much sea, east to west, about your ship */
-let flagsEnd = 300, botTop = 0, botEl = null; /* where the compass, its readings and the flags of the nations end; the small chart keeps clear of them */
-function chartRect(){ const small = coarse || vw < 620; let w = small ? clamp(vw - pad.l - pad.r - 234, 84, 120) : 190, h = w;
+let flagsEnd = 300, botTop = 0, botEl = null, miniCap = ''; /* where the compass, its readings and the flags of the nations end; the small chart keeps clear of them */
+function chartRect(){ if (deck){ const w = Math.round(clamp(vh*.27, 150, 210)); return { x: vw - 16 - w, y: vh - 16 - w, w, h: w }; }
+  const small = coarse || vw < 620; let w = small ? clamp(vw - pad.l - pad.r - 234, 84, 120) : 190, h = w;
   const floor = small && botTop > 0 ? Math.min(vh - pad.b, botTop - 8) : vh - pad.b, room = floor - flagsEnd - 12;
     if (h > room){ h = room < 56 ? 0 : room; w = h; } /* on a screen too short for it, the small chart stands down */
   return { x: vw - pad.r - w, y: small ? Math.min(flagsEnd + 12, floor - h) : floor - h, w, h }; }
@@ -12,12 +13,12 @@ function landLayer(g, k, detail){
   g.strokeStyle = '#e3d199'; g.lineWidth = (detail ? 1.6 : 1.1)/k; lands.forEach(l => g.stroke(l.path)); g.restore();
 }
 function resize(){
-  dpr = Math.min(2, window.devicePixelRatio || 1); vw = cv.clientWidth; vh = cv.clientHeight;
+  placeHud(); dpr = Math.min(2, window.devicePixelRatio || 1); vw = cv.clientWidth; vh = cv.clientHeight;
   cv.width = Math.round(vw*dpr); cv.height = Math.round(vh*dpr);
   baseScale = clamp(Math.sqrt(vw*vh)/620, .85, 2); scale = baseScale*zoomMul;
   const cs = getComputedStyle($('hud'));
   pad = { t: parseFloat(cs.paddingTop)||12, r: parseFloat(cs.paddingRight)||16, b: parseFloat(cs.paddingBottom)||12, l: parseFloat(cs.paddingLeft)||16 };
-  const tb = $('topbar').offsetHeight; pad.t += tb + 8; document.documentElement.style.setProperty('--bar', tb + 'px'); // the compass and chart sit below the top bar
+  const tb = $('topbar').offsetHeight; if (!deck) pad.t += tb + 8; document.documentElement.style.setProperty('--bar', tb + 'px'); // the compass and chart sit below the top bar
   vignette = cx.createRadialGradient(vw/2, vh/2, Math.min(vw, vh)*.35, vw/2, vh/2, Math.hypot(vw, vh)*.62);
   vignette.addColorStop(0, 'rgba(3,14,18,0)'); vignette.addColorStop(1, 'rgba(3,14,18,.5)');
   const m = chartRect(); miniC = document.createElement('canvas'); miniC.width = Math.round(W*190/MINI*dpr); miniC.height = Math.round(H*190/MINI*dpr);
@@ -205,7 +206,7 @@ function drawPort0(q){
   if (state === 'play' && Math.hypot(q.x-p.x, q.y-p.y) < 560){ cx.setLineDash([6, 8]); cx.strokeStyle = 'rgba(214,165,78,.5)'; cx.lineWidth = 1.5;
     circle(cx, q.x, q.y, 170); cx.stroke(); cx.setLineDash([]); }
   const lb = P(-(q.depth + 46), 0); cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeStyle = 'rgba(8,25,30,.85)';
-  cx.font = '24px "Pirata One", Georgia, serif'; cx.strokeText(q.name, lb[0], lb[1]); cx.fillStyle = C.bone; cx.fillText(q.name, lb[0], lb[1]);
+  cx.font = '22px "IM Fell English SC", Georgia, serif'; cx.strokeText(q.name, lb[0], lb[1]); cx.fillStyle = C.bone; cx.fillText(q.name, lb[0], lb[1]);
   cx.font = '700 11px "Alegreya Sans", sans-serif'; cx.lineWidth = 3; const sub = q.nation.adj.toUpperCase() + (hostile(q.nk) ? ' · CLOSED TO YOU' : '');
     cx.strokeText(sub, lb[0], lb[1] + 15); cx.fillStyle = hostile(q.nk) ? '#ff8a73' : q.nation.tag;
     cx.fillText(sub, lb[0], lb[1] + 15);
@@ -215,7 +216,7 @@ function drawMelee(){
   cx.strokeStyle = 'rgba(60,40,20,.9)'; cx.lineWidth = 1.4; for (const k of [-.25, 0, .25]){ cx.beginPath();
     cx.moveTo(p.x + Math.cos(p.h)*p.t.len*k, p.y + Math.sin(p.h)*p.t.len*k); cx.lineTo(s.x + Math.cos(s.h)*s.t.len*k, s.y + Math.sin(s.h)*s.t.len*k); cx.stroke(); }
   cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeStyle = 'rgba(8,25,30,.85)';
-    cx.font = '24px "Pirata One", Georgia, serif'; cx.strokeText('Boarding!', mx, my);
+    cx.font = '22px "IM Fell English SC", Georgia, serif'; cx.strokeText('Boarding!', mx, my);
     cx.fillStyle = '#ffffff'; cx.fillText('Boarding!', mx, my);
   const w = 150, bar = (y, f, col, label) => { cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(mx - w/2 - 1, y - 1, w + 2, 9); cx.fillStyle = col; cx.fillRect(mx - w/2, y, w*clamp(f, 0, 1), 7);
     cx.font = '700 12px "Alegreya Sans", sans-serif'; cx.lineWidth = 3; cx.strokeText(label, mx, y + 21); cx.fillStyle = C.bone; cx.fillText(label, mx, y + 21); };

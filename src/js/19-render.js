@@ -153,7 +153,7 @@ function render(dt){
   cx.globalAlpha = 1;
 
   if (melee) drawMelee();
-  cx.font = '24px "Pirata One", Georgia, serif'; cx.textAlign = 'center';
+  cx.font = '22px "IM Fell English SC", Georgia, serif'; cx.textAlign = 'center';
   for (const f of floaters){ cx.globalAlpha = clamp(f.life, 0, 1); cx.lineWidth = 4;
     cx.strokeStyle = 'rgba(8,25,30,.8)'; cx.strokeText(f.txt, f.x, f.y); cx.fillStyle = C.brass;
     cx.fillText(f.txt, f.x, f.y); }
@@ -224,7 +224,7 @@ function render(dt){
   drawCompass(); drawChart();
   if (chartOpen) drawBigChart();
 }
-function drawCompass(){
+function drawCompass(){ if (deck) return; /* on the quarterdeck the binnacle is an instrument of its own */
   const r = 42, x = vw - pad.r - r - 3, y = pad.t + r + 3;
   const rg = cx.createLinearGradient(x-r, y-r, x+r, y+r); rg.addColorStop(0, '#f0cf86'); rg.addColorStop(.5, '#a87a2c'); rg.addColorStop(1, '#e2b964');
   cx.fillStyle = rg; circle(cx, x, y, r+3); cx.fill();
@@ -232,7 +232,7 @@ function drawCompass(){
   cx.strokeStyle = 'rgba(239,230,207,.45)'; cx.lineWidth = 1;
   for (let i = 0; i < 32; i++){ const a = i/32*TAU, k = i % 8 === 0 ? 8 : i % 4 === 0 ? 6 : 3;
     cx.beginPath(); cx.moveTo(x + Math.cos(a)*(r-k), y + Math.sin(a)*(r-k)); cx.lineTo(x + Math.cos(a)*(r-1), y + Math.sin(a)*(r-1)); cx.stroke(); }
-  cx.font = '13px "Pirata One", Georgia, serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = C.bone;
+  cx.font = '13px "IM Fell English SC", Georgia, serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = C.bone;
   cx.fillText('N', x, y - r + 15); cx.fillStyle = 'rgba(239,230,207,.55)'; cx.fillText('S', x, y + r - 14); cx.fillText('E', x + r - 14, y); cx.fillText('W', x - r + 14, y);
   cx.save(); cx.translate(x, y); cx.rotate(p.h); cx.fillStyle = 'rgba(239,230,207,.8)';
     cx.beginPath(); cx.moveTo(13, 0); cx.quadraticCurveTo(2, 7, -9, 4.5); cx.lineTo(-9, -4.5);
@@ -272,11 +272,11 @@ function routeOn(x, y, k, w, big){ if (!course) return; const pts = [[p.x, p.y]]
 function chartMarks(x, y, k){ // the small chart in the corner
   routeOn(x, y, k, 1.4);
   { const near = ports.filter(q => !q.spec.land && (q.spec.sz >= 2 || q.name === homeName)).map(q => [Math.hypot(q.x - p.x, q.y - p.y), q]).filter(v => v[0] < MINI*.62).sort((a, b) => a[0] - b[0]).slice(0, 3);
-    cx.font = '600 10.5px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; cx.lineWidth = 2.6;
-    cx.strokeStyle = 'rgba(8,25,30,.9)';
-    near.forEach(v => { const q = v[1], px = x + q.x*k, py = y + q.y*k - 7; cx.strokeText(q.name, px, py); cx.fillStyle = '#efe6cf'; cx.fillText(q.name, px, py); }); }
+    cx.font = deck ? '12.5px ' + FELLSC : '600 10.5px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; cx.lineWidth = deck ? 3 : 2.6;
+    cx.strokeStyle = deck ? 'rgba(233,217,176,.92)' : 'rgba(8,25,30,.9)';
+    near.forEach(v => { const q = v[1], px = x + q.x*k, py = y + q.y*k - 7; cx.strokeText(q.name, px, py); cx.fillStyle = deck ? '#2b1d10' : '#efe6cf'; cx.fillText(q.name, px, py); }); }
   for (const q of ports){ const px = x + q.x*k, py = y + q.y*k, home = q.name === homeName, big = home || q.spec.sz >= 2 && !q.spec.land;
-    if (!big && q !== course){ cx.fillStyle = 'rgba(255,210,74,.75)'; cx.fillRect(px - 1, py - 1, 2, 2);
+    if (!big && q !== course){ cx.fillStyle = deck ? 'rgba(58,38,20,.6)' : 'rgba(255,210,74,.75)'; cx.fillRect(px - 1, py - 1, 2, 2);
     continue; } cx.fillStyle = '#08191e'; circle(cx, px, py, home ? 5 : 3.4); cx.fill();
     cx.fillStyle = home ? HOMEC : '#ffd24a'; circle(cx, px, py, home ? 3.6 : 2.2); cx.fill(); if (q === course){ cx.strokeStyle = '#ff7a5c'; cx.lineWidth = 1.5; circle(cx, px, py, 7); cx.stroke(); } }
   if (state !== 'title') for (const s of ships){ if (s.sinking != null || s.released) continue; const d = Math.hypot(s.x-p.x, s.y-p.y), sx = x + s.x*k, sy = y + s.y*k;
@@ -285,6 +285,7 @@ function chartMarks(x, y, k){ // the small chart in the corner
       circle(cx, sx, sy, 2); cx.fill(); continue; }
     if (s === tracked){ cx.strokeStyle = s.t.tag; cx.lineWidth = 1.5; circle(cx, sx, sy, 5); cx.stroke(); }
     else if (s.role !== 'fleet' && (prize(s) ? d > 1800 : d > 2600)) continue;
+    if (deck){ cx.fillStyle = '#2b1d10'; cx.fillRect(sx - 2.6, sy - 2.6, 5.2, 5.2); }
     cx.fillStyle = s.role === 'fleet' ? '#ffffff' : s.t.tag; cx.fillRect(sx - 1.6, sy - 1.6, 3.2, 3.2); }
   if (fleet && fleet.lead){ const fx = x + fleet.lead.x*k, fy = y + fleet.lead.y*k, r = 4.5;
     cx.fillStyle = '#08191e'; cx.beginPath(); cx.moveTo(fx, fy-r-1.5); cx.lineTo(fx+r+1.5, fy);
@@ -292,16 +293,22 @@ function chartMarks(x, y, k){ // the small chart in the corner
     cx.fillStyle = '#ffe07a'; cx.beginPath(); cx.moveTo(fx, fy-r); cx.lineTo(fx+r, fy); cx.lineTo(fx, fy+r); cx.lineTo(fx-r, fy); cx.closePath(); cx.fill(); }
   if (hurr){ cx.strokeStyle = '#ff7a66'; cx.lineWidth = 2; for (const r2 of [4, 8]){ cx.beginPath(); cx.arc(x + hurr.x*k, y + hurr.y*k, r2, time*2 + r2, time*2 + r2 + 4.4); cx.stroke(); } }
   const mt = missionTarget(); if (mt){ cx.strokeStyle = '#7fe0d0'; cx.lineWidth = 2; circle(cx, x + mt.x*k, y + mt.y*k, 6.5 + Math.sin(time*4)); cx.stroke(); }
-  const pr = 6 + 2*Math.sin(time*4); cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 1.2; circle(cx, x + p.x*k, y + p.y*k, pr); cx.stroke();
-  cx.save(); cx.translate(x + p.x*k, y + p.y*k); cx.rotate(p.h); cx.fillStyle = '#ffffff';
-    cx.beginPath(); cx.moveTo(6, 0); cx.lineTo(-4, 3.6); cx.lineTo(-4, -3.6); cx.closePath(); cx.fill(); cx.restore();
+  const pr = 6 + 2*Math.sin(time*4); cx.strokeStyle = deck ? 'rgba(200,50,30,.8)' : 'rgba(255,255,255,.7)'; cx.lineWidth = 1.2; circle(cx, x + p.x*k, y + p.y*k, pr); cx.stroke();
+  cx.save(); cx.translate(x + p.x*k, y + p.y*k); cx.rotate(p.h); cx.fillStyle = deck ? '#c8321e' : '#ffffff';
+    cx.beginPath(); cx.moveTo(6, 0); cx.lineTo(-4, 3.6); cx.lineTo(-4, -3.6); cx.closePath(); cx.fill(); if (deck){ cx.strokeStyle = '#2b1d10'; cx.lineWidth = 1; cx.stroke(); } cx.restore();
 }
 function drawChart(){
   if (!botEl) botEl = document.querySelector('#hud .bottom'); if (botEl && (tick & 15) === 0) botTop = botEl.getBoundingClientRect().top;
   const m0 = chartRect(); if (m0.w < 10) return;
   const m = m0, k = m.w/MINI, vhU = m.h/k, ox = clamp(p.x, MINI/2, W - MINI/2) - MINI/2, oy = clamp(p.y, vhU/2, H - vhU/2) - vhU/2, sc = miniC.width/W;
+  if (deck){ if (!chartCache) chartCache = buildChart(); const s2 = chartCache.width/W; cx.fillStyle = 'rgba(0,0,0,.35)'; cx.fillRect(m.x - 1, m.y + 3, m.w + 6, m.h + 5);
+    cx.drawImage(chartCache, ox*s2, oy*s2, MINI*s2, vhU*s2, m.x, m.y, m.w, m.h); } else
   cx.drawImage(miniC, ox*sc, oy*sc, MINI*sc, vhU*sc, m.x, m.y, m.w, m.h);
-  cx.save(); cx.beginPath(); cx.rect(m.x, m.y, m.w, m.h); cx.clip(); chartMarks(m.x - ox*k, m.y - oy*k, k); cx.restore();
-  cx.strokeStyle = 'rgba(214,165,78,.8)'; cx.lineWidth = 1.5; cx.strokeRect(m.x+.5, m.y+.5, m.w-1, m.h-1);
+  cx.save(); cx.beginPath(); cx.rect(m.x, m.y, m.w, m.h); cx.clip(); chartMarks(m.x - ox*k, m.y - oy*k, k);
+  if (deck){ if ((tick & 31) === 0 || !miniCap){ const o = offWhere(p.x, p.y).trim(); miniCap = (/^off/.test(o) ? cap1(o) : o.replace(/^at sea, /, '')) + ' · chart C'; }
+    cx.fillStyle = 'rgba(240,227,192,.93)'; cx.fillRect(m.x, m.y + m.h - 21, m.w, 21); cx.font = '13px ' + FELLSC; cx.textAlign = 'center'; cx.fillStyle = '#2b1d10'; let cap = miniCap;
+    while (cap.length > 12 && cx.measureText(cap).width > m.w - 10) cap = cap.replace(/ · chart C$/, '').slice(0, -2) + '…'; cx.fillText(cap, m.x + m.w/2, m.y + m.h - 6); }
+  cx.restore();
+  cx.strokeStyle = deck ? C.brass : 'rgba(214,165,78,.8)'; cx.lineWidth = deck ? 3 : 1.5; cx.strokeRect(m.x+.5, m.y+.5, m.w-1, m.h-1);
 }
 /* the full chart is drawn once, in ink on parchment, and then only marked up */

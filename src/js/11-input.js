@@ -21,7 +21,7 @@ function tutTick(){ if (tutI < 0 || tutI >= TUT.length) return; const e = $('tut
 function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
   if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
   chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick && chartPick.group){ chartPick = null;
-    later(() => { if (!chartOpen && !menuOpen) openPaper('overview'); }, 0); }
+    later(() => { if (!chartOpen && !menuOpen) deck ? openFleet(fleetSel) : openPaper('overview'); }, 0); }
   if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0);
     } /* a choice abandoned goes back to her card */
   held.left = held.right = false; $('chartTools').hidden = !chartOpen;
@@ -54,7 +54,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyJ' && !e.repeat) openPaper('gazette');
   else if (e.code === 'KeyL' && !e.repeat) openPaper('dispatches');
   else if (e.code === 'KeyK' && !e.repeat) openPaper('ledger');
-  else if (e.code === 'KeyO' && !e.repeat) openPaper('overview');
+  else if (e.code === 'KeyO' && !e.repeat) deck ? openFleet(fleetSel) : openPaper('overview');
   else if (e.code === 'KeyV' && !e.repeat) openFleet('F');
   else if (e.code === 'KeyP' && !e.repeat) setPaused(!paused);
   else if (e.code === 'KeyN' && !e.repeat && course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); }
@@ -99,12 +99,14 @@ $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.leng
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
 $('tutSkip').addEventListener('click', () => { tutI = -1; $('tutor').hidden = true; store('tut', '0'); });
-$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches'));
+$('portFleet').addEventListener('click', () => openFleet('F')); $('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches'));
   $('portGaz').addEventListener('click', () => openPaper('gazette'));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }
     if (chartPick){ pickClick(hit, g ? (e.clientX - g.x + g.ox)/g.k : 0, g ? (e.clientY - g.y + g.oy)/g.k : 0); return; }
+    if (deck && g){ let own = null, od = 17; for (const o of [p].concat(squad())){ const d = Math.hypot(g.x - g.ox + o.x*g.k - e.clientX, g.y - g.oy + o.y*g.k - e.clientY); if (d < od){ od = d; own = o; } }
+      if (own && (!hit || od < bd || state === 'port' && own === p)){ chartSelect(own); return; } if (!hit){ if (chartMark) chartSelect(null); return; } }
     if (hit){ if (hostile(hit.nk)) say(hit.name + ' is closed to you, but the course is set.'); setCourse(hit === course ? null : hit); }
     setChart(false); return; }
   const m = chartRect();

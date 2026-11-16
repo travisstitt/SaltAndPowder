@@ -118,7 +118,7 @@ function drawStruck(s){
   if (near){ cx.strokeStyle = C.brass; cx.lineWidth = 6; cx.lineCap = 'round'; cx.beginPath();
     cx.arc(s.x, s.y, BOARD_R, -Math.PI/2, -Math.PI/2 + TAU*clamp(s.board, 0, 1)); cx.stroke(); cx.lineCap = 'butt'; }
   const y = s.y - BOARD_R - 30; cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeStyle = 'rgba(8,25,30,.85)';
-  cx.font = '24px "Pirata One", Georgia, serif'; cx.strokeText('Struck her colours', s.x, y); cx.fillStyle = '#ffffff'; cx.fillText('Struck her colours', s.x, y);
+  cx.font = '22px "IM Fell English SC", Georgia, serif'; cx.strokeText('Struck her colours', s.x, y); cx.fillStyle = '#ffffff'; cx.fillText('Struck her colours', s.x, y);
   const l2 = near ? 'Boarding…' : 'Hold fire. Sail into the ring to board.';
   cx.font = '700 14px "Alegreya Sans", sans-serif'; cx.strokeText(l2, s.x, y + 18); cx.fillStyle = near ? C.brass : C.bone; cx.fillText(l2, s.x, y + 18);
 }

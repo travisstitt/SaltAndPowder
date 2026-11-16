@@ -135,14 +135,14 @@ const HELPERS = () => {
     await click('[data-tab=tavern]'); const c0 = await ev(() => __sp.p.crew); await ev(() => { __sp.p.crew = 40; }); await click('[data-tab=tavern]'); await click('#crew'); r = await ev(() => __sp.p.crew); check('port: tavern hires crew', r === 50, [c0, r]);
     const sp0 = await ev(() => __sp.spares.length); await click('#cap_0'); r = await ev(() => __sp.spares.length); check('port: tavern hires a captain', r === sp0 + 1, r);
     await click('[data-tab=governor]'); await click('#m_0'); r = await ev(() => __sp.mission && __sp.mission.type); check('port: governor gives a commission', !!r, r);
-    await click('[data-tab=fleet]'); await page.fill('#shipNameIn', 'Test Queen'); await click('#shipNameBtn'); r = await ev(() => __sp.p.name); check('fleet screen: rename the flagship', r === 'Test Queen', r);
+    await click('#portFleet'); await page.fill('#shipNameIn', 'Test Queen'); await click('#shipNameBtn'); r = await ev(() => __sp.p.name); check('fleet screen: rename the flagship', r === 'Test Queen', r);
     await click('#fi_S0'); const gu = await ev(() => __sp.squad()[0].guns); await click('#up_guns'); await click('#ch'); await click('#cp'); await click('#ca_0');
     r = await ev(() => { const s = __sp.squad()[0]; return [s.guns, s.crew, s.cap.name]; }); check('fleet screen: refit, hire, transfer crew and appoint a captain for one ship', r[0] === gu + 1 && r[1] === 45 && r[2] === 'Mary Pike', r);
     const g0 = await ev(() => __sp.gold); await click('#fs'); r = await ev(() => [__sp.squad().length, __sp.gold]); check('fleet screen: sell a consort', r[0] === 1 && r[1] > g0, r);
     await click('#fi_S0'); await click('#fl'); r = await ev(() => [__sp.squad().length, __sp.laidUp.length]); check('fleet screen: lay a ship up at the home port', r[0] === 0 && r[1] === 1, r);
     await click('#fi_L0'); await click('#lr'); r = await ev(() => [__sp.squad().length, __sp.laidUp.length]); check('fleet screen: recall her', r[0] === 1 && r[1] === 0, r);
     const before = await ev(() => [__sp.p.cls, __sp.squad()[0].cls]); await click('#fg'); r = await ev(() => [__sp.p.cls, __sp.squad()[0].cls, __sp.squad().length]); check('fleet screen: hoist your flag in a consort', r[0] === before[1] && r[1] === before[0] && r[2] === 1, [before, r]);
-    await click('#fleetClose'); await click('[data-tab=yard]'); await click('#y_brig'); r = await ev(() => __sp.p.cls); check('port: buy a ship at the yard', r === 'brig', r);
+    await click('#cabBack'); await click('[data-tab=yard]'); await click('#y_brig'); r = await ev(() => __sp.p.cls); check('port: buy a ship at the yard', r === 'brig', r);
     await click('#leaveBtn'); r = await ev(() => { T.run(3); return [__sp.state, __sp.squad().length]; }); check('port: weigh anchor with the fleet intact', r[0] === 'play' && r[1] === 1, r);
   } catch (e){ ok = false; why = e.message.split('\n')[0]; }
   check('port: every button in the walkthrough was clickable', ok, why);
@@ -150,7 +150,8 @@ const HELPERS = () => {
   for (const name of ['Kingston', 'Havana', 'Fort-Royal', 'Willemstad', 'Cap-Français', 'English Harbour', 'St Eustatius']){
     await ev(n => { const g = __sp; T.reset(); g.openPort(g.ports.find(q => q.name === n)); }, name); await page.waitForTimeout(250);
     const spots = await ev(() => { const c = document.getElementById('townCanvas').getBoundingClientRect(); return __sp.townSpots.map(s => [s.id, c.x + (s.x + s.w/2)/1640*c.width, c.y + (s.y + s.h/2)/560*c.height]); });
-    const m = spots.find(s => s[0] === 'market'); if (m) await page.mouse.click(m[1], m[2]); await page.waitForTimeout(80);
+    const m = spots.find(s => s[0] === 'market'), top = m && await ev(v => { const e = document.elementFromPoint(v[1], v[2]); return !!e && (e.id === 'townCanvas' || !!e.closest('#townTabs')); }, m); /* on a wide screen the papers lie over the foot of the painting; the plaque is always clear */
+    if (m && top) await page.mouse.click(m[1], m[2]); else if (m) await page.click('#townTabs [data-tab=market]'); await page.waitForTimeout(80);
     r = await ev(() => ({ tab: __sp.portTab, row: !!document.getElementById('buy_sugar') })); r.spots = spots.length; r.sel = true;
     check('town: ' + name + ' is painted with five places, and clicking the market opens it', r.spots === 5 && r.tab === 'market' && r.row && r.sel, r); await ev(() => __sp.closePort()); }
   r = await ev(() => { const g = __sp; T.reset(); g.openPort(g.ports[0]); let i = -1; while (i < 0){ g.makeOffers(g.ports[0]); i = g.offers.findIndex(o => o.type === 'deliver'); } g.accept(i); const t = g.mission.port, reward = g.mission.reward; g.closePort(); const g0 = g.gold; g.openPort(t); const done = !g.mission, paid = g.gold - g0; g.closePort(); return { done, paid, reward }; });
@@ -222,7 +223,7 @@ const HELPERS = () => {
   await page.keyboard.press('Escape'); await page.waitForTimeout(100); await page.keyboard.press('KeyC'); await page.waitForTimeout(300);
   const z0 = await ev(() => __sp.chartZ); for (let i = 0; i < 5; i++) await page.click('#czOut'); r = await ev(() => { const g = __sp, m = g.chartRect(); return { z1: g.chartZ, clear: m.y >= g.flagsEnd }; });
   check('chart: opens zoomed in on your own waters and zooms out to the whole', z0 === 3 && r.z1 === 1, [z0, r]); check('small chart: sits clear of the compass and the flags', r.clear, r);
-  const pt = await ev(() => { const g = __sp, q = g.ports.find(q => q.name === 'Cartagena'), aw = innerWidth - 32, ah = innerHeight - 14 - 12 - 62, k = Math.min(aw/g.W, ah/g.H), w = Math.min(aw, g.W*k), h = Math.min(ah, g.H*k); return [16 + (aw - w)/2 + q.x*k, 14 + (ah - h)/2 + q.y*k]; });
+  await page.waitForTimeout(120); const pt = await ev(() => { const g = __sp, q = g.ports.find(q => q.name === 'Cartagena'), c = g.chartGeo; return [c.x - c.ox + q.x*c.k, c.y - c.oy + q.y*c.k]; }); /* where the chart itself says the port is drawn */
   await page.mouse.click(pt[0], pt[1]); await page.waitForTimeout(200); r = await ev(() => [__sp.course && __sp.course.name, __sp.autoHelm, __sp.chartOpen]); check('chart: clicking a port sets a course', r[0] === 'Cartagena' && r[1] && !r[2], r);
   await page.keyboard.down('KeyA'); await page.waitForTimeout(300); await page.keyboard.up('KeyA'); r = await ev(() => [__sp.autoHelm, !!__sp.course]); check('helmsman: touching the helm takes over but keeps the course', !r[0] && r[1], r);
   // a fight at night in a storm, then fog: nothing may throw while drawing

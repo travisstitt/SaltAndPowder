@@ -8,11 +8,12 @@ const DIFFS = {
   normal: { name:'Normal', dmg:1,   spread:.12, reload:5,   hunt:1,   maxH:4, loot:1,    rep:1,   purse:0,   note:'The game as designed.' },
   hard:   { name:'Hard',   dmg:1.4, spread:.08, reload:4.2, hunt:.7,  maxH:5, loot:.85,  rep:1.3, purse:0,   note:'Enemies shoot straight and reload fast, you take more damage, hunters come sooner and in greater number, prizes pay less, and nations anger quickly.' } };
 let diff = 'normal'; const D = () => DIFFS[diff];
-const C = { sea:'#11434f', bone:'#efe6cf', brass:'#d6a54e', blood:'#c4472f', ink:'#08191e', navy:'#4a7fbd' };
+const C = { sea:'#0f3f4c', bone:'#f3ead2', brass:'#c9a24a', blood:'#c9523f', ink:'#08222b', navy:'#4a7fbd' };
 const cv = document.getElementById('sea'); let cx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
+const deckQ = matchMedia('(min-width: 900px) and (min-height: 560px) and (pointer: fine)'); let deck = false; /* the quarterdeck layout, for a wide screen and a mouse */
 
 let rnd = Math.random; /* every roll of the dice in the game comes through here, so a test can seed it */
 function seedRnd(n){ if (n == null){ rnd = Math.random; return; } const g = rng(n); rnd = g; }

@@ -28,7 +28,7 @@ function setDiff(k){ diff = DIFFS[k] ? k : 'normal'; store('diff', diff);
   document.querySelectorAll('[data-diff]').forEach(b => b.setAttribute('aria-pressed', b.dataset.diff === diff));
   document.querySelectorAll('.diffNote').forEach(e => { e.textContent = D().name + ': ' + D().note; }); }
 function refreshTitle(){ const l = latest(); $('contBtn').hidden = !l; if (l) $('contBtn').textContent = 'Continue: ' + summary(l); }
-function openMenu(){ setChart(false); menuOpen = true; held.left = held.right = false; $('menu').hidden = false; $('saveCode').value = ''; renderMenu(); $('menuClose').focus(); }
+function openMenu(){ setChart(false); menuOpen = true; held.left = held.right = false; $('menu').hidden = false; $('saveCode').value = ''; renderMenu(); $('menuClose').focus({ preventScroll: deck }); if (deck) $('menu').firstElementChild.scrollTop = 0; }
 function closeMenu(){ menuOpen = false; $('menu').hidden = true; $('manifest').hidden = true;
   $('fleetSheet').hidden = true; $('paper').hidden = true; if (!$('ask').hidden){ $('ask').hidden = true;
   const f = askDefault; askDefault = null; if (f) f(); } if (state === 'port') renderPort();

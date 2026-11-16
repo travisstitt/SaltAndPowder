@@ -2,7 +2,7 @@
 """Assemble index.html from the sources in src/.
 
   src/index.template.html   the page: markup and styles, with two placeholders
-  src/fonts.css             the four typefaces, embedded so the game looks the same offline
+  src/fonts.css             the three typefaces, embedded so the game looks the same offline
   src/js/NN-name.js         the game script, in the order it is joined
 
 The script files are sections of one program, not modules: they share one scope

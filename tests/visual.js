@@ -1,4 +1,4 @@
-// Screenshot comparisons of fixed scenes, and layout checks at four screen sizes. Run: node tests/visual.js [--update]
+// Screenshot comparisons of fixed scenes, and layout checks at five screen sizes: two on the quarterdeck layout, three on the compact one. Run: node tests/visual.js [--update]
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
 const URL = 'file://' + path.resolve(__dirname, '..', 'index.html') + '#test', BASE = path.join(__dirname, 'baseline'), UPDATE = process.argv.includes('--update');
 const results = [], check = (name, ok, detail) => results.push({ name, ok: !!ok, detail: detail === undefined ? '' : JSON.stringify(detail) });
@@ -33,12 +33,14 @@ const DIFF = async (page, a, b) => page.evaluate(async ([a, b]) => { const load 
       check('picture ' + name + ' at ' + sz + ' matches its baseline', !d.size && d.pct < (name === 'sea' ? 4.5 : 2.5) && d.mean < 18, d); } /* the sea glitters differently every frame, even behind a sheet, so pictures are held to shapes rather than shades */
     await page.close(); }
   // ---------- nothing in the HUD may lie across anything else
-  for (const [label, opt] of [['1366x768', { viewport: { width: 1366, height: 768 } }], ['1100x520', { viewport: { width: 1100, height: 520 } }], ['780x380 touch', { viewport: { width: 780, height: 380 }, hasTouch: true, isMobile: true }], ['400x780 touch', { viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true }]]){
+  for (const [label, opt] of [['1366x768', { viewport: { width: 1366, height: 768 } }], ['1000x620', { viewport: { width: 1000, height: 620 } }], ['1100x520', { viewport: { width: 1100, height: 520 } }], ['780x380 touch', { viewport: { width: 780, height: 380 }, hasTouch: true, isMobile: true }], ['400x780 touch', { viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true }]]){
     const page = await browser.newPage(opt); await page.goto(URL); await page.waitForFunction(() => window.__sp); await page.waitForTimeout(300);
-    await page.evaluate(setup); await page.evaluate(() => { const g = __sp; g.freeze(false); g.setWars(['en-fr', 'en-es', 'es-nl']); }); await page.waitForTimeout(500);
+    await page.evaluate(setup); await page.evaluate(() => { const g = __sp; g.freeze(false); g.setWars(['en-fr', 'en-es', 'es-nl']);
+      if (document.body.classList.contains('deck')) ['sloop', 'brig', 'snow', 'merchant', 'frigate', 'sloop', 'brig'].forEach((c, i) => g.addFleet({ cls: c, hf: 1, sails: 90, crew: 30, cap: { name: 'Tom Hale', gun: 3, sea: 3 } }, g.p.x - 60*i, g.p.y + 90 + 30*i, g.p.h)); /* the quarterdeck must hold a full fleet of eight */ }); await page.waitForTimeout(500);
     const r = await page.evaluate(() => { const g = __sp, box = {}, rect = (k, e) => { if (!e) return; const b = e.getBoundingClientRect(); if (b.width > 2 && b.height > 2 && getComputedStyle(e).visibility !== 'hidden') box[k] = [b.left, b.top, b.right, b.bottom].map(Math.round); };
       rect('top bar', document.getElementById('topbar')); rect('flagship card', document.getElementById('flagCard')); rect('fleet column', document.getElementById('fleetCol')); rect('key legend', document.getElementById('keys')); rect('touch controls', document.querySelector('.touch')); rect('dock button', document.getElementById('dock'));
-      const m = g.chartRect(); if (m.w > 10) box['small chart'] = [m.x, m.y, m.x + m.w, m.y + m.h].map(Math.round); const tb = box['top bar']; box['compass and flags'] = [innerWidth - 150, tb ? tb[3] + 4 : 0, innerWidth, Math.round(g.flagsEnd)];
+      const m = g.chartRect(); if (m.w > 10) box['small chart'] = [m.x, m.y, m.x + m.w, m.y + m.h].map(Math.round); const tb = box['top bar'], deck = document.body.classList.contains('deck');
+      if (deck){ rect('binnacle', document.getElementById('binn')); rect('pause and great cabin', document.querySelector('.tools')); } else box['compass and flags'] = [innerWidth - 150, tb ? tb[3] + 4 : 0, innerWidth, Math.round(g.flagsEnd)];
       const ks = Object.keys(box), hits = []; for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++){ const a = box[ks[i]], b = box[ks[j]]; if (a[0] < b[2] - 1 && a[2] > b[0] + 1 && a[1] < b[3] - 1 && a[3] > b[1] + 1) hits.push(ks[i] + ' / ' + ks[j]); }
       const off = ks.filter(k => box[k][0] < -1 || box[k][1] < -1 || box[k][2] > innerWidth + 1 || box[k][3] > innerHeight + 1); return { hits, off, n: ks.length, box }; });
     check('layout at ' + label + ': no HUD element overlaps another or leaves the screen', r.hits.length === 0 && r.off.length === 0 && r.n >= 4, r.hits.length || r.off.length ? r : undefined); await page.close(); }

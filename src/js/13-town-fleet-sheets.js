@@ -29,10 +29,10 @@ function paintTown(){
       g.strokeStyle = sel ? 'rgba(214,165,78,.95)' : 'rgba(255,255,255,' + (.6 + .3*Math.sin(time*5)).toFixed(3) + ')';
       g.lineWidth = 3; g.setLineDash([10, 8]); g.lineDashOffset = -time*24;
       g.beginPath(); g.roundRect ? g.roundRect(s.x, s.y, s.w, s.h, 10) : g.rect(s.x, s.y, s.w, s.h); g.fill(); g.stroke(); g.setLineDash([]); g.lineDashOffset = 0; }
-    const ty = s.y > 30 ? s.y - 9 : s.y + s.h + 22; g.font = '700 19px "Alegreya Sans", sans-serif';
+    if (deck) continue; const ty = s.y > 30 ? s.y - 9 : s.y + s.h + 22; g.font = '700 19px "Alegreya Sans", sans-serif';
       g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(8,25,30,.85)'; g.strokeText(s.name.toUpperCase(), s.x + s.w/2, ty);
       g.fillStyle = sel ? C.brass : C.bone; g.fillText(s.name.toUpperCase(), s.x + s.w/2, ty); }
-  g.font = '34px "Pirata One", Georgia, serif'; g.textAlign = 'left'; g.lineWidth = 5;
+  if (deck) return; g.font = '32px "IM Fell English SC", Georgia, serif'; g.textAlign = 'left'; g.lineWidth = 5;
     g.strokeStyle = 'rgba(8,25,30,.85)'; g.strokeText(curPort.name, 22, TH - 22); g.fillStyle = C.bone;
     g.fillText(curPort.name, 22, TH - 22);
 }
@@ -86,14 +86,27 @@ function renderFleet(focusId){
   let kind = fleetSel[0], idx = +fleetSel.slice(1) || 0;
   if (kind === 'S' && !sq[idx] || kind === 'L' && !laidUp[idx]){ kind = 'F'; fleetSel = 'F'; }
   $('fleetGold').textContent = gold;
-  const list = $('shipList'); list.textContent = '';
-  const item = (key, title, sub) => { const b = document.createElement('button'), t = document.createElement('span'), sm = document.createElement('small');
+  const list = $('shipList'); list.textContent = ''; $('fleetTitle').textContent = deck ? 'The muster book' : 'Fleet';
+  if (deck){ const h = mEl('div', 'mrow mhead'); ['Ship', 'Class', 'Doing', 'Where', 'Hull', 'Hold'].forEach(t => h.appendChild(mEl('span', '', t))); list.appendChild(h); }
+  const row = (key, s, cells, hf) => { const b = mEl('button', 'shipitem mrow'), n = mEl('span', 'nmc'), hb = mEl('span', 'hb'), tr = mEl('i'), f = mEl('b', hf > .4 ? '' : 'low'); b.type = 'button'; b.id = 'fi_' + key; b.setAttribute('aria-pressed', String(fleetSel === key));
+    n.appendChild(mEl('i', s ? penOf(s) : 'pn p')); n.appendChild(document.createTextNode(cells[0])); b.appendChild(n); cells.slice(1, 4).forEach(c => b.appendChild(mEl('span', '', c)));
+    f.style.width = Math.round(clamp(hf, 0, 1)*100) + '%'; tr.appendChild(f); hb.appendChild(tr); hb.appendChild(document.createTextNode(String(Math.round(hf*100)))); b.appendChild(hb); b.appendChild(mEl('span', '', cells[4]));
+    b.addEventListener('click', () => { fleetSel = key; renderFleet('fi_' + key); }); list.appendChild(b); }; /* the muster book: one line a ship */
+  const item = deck ? (key, title, sub) => { const s = key === 'F' ? p : key[0] === 'S' ? sq[+key.slice(1)] : null, d = s ? null : laidUp[+key.slice(1)];
+    if (s) row(key, s, [s.name, cap1(s.t.cname), doingShort(s) + (s.div ? ' · ' + DIVS[s.div].replace(' division', '') : ''), whereShort(s), holdShort(s)], s.hull/s.maxHull);
+    else row(key, null, [d.name || cap1(CLASSES[d.cls].cname), cap1(CLASSES[d.cls].cname), 'Laid up', homeName, '—'], d.hf); }
+  : (key, title, sub) => { const b = document.createElement('button'), t = document.createElement('span'), sm = document.createElement('small');
     b.type = 'button'; b.className = 'shipitem'; b.id = 'fi_' + key;
     b.setAttribute('aria-pressed', String(fleetSel === key)); t.textContent = title;
       sm.textContent = sub; b.appendChild(t); b.appendChild(sm); b.addEventListener('click', () => { fleetSel = key; renderFleet('fi_' + key); }); list.appendChild(b); };
   item('F', p.name, 'Flagship · ' + p.t.cname + ' · hull ' + pct(p) + '%');
   sq.forEach((s, i) => item('S' + i, s.name, cap1(s.t.cname) + ' · ' + stars(s.cap) + ' · hull ' + pct(s) + '%'));
   laidUp.forEach((d, i) => item('L' + i, 'Laid up · ' + cap1(CLASSES[d.cls].cname), 'At ' + homeName + ' · hull ' + Math.round(d.hf*100) + '%'));
+  if (deck){ const X = mEl('div', 'mextra'), acts = (label, arr) => { const r = mEl('div', 'btns'); r.appendChild(mEl('span', 'k', label)); arr.forEach(v => { const b = mEl('button', '', v[1]); b.type = 'button'; b.id = v[0]; b.disabled = v[2] === false; b.addEventListener('click', () => { v[3](); if (!chartOpen) renderFleet(v[0]); }); r.appendChild(b); }); X.appendChild(r); };
+    if (sq.length) acts('All ships', [['ms_recall', 'Rejoin the flag', true, () => fleetSignal('recall')], ['ms_port', 'To the nearest port', true, () => fleetSignal('port')], ['ms_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
+    [1, 2, 3].forEach(d => { const g2 = sq.filter(o => o.div === d); if (!g2.length) return; acts(DIVS[d].replace(' division', ''), [['md_recall' + d, 'Rejoin', true, () => g2.forEach(o => setTask(o, { type: 'fleet' }))], ['md_port' + d, 'To a port…', true, () => pickOnChart(g2[0], 'port', g2)], ['md_cruise' + d, 'Cruise…', true, () => pickOnChart(g2[0], 'cruise', g2)], ['md_block' + d, 'Blockade…', true, () => pickOnChart(g2[0], 'blockade', g2)]]); });
+    const last = dispatches[0]; if (last){ const w = mEl('p'); w.appendChild(mEl('span', 'seal')); w.appendChild(mEl('b', '', 'Latest word, ' + last.d + '. ')); w.appendChild(document.createTextNode(last.who + ': ' + last.t.slice(0, 200))); X.appendChild(w); }
+    list.appendChild(X); }
   const ul = $('shipRows'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderFleet);
   if (kind === 'L'){ const d = laidUp[idx], k = CLASSES[d.cls], tmp = makeShip(d.cls, 'player', 'fleet', 0, 0, 0), v = Math.round(k.value*.35*d.hf);
@@ -111,9 +124,10 @@ function renderFleet(focusId){
     R('Where she is', 'Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
     { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0;
       R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
-    if (flag) R('Fleet overview', 'Every ship on one sheet: what she is doing, where, her state and her last word, with orders for a whole division.', '', [['toOverview', 'Open the overview', true, () => openPaper('overview')]]);
-    if (flag) R('Trade ledger', 'What your traders have made, month by month, and the price book.', '', [['toLedger', 'Open the ledger', true, () => openPaper('ledger')]]);
-    if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
+    if (flag && !deck) R('Fleet overview', 'Every ship on one sheet: what she is doing, where, her state and her last word, with orders for a whole division.', '', [['toOverview', 'Open the overview', true, () => openPaper('overview')]]);
+    if (flag && !deck) R('Trade ledger', 'What your traders have made, month by month, and the price book.', '', [['toLedger', 'Open the ledger', true, () => openPaper('ledger')]]);
+    if (flag && deck) R('The manifest', 'Every ton in the fleet\'s holds, and what may be thrown overboard.', '', [['toManifest', 'Open the manifest', true, () => { closeMenu(); openManifest(); }]]);
+    if (flag && sq.length && !deck) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
     if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
@@ -144,7 +158,7 @@ function renderFleet(focusId){
         { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4);
           if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
         R('Her trading stock', 'The gold she takes from your purse to trade with. It comes back when she is given other orders. If it runs too low to load a cargo, her captain writes to ask for more.', '', [['so_cap', DOCS.cap[ci][1], !t2, () => { s.doc.cap = DOCS.cap[(ci + 1) % DOCS.cap.length][0]; }]]); }
-      R('Division', 'Ships of one division can be given a single order from the fleet overview.', '', [['so_div', DIVS[s.div|0], true, () => { s.div = ((s.div|0) + 1) % DIVS.length; }]]);
+      R('Division', 'Ships of one division can be given a single order together.', '', [['so_div', DIVS[s.div|0], true, () => { s.div = ((s.div|0) + 1) % DIVS.length; }]]);
       ledgerText(ul, 'sec', 'Standing orders');
       [['wx', 'In a hurricane', 'A good seaman sees it coming sooner.'], ['dmg', 'When damaged', 'She breaks off and makes for the nearest open port.'], ['foe', 'Against warships, when detached', 'Whether she stands or runs.'], ['allow', 'Repairs without asking', 'Above this her captain writes for your leave.'], ['after', 'Once repaired', '']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k]));
         R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });

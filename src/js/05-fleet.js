@@ -32,7 +32,7 @@ let dispatches = [], dispNew = 0, shipSeq = 0;
 function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null, x: s ? Math.round(s.x) : 0, y: s ? Math.round(s.y) : 0 });
   if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
   if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
-function dispBadge(){ for (const id of ['dispBtn', 'portDisp']){ const b = $(id); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); } }
+function dispBadge(){ for (const id of ['dispBtn', 'portDisp']){ const b = $(id); if (b){ b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); b.classList.toggle('has', dispNew > 0); } } }
 const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station', cap:250, margin:.12, contra:'avoid', risk:'any', ware:'off', insure:'off' };
 const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']], cap:[[100, '100 gold'], [250, '250 gold'], [500, '500 gold'], [1000, '1000 gold']], margin:[[.08, 'Eight per cent'], [.12, 'Twelve per cent'], [.2, 'Twenty per cent']], contra:[['avoid', 'No contraband'], ['allow', 'Smuggle if it pays']], risk:[['any', 'Any open port'], ['safe', 'Only where you stand well']], ware:[['off', 'Leave the warehouse alone'], ['on', 'Carry your stored goods to market']], insure:[['off', 'Uninsured'], ['on', 'Insure each cargo at 5 per cent']] };
 const docWord = (k, v) => (DOCS[k].find(o => o[0] === v) || DOCS[k][0])[1];
@@ -122,7 +122,7 @@ function pickClick(hit, wx, wy){ const c = chartPick, s = c.s; let done = false;
     return; } done = startTrade(s, [c.a, hit], null); }
   else if (c.group){ c.group.forEach(o => { if (squad().indexOf(o) < 0) return; if (c.kind === 'port') setTask(o, { type: 'port', port: hit }); else assign(o, c.kind, hit); });
     say(c.group.length + ' ships ordered: ' + c.kind + ', ' + hit.name + '.'); chartPick = null;
-    setChart(false); openPaper('overview'); return; }
+    setChart(false); deck ? openFleet(fleetSel) : openPaper('overview'); return; }
   else if (c.kind === 'port'){ setTask(s, { type: 'port', port: hit }); say('The ' + s.name + ' is ordered to ' + hit.name + '.'); done = true; }
   else { assign(s, c.kind, hit); done = true; }
   if (done){ chartPick = null; setChart(false); openFleet('S' + Math.max(0, squad().indexOf(s))); } }
@@ -362,7 +362,7 @@ let gazDate = null;
 function gaz(t, k){ gazette.unshift({ d: gazDate || dateStr(), t: String(t), k: k || 'news' }); if (gazette.length > 60) gazette.length = 60; }
 const offWhere = (x, y) => { let b = ports[0], bd = 1e9; for (const q of ports){ const d = Math.hypot(q.x - x, q.y - y);
   if (d < bd){ bd = d; b = q; } } return (bd < 700 ? ' off ' : ' at sea, ' + Math.round(bd/DEG*20) + ' leagues from ') + b.name; };
-function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return; setChart(false); menuOpen = true; held.left = held.right = false; const b = $('paperBody'); b.textContent = '';
+function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return; setChart(false); paperMode = mode || 'gazette'; menuOpen = true; held.left = held.right = false; const b = $('paperBody'); b.textContent = '';
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; b.appendChild(e); return e; };
   const row = (a, c, cls) => { const r = el('div', 'prow' + (cls ? ' ' + cls : '')), x = document.createElement('span'), y = document.createElement('span');
     x.textContent = a; y.textContent = c; r.appendChild(x); r.appendChild(y); };
@@ -404,7 +404,7 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
       if (!any) el('p', '', 'Nothing yet. Prices are written down whenever you or one of your traders calls at a port.'); }
   else if (mode === 'dispatches'){ dispNew = 0; dispBadge(); el('div', 'mast', 'Dispatches'); el('div', 'dateline', dateStr() + ' · from the captains of your fleet');
     if (!dispatches.length) el('p', 'lead', 'Nothing has come in. Your captains write when they make port, break off, or have something to report.');
-    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'), seal = document.createElement('span'); seal.className = 'seal'; { let hh = 0; for (const ch of v.who) hh = (hh*31 + ch.charCodeAt(0)) % 360; seal.style.background = 'hsl(' + hh + ',55%,36%)'; } e.appendChild(seal); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
+    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'), seal = document.createElement('span'); seal.className = 'seal'; if (!v.ask) seal.className = 'seal read'; e.appendChild(seal); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
       const s = v.ask && squad().find(o => o.id === v.id); if (v.ask === 'repair' && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null;
         if (v.ask === 'funds' && (!s || !s.task || s.task.type !== 'trade' || !s.task.need)) v.ask = null;
       if (v.ask === 'funds'){ const t2 = s.task, want = Math.max(0, t2.cap - Math.round(t2.funds)), r = el('div', 'dbtns');

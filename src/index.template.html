@@ -9,11 +9,13 @@
 <style>
 body{margin:0}[hidden]{display:none!important}
 /* Layout: full-bleed sea canvas; brass instruments pinned to the corners; ledger sheets for title, port and wreck. */
-/* Single dark world by choice: the sea is the page. */
+/* Two materials only: dark plates with a brass edge on deck, and paper everywhere else. Names in small capitals, prose in Fell, figures in Alegreya Sans. */
 :root{
-  --sea:#11434f; --sea-deep:#0a2a33; --ink:#08191e; --panel:rgba(8,25,30,.84);
-  --bone:#efe6cf; --bone-dim:#b9b39f; --brass:#d6a54e; --blood:#c4472f; --moss:#6c9a55;
-  --display:'Pirata One','Copperplate',Georgia,serif;
+  --sea:#0f3f4c; --sea-deep:#08222b; --ink:#08222b; --panel:rgba(8,34,43,.9);
+  --bone:#f3ead2; --bone-dim:#b9b39f; --brass:#c9a24a; --blood:#c9523f; --moss:#6fb37a;
+  --ox:#8c2a1c; --verd:#2f7d74; --paper:#ecdfba; --pink:#2b1d10; --pink2:#5a4024;
+  --display:'IM Fell English SC',Georgia,'Times New Roman',serif;
+  --prose:'IM Fell English',Georgia,'Times New Roman',serif;
   --body:'Alegreya Sans','Trebuchet MS',Verdana,sans-serif;
   color-scheme:dark;
 }
@@ -191,7 +193,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 #toast{border-color:rgba(214,165,78,.5)}
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 .card.paper{background:linear-gradient(180deg,#eddfb9,#dcc998 70%,#d2bd8a);color:#3a2614;border-color:#8a6a3a;box-shadow:0 0 0 4px #d9c594,0 0 0 5px rgba(58,38,20,.5),0 24px 60px rgba(0,0,0,.6);font-family:"IM Fell English",Georgia,serif;max-width:640px}
-.paper .mast{font-family:"Pirata One","IM Fell English SC",serif;font-size:2.3rem;text-align:center;line-height:1.1;color:#2c1a0c}
+.paper .mast{font-family:"IM Fell English SC",serif;font-size:2.3rem;text-align:center;line-height:1.1;color:#2c1a0c}
 .paper .dateline{font-family:"IM Fell English SC",Georgia,serif;text-align:center;border-top:3px double #5a4024;border-bottom:1px solid #5a4024;padding:.3rem 0;margin:.4rem 0 .9rem;font-size:.95rem}
 .paper p{margin:0 0 .6rem;font-size:1.02rem;line-height:1.4;text-wrap:pretty}
 .paper p.you{border-left:3px solid #8c2a1c;padding-left:.6rem}
@@ -215,6 +217,278 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 #tutor{pointer-events:auto;background:rgba(214,165,78,.14);border:1px solid var(--brass);border-radius:4px;padding:6px 8px;font-size:13.5px;line-height:1.35;color:var(--bone);max-width:260px}#tutSkip{font-size:11.5px;padding:1px 6px;margin-top:4px}
 .paper .dbtns i{font-style:italic}.paper p i{opacity:.85}
 .paper .seal{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.45em;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 0 0 1px rgba(58,38,20,.5);vertical-align:-.05em}.paper .bar{height:6px;background:#1f6b3a;border-radius:2px;margin:-2px 0 6px}.paper .bar.neg{background:#8c2a1c}
+/* ===== The Georgian navy look. Plates on deck; every sheet is paper. ===== */
+.topbar,.shipcard,.chip,.keys,#toast,#pauseBanner,#chartTools,#orders{background:linear-gradient(180deg,rgba(8,34,43,.9),rgba(6,24,30,.93));border:1px solid rgba(201,162,74,.55);border-radius:3px}
+.shipcard.flag{border-color:var(--brass)}
+button{border-radius:3px}
+button:hover:not(:disabled){background:#123a45}
+button.primary{background:linear-gradient(180deg,#e6c06a,#c2903a);color:#22160b;border-color:#c2903a}
+button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f0cf80,#c9a24a)}
+.stat .k,.meter,.ordlbl{letter-spacing:.14em}
+.stat .v.gold{color:#e8c874;text-shadow:none}
+#pauseBanner strong,.ordhead strong{letter-spacing:.04em}
+#boardBtn,button.danger{background:linear-gradient(180deg,#a6392a,#7c2418);border-color:#e6c06a;color:#f6ead0}
+#boardBtn:hover:not(:disabled),button.danger:hover:not(:disabled){background:linear-gradient(180deg,#b84331,#8c2a1c)}
+.more[open] summary{background:#123a45}
+.coursechip{border-color:#ff8a73}
+#tutor{background:linear-gradient(180deg,rgba(8,34,43,.92),rgba(6,24,30,.94));border-color:var(--brass);border-left:3px solid var(--brass)}
+.card{--bone:#2b1d10;--bone-dim:#5a4024;--brass:#6b4a1c;--blood:#8c2a1c;--moss:#1f6b3a;color-scheme:light;
+  background:linear-gradient(180deg,#f0e3c0,#e2d1a3 70%,#d6c392);color:#2b1d10;border:1px solid #8a6a3a;border-radius:3px;
+  box-shadow:0 0 0 4px #d9c594,0 0 0 5px rgba(58,38,20,.5),0 24px 60px rgba(0,0,0,.6),inset 0 0 60px rgba(120,90,40,.12)}
+.card.paper{background:linear-gradient(180deg,#f0e3c0,#e2d1a3 70%,#d6c392);color:#2b1d10;border-color:#8a6a3a;font-family:var(--prose);
+  box-shadow:0 0 0 4px #d9c594,0 0 0 5px rgba(58,38,20,.5),0 24px 60px rgba(0,0,0,.6),inset 0 0 60px rgba(120,90,40,.12)}
+.card h1,.card h2{text-shadow:none;letter-spacing:.04em;color:#2b1d10}
+.card h2{font-size:30px;padding-bottom:.4rem;border-bottom:3px double #5a4024}
+.card h1{font-size:clamp(36px,8.4vw,56px);text-align:center;letter-spacing:.06em;line-height:1.05}
+.card h1 em{font-family:var(--prose);font-style:italic;color:var(--ox);padding:0 .08em}
+.card .dateline,.paper .dateline{font-family:var(--display);text-align:center;border-top:3px double #5a4024;border-bottom:1px solid #5a4024;padding:.3rem 0;margin:.2rem 0 .3rem;font-size:.95rem;letter-spacing:.05em}
+.card p{font-family:var(--prose);font-size:17px;line-height:1.4}
+.card p.note,.card .note{font-family:var(--body);font-size:14px;line-height:1.4}
+.ledger li{border-top:1px dotted rgba(90,64,36,.5)}
+.ledger li>span:first-child{font-family:var(--prose);font-size:17px;line-height:1.25}
+.ledger small{font-family:var(--body);line-height:1.35;margin-top:1px}
+.ledger li.sec{font-family:var(--display);font-size:19px;letter-spacing:.05em;color:#2b1d10;border-bottom:1px solid #5a4024;padding:14px 0 3px;margin-bottom:2px}
+.ledger li.txt{font-family:var(--body)}
+.card dt{font-family:var(--display);font-weight:400;letter-spacing:.04em;color:#2b1d10}
+.card dd{font-family:var(--prose);line-height:1.35}
+.card button{background:rgba(255,250,235,.3);color:#2b1d10;border-color:rgba(58,38,20,.55);font-weight:500}
+.card button:hover:not(:disabled){background:rgba(58,38,20,.13);box-shadow:0 0 0 1px rgba(58,38,20,.3)}
+.card button.primary,.paper .primary{background:linear-gradient(180deg,#a6392a,#7c2418);color:#f6ead0;border-color:#7c2418;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 6px rgba(0,0,0,.25)}
+.card button.primary:hover:not(:disabled){background:linear-gradient(180deg,#b84331,#8c2a1c)}
+.card .seg button[aria-pressed="true"],.card .tabrow button[aria-selected="true"],.card .shipitem[aria-pressed="true"]{background:#3a2614;color:#f2e7c6;border-color:#3a2614;font-weight:700}
+.card .seg button[aria-pressed="true"]:hover:not(:disabled),.card .tabrow button[aria-selected="true"]:hover:not(:disabled),.card .shipitem[aria-pressed="true"]:hover{background:#4a321c}
+.card button.danger{background:linear-gradient(180deg,#a6392a,#7c2418);color:#f6ead0;border-color:#7c2418}
+.card input[type=text],.card textarea,.card select{background:rgba(255,250,235,.6);color:#2b1d10;border-color:rgba(58,38,20,.55)}
+.amt{color:#2b1d10}
+.purse{font-family:var(--body);font-weight:700;font-size:18px;color:#2b1d10}
+.shipitem small{color:inherit;opacity:.78}
+#shipNow{border-left:3px solid var(--verd);background:rgba(47,125,116,.1);font-family:var(--prose);font-size:17px}
+#townCanvas,#shipPic{border-color:#5a4024}
+.how summary{letter-spacing:.04em}
+.paper .mast{font-family:var(--display);letter-spacing:.06em;font-size:2.1rem;color:#2b1d10}
+.paper .dbtns button{background:#3a2614;color:#f2e7c6;border-color:#3a2614}
+.seal{display:inline-block;width:.72em;height:.72em;border-radius:50%;background:var(--ox);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 0 0 1px rgba(58,38,20,.4);margin-right:.4em;vertical-align:-.02em}
+/* ===== The quarterdeck (wide screens with a mouse): the sea fills the screen and the instruments stand at its edges ===== */
+body:not(.deck) .dk{display:none!important}
+body.deck .ph{display:none!important}
+.sc{font-family:var(--display);letter-spacing:.04em;font-weight:400}
+.plate{background:linear-gradient(180deg,rgba(8,34,43,.9),rgba(6,24,30,.93));border:1px solid rgba(201,162,74,.55);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim)}
+.k2{font-size:12.5px;color:var(--bone-dim);font-weight:400}
+body.deck #hud{display:block;padding:0}
+body.deck .topbar{position:fixed;left:16px;top:14px;flex-wrap:nowrap;padding:7px 14px;max-width:calc(100vw - 290px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+body.deck .stats{flex-wrap:nowrap;gap:0 16px;align-items:center}
+body.deck .stat{white-space:nowrap}
+body.deck .stat.when{gap:2px}
+#gDate{font-family:var(--display);font-size:17px;font-weight:400;letter-spacing:.04em}
+body.deck #whenBox{display:flex;gap:8px;align-items:center}
+body.deck #paceBtn{padding:0 7px;font-size:11.5px;line-height:1.55;border-color:rgba(201,162,74,.5);color:var(--bone)}
+body.deck .warbox{gap:3px}
+#gWar{display:block;width:124px;height:32px}
+#gWarT.war{color:#ff8a73}
+body.deck .stat.sepL{border-left:1px solid rgba(201,162,74,.4);padding-left:16px}
+body.deck .tools{position:fixed;right:16px;top:14px;margin:0;gap:8px;overflow:visible;max-width:none}
+body.deck .tools>*{display:none}
+body.deck .tools>#pauseBtn,body.deck .tools>#cabinBtn{display:inline-flex;align-items:center;padding:7px 13px;font-size:13.5px;font-weight:600;background:linear-gradient(180deg,rgba(8,34,43,.9),rgba(6,24,30,.93));box-shadow:0 6px 18px rgba(0,0,0,.35)}
+body.deck .tools>#pauseBtn:hover,body.deck .tools>#cabinBtn:hover{background:#123a45}
+body.deck #cabinBtn{border-color:var(--brass)}
+body.deck .side{position:fixed;left:16px;top:calc(var(--bar,48px) + 24px);width:214px;gap:5px;max-height:calc(100vh - var(--bar,48px) - 206px);overflow:hidden auto;scrollbar-width:thin}
+body.deck #flagCard{position:fixed;left:16px;bottom:16px;width:290px;padding:10px 14px;gap:6px}
+body.deck #flagCard .nm{align-items:baseline}
+body.deck #flagName{font-family:var(--display);font-size:18px;font-weight:400;letter-spacing:.04em}
+body.deck #flagCls{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim)}
+body.deck #flagCard .meter{grid-template-columns:44px 1fr 46px;font-size:10.5px}
+.meter em{font-style:normal;text-align:right;font-size:12.5px;letter-spacing:0;color:var(--bone);font-variant-numeric:tabular-nums;text-transform:none}
+#bCrew{background:var(--brass)}
+body.deck #flagNote{font-size:12.5px;color:var(--bone-dim);margin-top:1px}
+.pn{display:inline-block;width:0;height:0;border-top:5.5px solid transparent;border-bottom:5.5px solid transparent;border-left:12px solid #fff;margin-right:7px;flex:none;align-self:center}
+.pn.t{border-left-color:#e8b92e}.pn.e{border-left-color:#7fb0ff}.pn.c{border-left-color:#ff8a73}.pn.p{border-left-color:#b9b39f}
+body.deck #fleetCol{gap:5px}
+body.deck #fleetCol .shipcard{padding:5px 10px 7px;gap:5px}
+body.deck #fleetCol .nm{display:flex;font-size:13.5px;font-weight:500;justify-content:flex-start;align-items:baseline}
+body.deck #fleetCol .nm>span{flex:1}
+body.deck #fleetCol .nm small{font-size:11.5px;color:var(--bone-dim);letter-spacing:0;max-width:58%;overflow:hidden;text-overflow:ellipsis}
+body.deck #fleetCol .meter{display:block}
+body.deck #fleetCol .meter i{height:4px}
+body.deck #fleetCol.many .shipcard{padding:3px 10px 5px;gap:3px}
+body.deck #fleetCol.many .shipcard>*:nth-child(n+3){display:block}
+body.deck #fleetCol.many .meter i{height:3px}
+body.deck #fleetRow{flex-wrap:wrap;gap:4px}
+body.deck #fleetRow .mini{flex:1 1 auto;background:rgba(8,34,43,.55);border-color:rgba(201,162,74,.35);color:var(--bone-dim);font-size:11.5px}
+body.deck #fleetRow .mini[aria-pressed="true"]{color:var(--bone);border-color:var(--brass)}
+body.deck #chase{display:none!important}
+#target{position:fixed;top:14px;left:max(calc(50% - 180px),calc(var(--tlw,600px) + 30px));width:360px;box-sizing:border-box;padding:7px 14px;text-align:center}
+body.tight #target{top:calc(var(--bar,48px) + 24px);left:calc(50% - 180px)}
+#tgName{font-size:16px;color:#ffb3a3}
+.tgbars{display:flex;gap:10px;align-items:center;margin-top:4px}
+.tgbars i{flex:1;height:6px;border-radius:3px;background:rgba(243,234,210,.16);overflow:hidden;display:block}
+.tgbars b{display:block;height:100%;width:100%;background:var(--blood)}
+#tgSails{background:var(--bone)}
+#tgNote{font-size:12.5px;color:#9fe0b5;margin-top:4px}
+#binn{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);display:grid;grid-template-columns:auto auto auto;align-items:end;justify-items:center;gap:0 10px}
+.gun{all:unset;box-sizing:border-box;cursor:pointer;display:grid;justify-items:center;position:relative;margin-bottom:4px}
+.gun svg{display:block}
+.gun b{position:absolute;left:0;right:0;top:0;height:74px;display:grid;place-items:center;font-size:13px}
+.gun .k{margin-top:1px;white-space:nowrap}
+.gun:focus-visible{outline:2px solid var(--bone);outline-offset:2px;border-radius:4px}
+.gun:hover .g0{fill:#123a45}
+.g0{fill:#0a2a33;stroke:rgba(201,162,74,.5);stroke-width:2}
+.g1{fill:none;stroke:var(--brass);stroke-width:5;stroke-linecap:round}
+.g1.rdy{stroke:#6fb37a}
+.mid{display:grid;justify-items:center}
+#rose{display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.r0{fill:#0a2a33;stroke:var(--brass);stroke-width:3}.r1{fill:none;stroke:rgba(201,162,74,.4)}
+#roseTicks line{stroke:var(--brass);stroke-width:1}
+#rose text{font-family:var(--display);font-size:11px;fill:var(--bone-dim);text-anchor:middle}
+#rose text.rN{font-size:13px;fill:var(--bone)}
+#roseShip path{fill:var(--bone);stroke:#2b1d10}
+#roseWind path{fill:#e8b92e}#roseWind line{stroke:#e8b92e;stroke-width:2.5}
+.read{padding:2px 12px 3px;margin-top:-9px;white-space:nowrap;position:relative}
+#posN{font-size:15px}#posN.irons{color:#ff8a73}
+#knots{font-size:15px;color:#e8c874;font-variant-numeric:tabular-nums}
+#binRow{grid-column:1/-1;display:flex;gap:4px;justify-content:center;margin-top:5px;align-items:center}
+#binRow button{font-size:12px;padding:2px 9px;border-radius:10px;border-color:rgba(201,162,74,.5);color:var(--bone-dim);background:rgba(8,34,43,.8);white-space:nowrap}
+#binRow button[aria-pressed="true"]{background:var(--brass);color:#22160b;border-color:var(--brass);font-weight:700}
+#binRow #shotBtn{border-radius:3px;color:var(--bone);font-family:var(--display);letter-spacing:.04em;font-size:13px;margin-left:8px;padding:2px 10px}
+body.deck .bottom{position:fixed;left:0;right:0;top:calc(50% + 84px);margin:0;pointer-events:none;gap:6px}
+body.deck .bottom>*{pointer-events:auto}
+body.deck #orders{position:fixed;left:16px;bottom:176px}
+body.deck #dock,body.deck #boardBtn{font-size:14px;padding:6px 14px;background:linear-gradient(180deg,rgba(8,34,43,.92),rgba(6,24,30,.95));color:var(--bone);border-color:#9fe0b5;font-weight:500;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+body.deck #boardBtn{border-color:#ff8a73}
+body.deck #dock:hover,body.deck #boardBtn:hover{background:#123a45}
+body.deck .keys{display:none}
+body.deck #toast{top:calc(var(--bar,48px) + 24px)}
+body.deck.tight.tgt #toast{top:calc(var(--bar,48px) + 110px)}
+body.deck #pauseBanner{top:calc(var(--bar,48px) + 84px)}
+#menuOpts button{flex:1 1 auto}
+.card dl.keysref{grid-template-columns:auto 1fr auto 1fr;font-size:14px}
+.card dl.keysref dt{font-family:var(--body);font-weight:700}
+.card dl.keysref dd{font-family:var(--body)}
+/* ===== The great cabin: one table, six tabs ===== */
+#cabinBar{position:fixed;left:16px;right:16px;top:10px;display:flex;align-items:flex-end;gap:14px;z-index:5}
+.cabtabs{display:flex;gap:3px}
+.cabtabs button{padding:9px 18px 7px;font:400 15px var(--display);letter-spacing:.06em;color:#cdbf98;border:1px solid rgba(201,162,74,.35);border-bottom:0;border-radius:4px 4px 0 0;background:rgba(8,34,43,.9);white-space:nowrap}
+.cabtabs button:hover:not(:disabled){background:#123a45;box-shadow:none}
+.cabtabs button[aria-selected="true"],.cabtabs button[aria-selected="true"]:hover{background:#f0e3c0;color:#2b1d10;border-color:#f0e3c0}
+#cabNote{font-size:15px;color:#cdbf98;margin-left:auto;padding-bottom:8px;white-space:nowrap;text-shadow:0 1px 2px #000}
+#cabBack{margin-bottom:5px;white-space:nowrap}
+@media (max-width:1080px){#cabNote{display:none}#cabBack{margin-left:auto}.cabtabs button{padding-inline:12px}}
+.pane{position:fixed;top:49px;bottom:16px;box-sizing:border-box;padding:12px;overflow:auto;color:#2b1d10;background:linear-gradient(180deg,#f0e3c0,#e2d1a3 70%,#d6c392);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(120,90,40,.12);
+  --bone:#2b1d10;--bone-dim:#5a4024;--brass:#6b4a1c;color-scheme:light;-webkit-user-select:text;user-select:text}
+#muster{left:16px;width:250px;display:flex;flex-direction:column}
+#shipPane{right:16px;width:276px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.ph2{font-size:19px;padding-bottom:6px;border-bottom:3px double #5a4024;margin-bottom:2px}
+#musterList{flex:1;min-height:0;overflow:auto}
+.mitem{all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;padding:7px 6px;border-bottom:1px dotted rgba(90,64,36,.45);border-left:3px solid transparent}
+.mitem:hover{background:rgba(58,38,20,.07)}
+.mitem:focus-visible{outline:2px solid #2b1d10;outline-offset:-2px}
+.mitem[aria-pressed="true"]{background:rgba(47,125,116,.16);border-left-color:var(--verd)}
+.mitem .l1{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:15px}
+.mitem .l1 b{font-family:var(--prose);font-weight:700}
+.mitem .l1 span:last-child{font-size:12px;color:#5a4024;font-variant-numeric:tabular-nums}
+.mitem .l2{font-size:12.5px;color:#5a4024;margin-left:19px;margin-top:1px}
+.pane .pn,.card .pn{filter:drop-shadow(0 0 .6px #2b1d10) drop-shadow(0 0 .6px #2b1d10)}
+.pn.f{border-left-color:#2b1d10}
+.mleg{font-size:12px;color:#5a4024;padding-top:8px;display:flex;flex-wrap:wrap;gap:2px 4px;align-items:center}
+.mleg .pn{margin:0 3px 0 5px}
+#shipPane .sub{font-size:12.5px;color:#5a4024;line-height:1.35}
+#shipPane .rule{border:0;border-top:3px double #5a4024;margin:8px 0;width:100%}
+#shipPane .now{font-family:var(--prose);font-size:15.5px;line-height:1.35;margin:0}
+#shipPane .k{color:#5a4024;margin:10px 0 3px}
+#shipPane .v{font-size:14px;line-height:1.35}
+#shipPane .v b.up{color:#1f6b3a}#shipPane .v b.dn{color:#8c2a1c}
+#shipPane .btns{display:flex;flex-wrap:wrap;gap:6px}
+.pane button{background:rgba(255,250,235,.3);color:#2b1d10;border-color:rgba(58,38,20,.55);font-size:13px;font-weight:600;padding:5px 10px}
+.pane button:hover:not(:disabled){background:rgba(58,38,20,.13);box-shadow:none}
+.pane button.ink{background:#3a2614;color:#f2e7c6;border-color:#3a2614}
+.pane button.ink:hover:not(:disabled){background:#4a321c}
+#shipPane .word{margin-top:auto;border-top:1px solid #5a4024;padding-top:8px;font-family:var(--prose);font-style:italic;font-size:13.5px;line-height:1.35}
+#shipPane .x{position:absolute;right:8px;top:8px;padding:0 8px;font-size:17px;line-height:1.3}
+#shipPane{position:fixed}
+body.cabin #chartTools{left:290px;bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+body.cabin #cClose{display:none}
+#chartTools button[aria-pressed="true"]{border-color:var(--bone);color:var(--bone)}
+#chartTools button[aria-pressed="false"]{color:var(--bone-dim);border-color:rgba(201,162,74,.4)}
+body.cabin #fleetSheet,body.cabin #paper,body.cabin #menu{background:#0a2530;align-items:stretch;padding:49px 16px 16px}
+body.cabin #fleetSheet>.card,body.cabin #paper>.card,body.cabin #menu>.card{width:100%;max-width:none;box-sizing:border-box;border:0;border-radius:0 3px 3px 3px;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(120,90,40,.12)}
+body.cabin #paper>.card,body.cabin #menu>.card{padding-inline:max(24px,calc(50% - 390px))}
+body.cabin #fleetSheet .purse,body.cabin #fleetClose,body.cabin #menuClose{display:none}
+body.cabin .fleetgrid{grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);gap:0;flex:1}
+body.cabin .shiplist{overflow:auto;padding-right:18px;gap:0}
+body.cabin .shipdetail{overflow:auto;border-left:1px solid rgba(90,64,36,.5);padding-left:18px}
+body.cabin .shipdetail .ledger.panel{max-height:none;overflow:visible}
+body.cabin #shipPic{max-width:360px}
+.mrow{display:grid;grid-template-columns:minmax(130px,1.35fr) minmax(74px,.8fr) minmax(86px,.95fr) minmax(110px,1.25fr) 112px minmax(76px,.85fr);gap:0 10px;align-items:center;text-align:left}
+.mhead{font-family:var(--display);font-size:12.5px;letter-spacing:.08em;color:#5a4024;border-bottom:1px solid #5a4024;padding:4px 8px}
+button.mrow.shipitem{background:transparent;border:0;border-bottom:1px dotted rgba(90,64,36,.5);border-radius:0;padding:8px;font-weight:400;font-size:14.5px;color:#2b1d10}
+button.mrow.shipitem:hover:not(:disabled){background:rgba(58,38,20,.07);box-shadow:none}
+.card button.mrow.shipitem[aria-pressed="true"]{background:rgba(47,125,116,.17);color:#2b1d10;font-weight:400;box-shadow:inset 3px 0 0 var(--verd)}
+.card button.mrow.shipitem[aria-pressed="true"]:hover{background:rgba(47,125,116,.22)}
+.mrow .nmc{display:flex;align-items:center;font-family:var(--prose);font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .hb{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums;font-size:13px}
+.mrow .hb i{flex:1;height:6px;border-radius:3px;background:rgba(58,38,20,.2);overflow:hidden;display:block}
+.mrow .hb b{display:block;height:100%;background:#1f6b3a}.mrow .hb b.low{background:#8c2a1c}
+.mextra{padding:12px 8px 4px;display:flex;flex-direction:column;gap:8px}
+.mextra .btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mextra .btns .k{color:#5a4024;margin-right:4px}
+.mextra p{margin:0;font-size:15.5px}
+/* cabin: small corrections */
+body.cabin #fleetSheet>.card,body.cabin #paper>.card,body.cabin #menu>.card{height:100%}
+.paper p{max-width:none}
+body.cabin #paperClose{align-self:flex-start;background:rgba(255,250,235,.3);color:#2b1d10;border-color:rgba(58,38,20,.55);font-weight:600;box-shadow:none;font-family:var(--body);padding:6px 14px}
+body.cabin #paperClose:hover{background:rgba(58,38,20,.13)}
+.paper .seal.read{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(58,38,20,.45)}
+.pane button.ink:disabled{background:rgba(255,250,235,.3);color:#2b1d10;border-color:rgba(58,38,20,.55)}
+#shipHead{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.04em}
+/* ===== Ashore: the town is the screen, its buildings are the tabs ===== */
+#townWrap{display:contents}
+body.deck #port{padding:0;display:block;background:var(--sea-deep)}
+body.deck #port>.card{position:absolute;inset:0;width:auto;max-height:none;background:linear-gradient(180deg,#0f3f4c,#08222b);border:0;border-radius:0;box-shadow:none;padding:0;display:block;overflow:hidden;--ptop:clamp(210px,calc(100vw*.2049),46vh)}
+body.deck #townWrap{display:block;position:absolute;left:0;right:0;top:0}
+body.deck #townWrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,34,43,.38) 0,rgba(8,34,43,0) 22%,rgba(8,34,43,0) 52%,rgba(8,34,43,.92) 100%);pointer-events:none}
+body.deck #townCanvas{width:100%;height:auto;border:0;border-radius:0;margin:0}
+body.deck #port .head{position:absolute;left:24px;top:14px;right:24px;z-index:2;pointer-events:none;align-items:flex-start}
+body.deck #portName{font-size:40px;color:#f3ead2;border:0;padding:0;text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.5)}
+body.deck #portNation{color:#f3ead2;font-size:14.5px;text-shadow:0 1px 0 rgba(0,0,0,.8),0 0 8px rgba(0,0,0,.7);display:block;margin-top:2px;max-width:60vw}
+body.deck #port .purse{color:#e8c874;font-size:17px;padding:6px 13px;background:linear-gradient(180deg,rgba(8,34,43,.9),rgba(6,24,30,.93));border:1px solid rgba(201,162,74,.55);border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+body.deck #townTabs{position:absolute;inset:0;display:block;pointer-events:none;z-index:1}
+body.deck #townTabs button{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;flex:none;padding:4px 12px 3px;font:400 14.5px var(--display);letter-spacing:.05em;color:#2b1d10;background:#f0e3c0;border:1px solid #2b1d10;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+body.deck #townTabs button:hover{background:#fff6dc}
+body.deck #townTabs button[data-tab="fleet"]{display:none}
+body.deck #townTabs button[aria-selected="true"]{background:#f0e3c0;color:#2b1d10;font-weight:400;border-color:#c9a24a;box-shadow:0 0 0 2px #c9a24a,0 3px 10px rgba(0,0,0,.5)}
+body.deck #quay,body.deck #port .ledger.panel{position:absolute;top:var(--ptop);bottom:74px;box-sizing:border-box;overflow:auto;background:linear-gradient(180deg,#f0e3c0,#e2d1a3 70%,#d6c392);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 60px rgba(120,90,40,.12);z-index:2;-webkit-user-select:text;user-select:text}
+body.deck #quay{left:24px;width:calc(38% - 36px);padding:14px 20px}
+body.deck #port .ledger.panel{right:24px;left:38%;padding:6px 22px 14px;max-height:none;min-height:0}
+@media (max-width:1180px){body.deck #quay{width:calc(30% - 34px);padding:12px 14px}body.deck #port .ledger.panel{left:30%;padding-inline:14px}table.mk td,table.mk th{padding-inline:5px}}
+#quay h3{font:400 21px var(--display);letter-spacing:.05em;margin:0 0 8px;padding-bottom:6px;border-bottom:3px double #5a4024}
+#quay p{margin:0 0 10px;font-size:16.5px;line-height:1.38;max-width:none}
+#quay p.it{font-style:italic}
+#quay .btns{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+#quay button{font-size:13px;font-weight:600;padding:5px 10px}
+#quay button.ink{background:#3a2614;color:#f2e7c6;border-color:#3a2614}
+#quay button.ink:hover:not(:disabled){background:#4a321c}
+body.deck .portfoot{position:absolute;left:24px;right:24px;bottom:16px;margin:0;z-index:2}
+body.deck .portfoot button{background:linear-gradient(180deg,rgba(8,34,43,.9),rgba(6,24,30,.93));color:#f3ead2;border-color:rgba(201,162,74,.6);font-weight:600;padding:9px 18px}
+body.deck .portfoot button:hover:not(:disabled){background:#123a45}
+body.deck .portfoot button.primary{flex:none;margin-left:auto;min-width:230px;background:linear-gradient(180deg,#e6c06a,#c2903a);color:#22160b;border-color:#c2903a;font-size:16px;font-weight:700}
+body.deck .portfoot button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f0cf80,#c9a24a)}
+#portDisp.has::before{content:"";display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#b8372a;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);margin-right:.45em}
+/* tables on paper */
+.ledger li.tbl{display:block;padding:0;border-top:0}
+table.mk{border-collapse:collapse;width:100%}
+table.mk th{font:400 12.5px var(--display);letter-spacing:.08em;color:#5a4024;border-bottom:1px solid #5a4024;padding:5px 8px;text-align:left;white-space:nowrap;position:sticky;top:0}
+table.mk td{padding:5px 8px;font-size:14px;border-top:1px dotted rgba(90,64,36,.5);vertical-align:middle}
+table.mk tr:first-child td{border-top:0}
+table.mk td.gd{font-family:var(--prose);font-size:17px;white-space:nowrap}
+table.mk td.gd small{display:block;font-family:var(--body);font-size:12px;color:#5a4024;margin-top:-1px}
+table.mk .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+table.mk th.num{font-weight:400}
+table.mk td.tr{width:14px;padding-inline:0;font-size:12px}
+table.mk td.up{color:#8c2a1c}table.mk td.dn{color:#1f6b3a}
+table.mk td.bk{color:#5a4024;font-size:13.5px}
+table.mk td.bt{white-space:nowrap;text-align:right;padding-inline:4px}
+table.mk td.bt button{min-width:44px;padding:3px 9px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 </style>
 
 </head>
@@ -224,12 +498,14 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 <div id="hud">
   <div class="topbar" id="topbar">
     <div class="stats">
-      <div class="stat"><span class="k">Gold</span><span class="v gold" id="gold">0</span></div>
+      <div class="stat when dk"><span class="v" id="gDate"></span><span class="k2" id="whenBox"><span id="gWx"></span></span></div>
+      <div class="stat warbox dk"><span class="k" id="gWarT">At peace</span><canvas id="gWar" width="124" height="32" role="img" aria-label="The flags of the four powers; a red tie joins nations at war"></canvas></div>
+      <div class="stat sepL"><span class="k">Purse</span><span class="v gold" id="gold">0</span></div>
       <div class="stat"><span class="k">Rank</span><span class="v" id="rank">Master</span></div>
       <div class="stat"><span class="k">Commission</span><span class="v" id="marq">None</span></div>
-      <div class="stat"><span class="k">Hold</span><button class="v link" id="holdLine" type="button" title="Open the ship's manifest">0/40 t</button></div>
-      <div class="stat"><span class="k">Crew</span><span class="v" id="crewStat">40/60</span></div>
-      <div class="stat"><span class="k">Sails</span><span class="v" id="sailSet">Furled</span></div>
+      <div class="stat ph"><span class="k">Hold</span><button class="v link" id="holdLine" type="button" title="Open the ship's manifest">0/40 t</button></div>
+      <div class="stat ph"><span class="k">Crew</span><span class="v" id="crewStat">40/60</span></div>
+      <div class="stat ph"><span class="k">Sails</span><span class="v" id="sailSet">Furled</span></div>
     </div>
     <div class="tools">
       <button id="shotBtn" type="button" title="Shot loaded (R)">Round shot</button>
@@ -244,6 +520,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
       <button id="menuBtn" type="button" title="Save, load, difficulty (Esc)">Log book</button>
       <span class="sep"></span>
       <button id="pauseBtn" type="button" title="Pause to give orders (P)">Pause</button>
+      <button id="cabinBtn" class="dk" type="button" title="The great cabin: chart, fleet, ledger, dispatches, gazette and log book (C)"><span class="seal" id="cabSeal" hidden></span><span id="cabTxt">Great cabin</span></button>
       <details class="more"><summary title="Sound, zoom, full screen">More</summary>
       <button id="muteBtn" type="button">Sound on</button>
       <button id="zoomOutBtn" type="button" aria-label="Zoom out" title="Zoom out (-)">−</button>
@@ -255,18 +532,28 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
   </div>
   <div class="side" id="side">
     <button class="shipcard flag" id="flagCard" type="button" title="Manage your flagship">
-      <span class="nm"><span id="flagName">Sloop</span><small>Flagship</small></span>
-      <span class="meter"><span>Hull</span><i><b id="bHull"></b></i></span>
-      <span class="meter"><span>Sail</span><i><b id="bSails"></b></i></span>
-      <span class="meter"><span>Port</span><i><b id="bPort"></b></i></span>
-      <span class="meter"><span>Stbd</span><i><b id="bStar"></b></i></span>
+      <span class="nm"><span id="flagName">Sloop</span><small id="flagCls">Flagship</small></span>
+      <span class="meter"><span>Hull</span><i><b id="bHull"></b></i><em class="dk" id="nHull"></em></span>
+      <span class="meter"><span>Sail</span><i><b id="bSails"></b></i><em class="dk" id="nSails"></em></span>
+      <span class="meter dk"><span>Crew</span><i><b id="bCrew"></b></i><em id="nCrew"></em></span>
+      <span class="meter ph"><span>Port</span><i><b id="bPort"></b></i></span>
+      <span class="meter ph"><span>Stbd</span><i><b id="bStar"></b></i></span>
+      <span class="cr dk" id="flagNote"></span>
     </button>
     <div id="fleetCol"></div>
     <div id="tutor" hidden><span id="tutText"></span> <button type="button" id="tutSkip">Skip the lesson</button></div>
-    <div class="row" id="fleetRow" hidden><button class="mini" id="formBtn" type="button" title="Fleet formation (G)">Line astern</button><button class="mini" id="orderBtn" type="button" title="Fleet orders (H)">Line of battle</button></div>
+    <div class="row" id="fleetRow" hidden><button class="mini" id="formBtn" type="button" title="Fleet formation (G)">Line astern</button><button class="mini" id="orderBtn" type="button" title="Fleet orders (H)">Line of battle</button><button class="mini dk" id="sightBtn" type="button" aria-pressed="false" title="Show every ship of yours, or only those in sight of the flagship">All ships</button></div>
     <div class="note2 chip" id="chase" hidden></div>
     <div class="note2 chip" id="missionLine" hidden></div>
     <button class="note2 chip coursechip" id="courseLine" type="button" title="Hand the helm over or take it back (N)" hidden></button>
+  </div>
+  <div class="dk plate" id="target" role="status" hidden><div class="sc" id="tgName"></div><div class="tgbars"><span class="k">Hull</span><i><b id="tgHull"></b></i><span class="k">Sails</span><i><b id="tgSails"></b></i></div><div id="tgNote"></div></div>
+  <div class="dk" id="binn">
+    <button type="button" class="gun" id="gunP" title="Fire the port broadside (Q)"><svg viewBox="-37 -37 74 74" width="74" height="74" aria-hidden="true"><circle r="30" class="g0"/><circle r="30" class="g1" id="arcP" transform="rotate(-90)"/></svg><b>Q</b><span class="k" id="gunPT">Port guns</span></button>
+    <div class="mid"><svg id="rose" viewBox="-66 -66 132 132" width="132" height="132" role="img" aria-label="Compass: the pale needle is your heading, the gold arrow the wind"><circle r="62" class="r0"/><circle r="52" class="r1"/><g id="roseTicks"></g><text y="-27" class="rN">N</text><text x="35" y="4" class="rD">E</text><text x="-35" y="4" class="rD">W</text><text y="38" class="rD">S</text><g id="roseShip"><path d="M24 0L-16 9L-9 0L-16-9Z"/></g><g id="roseWind"><path d="M-33 0L-46 6.5L-46-6.5Z"/><line x1="-60" x2="-46"/></g></svg>
+      <div class="read plate"><span class="sc" id="posN"></span> <b id="knots"></b></div></div>
+    <button type="button" class="gun" id="gunS" title="Fire the starboard broadside (E)"><svg viewBox="-37 -37 74 74" width="74" height="74" aria-hidden="true"><circle r="30" class="g0"/><circle r="30" class="g1" id="arcS" transform="rotate(-90)"/></svg><b>E</b><span class="k" id="gunST">Starboard guns</span></button>
+    <div id="binRow" role="group" aria-label="Sail and shot"><button type="button" data-sail="0" title="Furl the sails (S)">Furled</button><button type="button" data-sail="1" title="Battle sail">Battle</button><button type="button" data-sail="2" title="Full sail (W)">Full sail</button></div>
   </div>
   <div class="bottom">
     <div id="orders" role="group" aria-label="Combat orders" hidden>
@@ -286,12 +573,19 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
   </div>
 </div>
 <div id="toast" class="off" role="status" aria-live="polite"></div>
-<div id="chartTools" hidden><button type="button" id="czOut" aria-label="Zoom the chart out">−</button><button type="button" id="czIn" aria-label="Zoom the chart in">+</button><button type="button" id="cPrice" title="Show the price book on the chart, one good at a time">Prices</button><button type="button" id="cClear">Clear course</button><button type="button" class="primary" id="cClose">Close chart</button></div>
+<div id="chartTools" hidden><button type="button" id="czOut" aria-label="Zoom the chart out">−</button><button type="button" id="czIn" aria-label="Zoom the chart in">+</button><button type="button" id="cPrice" title="Show the price book on the chart, one good at a time">Prices</button><button type="button" class="dk" id="cRoutes" aria-pressed="true" title="Show your traders' runs">Routes</button><button type="button" class="dk" id="cWx" aria-pressed="true" title="Show the wind, hurricanes and harbours shut by ice">Weather</button><button type="button" id="cClear">Clear course</button><button type="button" class="primary" id="cClose">Close chart</button></div>
+<div id="cabinBar" hidden>
+  <div class="cabtabs" role="tablist" aria-label="The great cabin"><button type="button" role="tab" data-cab="chart" title="The chart (C)">Chart</button><button type="button" role="tab" data-cab="fleet" title="The muster book (V)">Fleet</button><button type="button" role="tab" data-cab="ledger" title="The trade ledger (K)">Ledger</button><button type="button" role="tab" data-cab="dispatches" title="Dispatches from your captains (L)"><span class="seal" id="cabDSeal" hidden></span><span id="cabDTxt">Dispatches</span></button><button type="button" role="tab" data-cab="gazette" title="The gazette (J)">Gazette</button><button type="button" role="tab" data-cab="log" title="Save, load and settings">Log book</button></div>
+  <span class="sc" id="cabNote"></span><button class="primary" id="cabBack" type="button">Back on deck</button>
+</div>
+<div class="pane" id="muster" hidden><div class="sc ph2">The muster</div><div id="musterList"></div><div class="mleg"><i class="pn t"></i>trader <i class="pn e"></i>escort <i class="pn c"></i>cruiser <i class="pn p"></i>in port</div></div>
+<div class="pane" id="shipPane" hidden></div>
 <div id="pauseBanner" role="status" hidden><strong>Paused.</strong> Set the formation (G) and orders (H), change shot (R), and click an enemy ship to name her the fleet's target. Press P to resume.</div>
 
 <div class="sheet" id="title">
   <div class="card">
     <h1>Salt <em>&amp;</em> Powder</h1>
+    <div class="dateline">The West Indies and the coast of North America · 1750 to 1763</div>
     <p>The West Indies and the coast of North America in the 1750s, from the Spanish Main to Louisbourg, as Britain and France slide into the Seven Years' War. You have a sloop, four guns a side, and no gold. Great Britain, Spain, France, the Netherlands and neutral Denmark hold more than a hundred ports, from cities to fishing landings. Sail as a trader, take a governor's letter of marque and hunt his enemies as a privateer, or take what you like as a pirate and answer to everyone.</p>
     
     <div class="seg" role="group" aria-label="Difficulty"><button type="button" data-diff="easy">Easy</button><button type="button" data-diff="normal">Normal</button><button type="button" data-diff="hard">Hard</button></div>
@@ -327,16 +621,19 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 <div class="sheet" id="port" hidden>
   <div class="card wide">
     <div class="head"><div><h2 id="portName">Port</h2><span class="note" id="portNation"></span></div><span class="purse"><span id="portGold">0</span> gold</span></div>
+    <div id="townWrap">
     <canvas id="townCanvas" width="1640" height="560" role="img" aria-label="The town seen from above. Use the tabs below to visit the shipyard, market, tavern, governor and your fleet."></canvas>
     <div class="tabrow" id="townTabs" role="tablist" aria-label="Places in town"><button type="button" role="tab" data-tab="yard">Shipyard</button><button type="button" role="tab" data-tab="market">Market</button><button type="button" role="tab" data-tab="tavern">Tavern</button><button type="button" role="tab" data-tab="governor">Governor</button><button type="button" role="tab" data-tab="fleet">Your fleet</button></div>
+    </div>
+    <div class="dk" id="quay"></div>
     <ul class="ledger panel" id="ledger"></ul>
-    <div class="portfoot"><button id="portChart" type="button" title="Open the chart (C)">Chart</button><button id="portDisp" type="button" title="Dispatches from your captains (L)">Dispatches</button><button id="portGaz" type="button" title="The gazette (J)">Gazette</button><button class="primary" id="leaveBtn" type="button">Weigh anchor</button></div>
+    <div class="portfoot"><button id="portChart" type="button" title="Open the chart (C)">Chart</button><button id="portFleet" class="dk" type="button" title="The muster book (V)">Fleet</button><button id="portDisp" type="button" title="Dispatches from your captains (L)">Dispatches</button><button id="portGaz" type="button" title="The gazette (J)">Gazette</button><button class="primary" id="leaveBtn" type="button">Weigh anchor</button></div>
   </div>
 </div>
 
 <div class="sheet" id="fleetSheet" hidden>
   <div class="card wide">
-    <div class="head"><h2>Fleet</h2><span class="purse"><span id="fleetGold">0</span> gold</span></div>
+    <div class="head"><h2 id="fleetTitle">Fleet</h2><span class="purse"><span id="fleetGold">0</span> gold</span></div>
     <div class="fleetgrid">
       <div class="shiplist" id="shipList"></div>
       <div class="shipdetail">
@@ -405,6 +702,14 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     <ul class="ledger"><li class="sec">The economy</li></ul>
     <div class="seg" role="group" aria-label="Economy"><button type="button" data-eco="trade">Trade income</button><button type="button" data-eco="prize">Prize money</button><button type="button" data-eco="wage">Wages</button></div>
     <p class="note">Each can be lean, normal or rich. They apply at once and are remembered on this device.</p>
+    <div class="dk"><ul class="ledger"><li class="sec">On deck</li></ul>
+    <div class="seg" id="menuOpts" role="group" aria-label="Aim, sound, zoom and full screen"></div>
+    <details class="how"><summary>The keys</summary>
+    <dl class="keysref">
+      <dt>A D</dt><dd>The helm, to port and to starboard</dd><dt>W S</dt><dd>More sail, less sail</dd><dt>Q E</dt><dd>Fire the port or the starboard broadside; Space fires both</dd><dt>R</dt><dd>Change shot: round, double, chain, grape</dd>
+      <dt>B</dt><dd>Board, or stop and search</dd><dt>F</dt><dd>Drop anchor at a port</dd><dt>C</dt><dd>The chart</dd><dt>V</dt><dd>The fleet's muster book</dd><dt>K</dt><dd>The trade ledger</dd><dt>L</dt><dd>Dispatches from your captains</dd><dt>J</dt><dd>The gazette</dd><dt>I</dt><dd>The ship's manifest</dd>
+      <dt>P</dt><dd>Pause to give orders</dd><dt>N</dt><dd>Hand the helm to the helmsman on a set course, or take it back</dd><dt>G H</dt><dd>The fleet's formation and its orders</dd><dt>T</dt><dd>Aim assist</dd><dt>1 to 6</dt><dd>The pace of the game</dd><dt>− =</dt><dd>Zoom, or turn the wheel</dd><dt>Esc</dt><dd>The log book: save and load</dd>
+    </dl></details></div>
     <ul class="ledger"><li class="sec">Save code</li></ul>
     <label class="note" for="saveCode">Saves live in this browser only. A save code lets you keep a voyage elsewhere or move it to another device: copy it out, or paste one in and load it.</label>
     <textarea id="saveCode" rows="3" spellcheck="false" autocomplete="off"></textarea>

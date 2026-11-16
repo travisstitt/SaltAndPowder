@@ -41,11 +41,33 @@ function uiRow(ul, name, desc, amt, btns, rerender, cls){
 const hurt = s => Math.ceil(s.maxHull - s.hull) + Math.ceil(100 - s.sails);
 function mend(s, c){ const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hull = Math.min(s.maxHull, s.hull + h);
   c -= h; const v = Math.min(c, Math.ceil(100 - s.sails)); s.sails = Math.min(100, s.sails + v); return c - v; }
+function renderQuay(){ const Q = $('quay'); Q.textContent = ''; const add = (tag, cls, txt) => { const e = mEl(tag, cls, txt); Q.appendChild(e); return e; }; let n = 0;
+  const say2 = (lead, txt, cls, seal) => { const e = add('p', cls || ''); if (seal) e.appendChild(mEl('span', 'seal')); if (lead) e.appendChild(mEl('b', '', lead + ' ')); e.appendChild(document.createTextNode(txt)); n++; return e; };
+  const acts = arr => { const r = add('div', 'btns'); arr.forEach(v => { const b = mEl('button', v[4] ? 'ink' : '', v[1]); b.type = 'button'; b.id = v[0]; b.disabled = !v[2]; b.addEventListener('click', () => { dirty(); v[3](); dirty(); if (state === 'port' && !menuOpen && !chartOpen) renderPort(v[0]); }); r.appendChild(b); }); };
+  add('h3', '', 'Word on the quay');
+  if (hurr) say2('The glass.', hurr.stage ? 'A hurricane is on the coast. You are safe at anchor here; the shipwright can tell you how to wait it out.' : 'The glass is falling and a long swell is running in. A hurricane is coming.');
+  squad().forEach((s, i) => { if (s.docked !== curPort) return; const c = repairCost(s), t = s.task && s.task.type === 'trade' ? s.task : null, v = dispatches.find(d => d.id === s.id && d.ask);
+    if (c > 8){ say2((s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name + ':', 'In at ' + curPort.name + ' with her hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent. The yard asks ' + c + ' gold.', '', true);
+      acts([['q_back' + i, 'Pay and send her back', gold > 0, () => { payRepairs(s, 'station'); if (v) v.ask = null; }, true], ['q_join' + i, 'Pay and have her rejoin', gold > 0, () => { payRepairs(s, 'join'); if (v) v.ask = null; }]]); }
+    else if (t && t.need){ const want = Math.max(0, t.cap - Math.round(t.funds)); say2('The ' + s.name + ':', 'She lies here without the means to load a cargo, and asks for ' + want + ' gold of trading stock.', '', true);
+      acts([['q_fund' + i, 'Send her ' + Math.min(want, gold) + ' gold', gold > 0, () => { const k = Math.min(want, gold); gold -= k; t.funds += k; t.need = false; s.dwell = 2; if (v) v.ask = null; }, true], ['q_rec' + i, 'Recall her', true, () => setTask(s, { type: 'fleet' })]]); }
+    else { say2('The ' + s.name + ' lies here.', cap1(taskWord(s)) + '.'); acts([['q_page' + i, 'Her page', true, () => openFleet('S' + i)]].concat(t ? [['q_sail' + i, 'Sail now', true, () => tradeSail(s)]] : [])); } });
+  if (mission) say2('Your commission:', missionText() + '.');
+  if (contract) say2('Freight in hand:', contract.tons + ' tons of ' + GOODS[contract.g][0].toLowerCase() + ' for ' + contract.port.name + ' by ' + MONTHS[contract.until % 12] + ', ' + contract.reward + ' gold on delivery. You hold ' + hold[contract.g] + ' tons.');
+  else if (!curPort.spec.land){ const fr = freightOffer(curPort); if (fr){ say2('Freight wanted:', fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' for ' + fr.port.name + ' within ' + fr.months + ' months, ' + fr.reward + ' gold on delivery.');
+    acts([['q_freight', 'Take it', true, () => { contract = { type: 'freight', nk: curPort.nk, g: fr.g, tons: fr.tons, port: fr.port, until: calIdx() + fr.months, reward: fr.reward, rep: 4, title: 'Land ' + fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' at ' + fr.port.name }; curPort.freight = null; }]]); } }
+  (curPort.ev || []).filter(e => e.until >= calIdx()).forEach(e => say2('', GOODS[e.g][0] + (e.mul > 1 ? ' is short here and fetching a high price.' : ' is a glut on the market here and going cheap.'), 'it'));
+  if (courtDue > 0 && marque) say2('The prize court:', courtDue + ' gold is owing to you on condemned prizes, paid at a ' + NAT[marque].adj + ' port or at home.');
+  newsLog.slice(0, 3).forEach(t => say2('', t, 'it'));
+  if (!n) say2('', 'Nothing is stirring on the quay today. The market, the tavern and the ' + (curPort.spec.land ? 'headman' : 'governor') + ' are where they always are.', 'it'); }
 function renderPort(focusId){
   $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + (curPort.spec.land ? ' landing' : curPort.spec.sz >= 3 ? ' city' : curPort.spec.sz === 2 ? ' town' : ' port') + (curPort.spec.free ? ' · free port' : '') + (wars.size && foesOf(curPort.nk).length ? ' · at war' : '') + (hurr ? ' · hurricane ' + (hurr.stage ? 'blowing' : 'coming') : '') + (dispNew ? ' · ' + dispNew + ' dispatch' + (dispNew > 1 ? 'es' : '') + ' unread' : '') + (squad().some(o => o.docked === curPort) ? ' · ' + squad().filter(o => o.docked === curPort).map(o => o.name).join(', ') + ' lying here' : '') + (curPort.name === homeName ? ' · your home port' : '');
-    $('portGold').textContent = gold;
+    $('portGold').textContent = deck ? gold.toLocaleString('en-US') : gold;
   document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === portTab)));
   paintTown();
+  document.querySelectorAll('#townTabs [data-tab]').forEach(b => { const s = deck && townArt ? townArt.spots.find(v => v.id === b.dataset.tab) : null; if (!b._t) b._t = b.textContent;
+    b.textContent = s ? s.name : b._t; b.style.left = s ? ((s.x + s.w/2)/TW*100).toFixed(2) + '%' : ''; b.style.top = s ? 'min(' + ((s.y + s.h*.7)/TH*100).toFixed(2) + '%, calc(var(--ptop) - 26px))' : ''; }); /* each building carries its own plaque */
+  if (deck) renderQuay();
   const ul = $('ledger'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderPort), T = (cls, t) => ledgerText(ul, cls, t);
   if (hurr){ T('sec', hurr.stage ? 'A hurricane is blowing' : 'A hurricane is coming'); /* in harbour you are safe; this passes the time until it is over */
@@ -73,8 +95,17 @@ function renderPort(focusId){
       if (g === 'cloth' && curPort.home === 'es' && curPort.nk === 'es' && !curPort.spec.land && !curPort.greased && rnd() < .22){ const fine = Math.min(gold, n*4);
         hold[g] -= n; gold -= fine; repute('es', -2); later(() => say('The customs officers were waiting on the quay. Your ' + n + ' tons are seized and you are fined ' + fine + ' gold.'), 50); return; }
       gold += Math.round(n*sell*eco.trade); hold[g] -= n; press(curPort, g, -n); repute(curPort.nk, .05*n); };
+    const tbl = deck ? mEl('table', 'mk') : null; if (tbl){ const li = mEl('li', 'tbl'), hr = mEl('tr'); [['Good', ''], ['Here', 'num'], ['', ''], ['Best known elsewhere', ''], ['Aboard', 'num'], ['Buy', 'num'], ['Sell', 'num']].forEach(v => hr.appendChild(mEl('th', v[1], v[0])));
+      const th = mEl('thead'); th.appendChild(hr); tbl.appendChild(th); tbl.appendChild(mEl('tbody')); li.appendChild(tbl); ul.appendChild(li); } /* on a wide screen the market is one table */
     GK.forEach(g => { if (curPort.spec.land && curPort.spec.mk.indexOf(g) < 0 && curPort.spec.dm.indexOf(g) < 0) return; const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9)), room = Math.max(0, Math.min(holdCap() - holdUsed(), Math.floor(gold/pr))), n = Math.min(10, room), have = hold[g], bk = bestKnown(g, curPort.name), ev = (curPort.ev || []).find(e => e.g === g && e.until >= calIdx());
       const tip = bk.hi && bk.hi[1] > pr*1.12 ? ' · ' + bk.hi[1] + ' at ' + bk.hi[0] + ' ' + ago(bk.hi[2]) : bk.lo && bk.lo[1] < pr*.85 ? ' · only ' + bk.lo[1] + ' at ' + bk.lo[0] + ' ' + ago(bk.lo[2]) : '';
+      if (tbl){ const tr = mEl('tr'), gd = mEl('td', 'gd', GOODS[g][0]), m = mkt(curPort, g), why = ev ? (ev.mul > 1 ? 'short here' : 'a glut here') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain' : 'wanted here') : '';
+        const cell = btns => { const td = mEl('td', 'bt'); btns.forEach(v => { const b = mEl('button', '', v[1]); b.type = 'button'; b.id = v[0]; b.disabled = !v[2]; if (v[4]) b.title = v[4]; b.addEventListener('click', () => { dirty(); v[3](); dirty(); renderPort(v[0]); }); td.appendChild(b); }); return td; };
+        if (why) gd.appendChild(mEl('small', '', why)); tr.appendChild(gd); tr.appendChild(mEl('td', 'num', String(pr))); tr.appendChild(mEl('td', 'tr ' + (m > 1.04 ? 'up' : m < .96 ? 'dn' : ''), m > 1.04 ? '▲' : m < .96 ? '▼' : ''));
+        tr.appendChild(mEl('td', 'bk', bk.hi && bk.hi[1] > pr*1.12 ? bk.hi[1] + ' at ' + bk.hi[0] : bk.lo && bk.lo[1] < pr*.85 ? 'only ' + bk.lo[1] + ' at ' + bk.lo[0] : '—')); tr.appendChild(mEl('td', 'num', String(have)));
+        tr.appendChild(cell([['buy_' + g, String(n || 10), n > 0, () => { gold -= n*pr; hold[g] += n; press(curPort, g, n); }, 'Buy ' + (n || 10) + ' tons'], ['buymax_' + g, 'fill', room > 10, () => { gold -= room*pr; hold[g] += room; press(curPort, g, room); }, 'Buy ' + room + ' tons: all you can stow and pay for']]));
+        tr.appendChild(cell([['sell10_' + g, '10', have > 10, () => sellGoods(g, 10), 'Sell 10 tons'], ['sell_' + g, 'all', have > 0, () => sellGoods(g, have), have ? 'Sell ' + have + ' tons for ' + have*sell + ' gold' : 'Nothing aboard to sell']]));
+        tbl.lastChild.appendChild(tr); return; }
       uiRow(ul, GOODS[g][0], (ev ? (ev.mul > 1 ? 'short here · ' : 'a glut here · ') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here, cheap · ' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain · ' : 'wanted here · ') : '') + 'hold ' + have + ' t' + tip, pr + ' a ton' + (mkt(curPort, g) > 1.04 ? ' ▲' : mkt(curPort, g) < .96 ? ' ▼' : ''), [
         ['buy_' + g, 'Buy ' + (n || 10), n > 0, () => { gold -= n*pr; hold[g] += n; press(curPort, g, n); }], ['buymax_' + g, 'Fill', room > 10, () => { gold -= room*pr; hold[g] += room; press(curPort, g, room); }],
         ['sell10_' + g, 'Sell 10', have > 10, () => sellGoods(g, 10)], ['sell_' + g, have ? 'Sell ' + have + ' for ' + have*sell : 'Sell all', have > 0, () => sellGoods(g, have)]], renderPort, 'tight'); });

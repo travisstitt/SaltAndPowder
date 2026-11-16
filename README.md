@@ -4,7 +4,7 @@ A top-down pirate sailing game set in the West Indies and along the coast of Nor
 
 ## Play
 
-Open `index.html` in a browser. There is no build step and no dependencies; the only network request is for two web fonts, and the game falls back to system fonts without them.
+Open `index.html` in a browser. It is one file with nothing to install; the typefaces are embedded, so it makes no network requests.
 
 ## Controls
 
@@ -30,10 +30,11 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Trade ledger and price book | `K` |
 | Make a passage (8× on a set course) | `6` |
 | Fleet orders: line of battle / engage at will / general chase / hold fire | `H` |
-| Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
-| Ship's manifest: cargo, crew, purse | `I` (or click the Hold line) |
+| The muster book: every ship, at sea or in port | `V` |
+| Ship's manifest: cargo, crew, purse | `I` |
 | Game pace: slow / steady / brisk / swift / passage | `1` to `5` |
-| Combat orders for one ship | click her on the sea or on her card |
+| Combat orders for one ship | click her on the sea or on her pennant |
+| Set sail, fire a broadside, change shot | click the binnacle: the sail chips, the two gun dials, the shot chip |
 | Log book: save, load, difficulty | `Esc` or `L` |
 | Mute | `M` |
 
@@ -41,10 +42,15 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## Screens
 
-- **Top bar and ship cards.** Gold, rank, hold, crew and sail state run across the top with the tools beside them, including a full-screen button. Down the left side is a card for your flagship and one for each consort, showing hull, sails and crew; click a card to manage that ship.
-- **Port.** Each port opens on a painting of the town from above, made with the same water, shallows, sand, trees, roofs and ship drawings as the sea view, so it reads as the same world seen closer. The roofs and church follow the nation that holds the town (Spanish tile and domes, English slate and a square tower, French blue slate and a spire, Dutch colours, thatched huts in the buccaneer hamlets); size, walls, cathedral and fort follow the town. A trader lies at a jetty, your own ships ride at anchor, flags fly with the wind and lamps are lit at night. Click a building, or the tab beneath it: Shipyard (repair everything, buy a ship), Market, Tavern (crew and captains), Governor (commissions, standing, news, pardons, home port) and Your fleet.
-- **The chart** is drawn in ink on parchment, with rhumb lines, compass roses and place names. Zoom with the wheel, pinch, or the + and − buttons and keys; drag or use the arrow keys to move. A set course is drawn as a dotted red line with its length in leagues. Your home port is the green star. Click a port to set a course: the helmsman steers there round the land and against the wind until you touch the helm, an enemy closes, or you arrive.
-- **Fleet management** opens at any time. Pick a ship from the list to see her picture and manage her alone: repairs, crew (move hands between ships, or hire in port), her own four refits, her captain, hoisting your flag in her, selling her, or laying her up at your home port. Repairs, refits, hiring and selling need a port.
+The game has one look throughout, taken from the Georgian navy: dark plates with a brass edge for the instruments on deck, and paper for everything you read. Names are set in small capitals (IM Fell English SC), prose in IM Fell English, figures and buttons in Alegreya Sans. One button on each screen is the main one: brass on deck, oxblood on paper. A wax seal means a captain's message is waiting.
+
+On a wide screen with a mouse (at least 900 by 560) the game is laid out as three places. Smaller and touch screens keep the earlier compact layout, in the same colours and type.
+
+- **The quarterdeck.** The sea fills the screen and the instruments stand at its edges. Top left: the date, hour, weather and wind, the pace, the four powers' flags with a red tie between those at war, your purse, rank and commission. Top centre, when you have a chase: her name, hull and sails as bars, her distance and who has the weather gauge. Top right: Pause and the Great cabin, with a seal and a count when dispatches are unread. Down the left: one pennant for each consort, coloured by her task (white with the flag, gold a trader, blue an escort, red a cruiser, grey in port), with what she is about and her hull; a button shows all eight or only those in sight. Bottom left: your flagship, with hull, sails and crew as bars, the mood of the hands and the hold. Bottom centre: the binnacle, a compass with your heading and the wind, your point of sail and speed, the sail set, a dial for each broadside that fills as it reloads, and the shot loaded. Bottom right: a paper chart of the waters round you. Prompts such as "B · board" and "F · drop anchor" appear by your ship when they apply. The list of keys is kept in the log book.
+- **The great cabin** is one table with six tabs: Chart, Fleet, Ledger, Dispatches, Gazette and Log book, and a button back to the deck. The **chart** is the hub: your ships are listed down the left, and clicking one, there or on the chart, opens her card on the right with what she is doing, her hold, her trading account and her orders. Click a port to set a course. Buttons show the price book a good at a time, your traders' runs, and the weather. The **Fleet** tab is the muster book: one line a ship (class, what she is doing, where, hull, hold), orders for all ships or for a division beneath, and the chosen ship on the facing page with her picture, refits, crew, captain and standing orders.
+- **Ashore.** The painting of the town is the screen and its buildings carry the tabs: shipyard, market, tavern and governor. The market is one table: each good with its price here, whether it is rising or falling, the best price known elsewhere, what you have aboard, and buttons to buy ten or fill and sell ten or all. Beside it, "Word on the quay" gathers what concerns this port: captains of yours lying here who want repairs or funds, freight on offer, your commission, local shortages and gluts, and the late news. Along the foot are the chart, the fleet, dispatches and the gazette, and Weigh anchor.
+- **The town paintings** are made with the same water, sand, trees, roofs and ship drawings as the sea view. Roofs and churches follow the nation that holds the town.
+- **The chart** is drawn in ink on parchment, with rhumb lines, compass roses and place names. Zoom with the wheel or the + and − buttons; drag to move. A set course is a dotted red line with its length in leagues. Your home port is the green star.
 
 ## Tests
 
@@ -52,7 +58,7 @@ Three suites, all in headless Chromium (they need Playwright):
 
 - `node tests/rules.js` runs 42 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
 - `node tests/run-tests.js` runs 170 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
-- `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
+- `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at five screen sizes, two on the quarterdeck layout with a full fleet of eight and three on the compact one, that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
 
 Every roll of the dice in the game comes from one source that the tests seed, so a failure repeats. The page exposes its test hook only when opened with `#test`.
 
@@ -60,7 +66,7 @@ Every roll of the dice in the game comes from one source that the tests seed, so
 
 `index.html` is built from `src/` by `python3 build.py`: the page template, the embedded typefaces, and the script in 21 sections under `src/js/` that are joined in name order. The sections share one scope and are not modules. Edit the sources and rebuild; do not edit `index.html` by hand.
 
-The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC, all under the SIL Open Font License) are embedded, so the game needs no network and looks the same offline.
+The typefaces (Alegreya Sans, IM Fell English and IM Fell English SC, all under the SIL Open Font License) are embedded, so the game needs no network and looks the same offline.
 
 ## How it plays
 
