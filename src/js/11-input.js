@@ -23,7 +23,7 @@ addEventListener('keydown', e => {
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && e.code !== 'Escape') return; // typing a name or a save code
   if (menuOpen){ if (e.code === 'Escape' || (e.code === 'KeyJ' || e.code === 'KeyL') && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
   if (state === 'fate') return;
-  if (state === 'port' && !chartOpen && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV' || e.code === 'KeyC')){ e.code === 'KeyI' ? openManifest() : e.code === 'KeyV' ? openFleet('F') : setChart(true); return; }
+  if (state === 'port' && !chartOpen && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV' || e.code === 'KeyC' || e.code === 'KeyJ' || e.code === 'KeyL')){ e.code === 'KeyI' ? openManifest() : e.code === 'KeyV' ? openFleet('F') : e.code === 'KeyJ' ? openPaper('gazette') : e.code === 'KeyL' ? openPaper('dispatches') : setChart(true); return; }
   if (state === 'port' && !chartOpen){ if (e.code === 'Escape') closePort(); return; }
   if (state !== 'play' && !(state === 'port' && chartOpen)) return;
   if (state === 'play' && e.code === 'Escape' && orderSel && !chartOpen && !menuOpen){ if (picking){ picking = false; renderOrders(); } else closeOrders(); e.preventDefault(); return; }
@@ -85,7 +85,7 @@ $('zoomInBtn').addEventListener('click', e => { setZoom(zoomMul*1.2); e.currentT
 $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.length); e.currentTarget.blur(); });
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
-$('portChart').addEventListener('click', () => setChart(true));
+$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches')); $('portGaz').addEventListener('click', () => openPaper('gazette'));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }

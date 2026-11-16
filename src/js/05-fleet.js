@@ -29,7 +29,7 @@ function setOrders(k){ orders = ORDERS[k] ? k : 'line'; $('orderBtn').textConten
 let dispatches = [], dispNew = 0, shipSeq = 0;
 function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null }); if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
   if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
-function dispBadge(){ const b = $('dispBtn'); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); }
+function dispBadge(){ for (const id of ['dispBtn', 'portDisp']){ const b = $(id); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); } }
 const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station', cap:250 };
 const DOCS = { wx:[['port', 'Run for port'], ['ride', 'Ride it out']], dmg:[[.5, 'Retire at half hull'], [.33, 'Retire at a third'], [0, 'Never retire']], foe:[['avoid', 'Avoid anything stronger'], ['equal', 'Fight her equals'], ['any', 'Fight anything']], allow:[[0, 'Ask every time'], [150, 'Up to 150 gold'], [400, 'Up to 400 gold'], [1e6, 'Whatever it costs']], after:[['station', 'Return to her station'], ['join', 'Rejoin the flagship'], ['stay', 'Wait in port']], cap:[[100, '100 gold'], [250, '250 gold'], [500, '500 gold'], [1000, '1000 gold']] };
 const docWord = (k, v) => (DOCS[k].find(o => o[0] === v) || DOCS[k][0])[1];
@@ -64,10 +64,10 @@ function tradeCall(s, port){ const t = s.task; t.need = false; /* sell if it pay
     dispatch(s, 'Sold ' + c.tons + ' tons of ' + GOODS[c.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear.' : 'a loss of ' + -profit + ' gold, the market having turned.') + tail); }
   if (t.funds < Math.max(40, t.cap*.25)){ t.need = true; s.dwell = 1e9; dispatch(s, 'My trading money is down to ' + Math.round(t.funds) + ' gold, too little to load a cargo worth carrying. I ask ' + (t.cap - Math.round(t.funds)) + ' gold to make it up to ' + t.cap + ', and lie at ' + port.name + ' until I hear.', 'funds'); return; }
   const plan = tradePlan(s, port, t);
-  if (plan){ t.cargo = { g: plan.g, tons: plan.tons, cost: plan.tons*plan.buy }; t.funds -= t.cargo.cost; t.dest = plan.q; t.idle = 0; s.dwell = 14; return; }
+  if (plan){ t.cargo = { g: plan.g, tons: plan.tons, cost: plan.tons*plan.buy }; t.funds -= t.cargo.cost; t.dest = plan.q; t.idle = 0; s.dwell = 6; return; }
   /* nothing worth loading here: try the port in her waters with the best prospect, in ballast */
   let go = null; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = tradePlan(s, q, t); if (pl && (!go || pl.gain > go.gain)) go = { q, gain: pl.gain }; }
-  t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 8; } else { s.dwell = 40; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
+  t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 3; } else { s.dwell = 20; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
 function startTrade(s, set, area){ set = set.filter((q, i) => q && set.indexOf(q) === i); if (set.length < 2){ say('A trader needs at least two open ports to work between.'); return false; }
   const cap = s.doc.cap || 250, put = Math.min(gold, cap); if (put < 40){ say('You have not the gold to give her a trading stock.'); return false; } gold -= put;
   let near = set[0]; for (const q of set) if (Math.hypot(q.ox - s.x, q.oy - s.y) < Math.hypot(near.ox - s.x, near.oy - s.y)) near = q;
@@ -109,7 +109,7 @@ function fleetSignal(kind){ const sq = squad(); if (kind === 'recall'){ sq.forEa
   else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); }); say('Signal to all ships: make for the nearest open port.'); }
   else { const q = ports.find(x => x.name === homeName); sq.forEach(s => setTask(s, { type: 'port', port: q })); say('Signal to all ships: rendezvous at ' + homeName + '.'); } }
 const inCompany = s => !s.docked && Math.hypot(s.x - p.x, s.y - p.y) < 900;
-const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? (t.need ? 'Waiting for funds at ' : 'Loading at ') : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.dest.name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
+const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? (t.need ? 'Waiting for funds at ' : t.idle ? 'Waiting for a market at ' : 'Loading at ') : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'trade' ? 'Trading: bound for ' + t.dest.name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
   : t.flee && !t.arrived ? 'Running for ' + t.port.name
   : t.arrived ? 'Waiting at ' + t.port.name : 'Bound for ' + t.port.name; };
 function setTask(s, t){ if (s.task && s.task.type === 'trade' && (!t || t.type !== 'trade')){ const o = s.task, back = Math.round(o.funds + (o.cargo ? o.cargo.cost*.8 : 0)); if (back > 0){ gold += back; say('The ' + s.name + ' hands back her trading stock: ' + back + ' gold.'); } } /* her trading money comes home with her */
@@ -218,7 +218,7 @@ function detached(s, dt){ // a consort acting on her own orders
   return want;
 }
 function fleetAI(s, dt){
-  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && state === 'play' && (s.dwell -= dt) <= 0){ const t = s.task; if (t.dest === s.docked) tradeCall(s, s.docked); else { s.h = s.docked.out; s.docked = null; s.sail = 1; } }
+  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && (s.dwell -= dt) <= 0){ const t = s.task; if (t.dest === s.docked) tradeCall(s, s.docked); else { s.h = s.docked.out; s.docked = null; s.sail = 1; } }
     else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' }); say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
     else if (s.task && s.task.why === 'weather' && !hurr && weather.kind !== 'storm' && repairCost(s) <= 8){ afterRepairs(s, s.prev ? 'station' : 'join'); } return; }
   s.thinkT = (s.thinkT || 0) - dt; if (s.thinkT <= 0){ s.thinkT = 1; think(s); }

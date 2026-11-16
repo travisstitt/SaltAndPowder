@@ -207,7 +207,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 .how{margin-top:.9rem}.how summary{cursor:pointer;font-family:var(--display);font-size:1.25rem;color:var(--brass);padding:.3rem 0}.how summary:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
 @media (pointer:coarse){.tools button,.more summary{min-height:40px}}
 @media (max-height:480px){.topbar{flex-wrap:nowrap;padding:4px 10px;gap:4px 12px}.stats{flex-wrap:nowrap;flex:none}.stat .k{display:none}.stats .stat:nth-child(2),.stats .stat:nth-child(3){display:none}.tools{min-width:0}#fleetCol{display:flex;gap:4px}#fleetCol .shipcard{flex:1;min-width:0;padding:3px 5px}#fleetCol .shipcard>*:not(:nth-child(2)){display:none}.tools button,.more summary{min-height:30px}}
-.portfoot{display:flex;gap:8px;margin-top:.6rem}.portfoot .primary{flex:1;margin:0}.portfoot #portChart{flex:none;padding-inline:1.2rem}
+.portfoot{display:flex;gap:8px;margin-top:.6rem}.portfoot .primary{flex:1;margin:0}.portfoot button:not(.primary){flex:none;padding-inline:1rem}@media (max-width:620px){.portfoot{flex-wrap:wrap}.portfoot .primary{flex-basis:100%;order:9}.portfoot button:not(.primary){flex:1}}
 .paper .dbtns{display:flex;flex-wrap:wrap;gap:6px;margin:-.2rem 0 .8rem}.paper .dbtns button{background:#3a2614;color:#f2e7c6;border-color:#3a2614;font-family:"Alegreya Sans",sans-serif;font-size:.9rem;padding:4px 10px}.paper .dbtns button:hover:not(:disabled){background:#5a4024}
 #fleetCol.many .shipcard{padding:4px 8px;gap:2px}#fleetCol.many .shipcard>*:nth-child(n+3){display:none}
 #shipNow{margin:.5rem 0 .2rem;padding:.35rem .7rem;border-left:3px solid var(--brass);background:rgba(214,165,78,.09);color:var(--bone);font-size:.98rem;line-height:1.35}
@@ -324,7 +324,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     <canvas id="townCanvas" width="1640" height="560" role="img" aria-label="The town seen from above. Use the tabs below to visit the shipyard, market, tavern, governor and your fleet."></canvas>
     <div class="tabrow" id="townTabs" role="tablist" aria-label="Places in town"><button type="button" role="tab" data-tab="yard">Shipyard</button><button type="button" role="tab" data-tab="market">Market</button><button type="button" role="tab" data-tab="tavern">Tavern</button><button type="button" role="tab" data-tab="governor">Governor</button><button type="button" role="tab" data-tab="fleet">Your fleet</button></div>
     <ul class="ledger panel" id="ledger"></ul>
-    <div class="portfoot"><button id="portChart" type="button" title="Open the chart (C)">Chart</button><button class="primary" id="leaveBtn" type="button">Weigh anchor</button></div>
+    <div class="portfoot"><button id="portChart" type="button" title="Open the chart (C)">Chart</button><button id="portDisp" type="button" title="Dispatches from your captains (L)">Dispatches</button><button id="portGaz" type="button" title="The gazette (J)">Gazette</button><button class="primary" id="leaveBtn" type="button">Weigh anchor</button></div>
   </div>
 </div>
 

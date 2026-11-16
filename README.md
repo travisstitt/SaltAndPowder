@@ -50,7 +50,7 @@ On a touch screen, on-screen buttons replace the keys.
 Three suites, all in headless Chromium (they need Playwright):
 
 - `node tests/rules.js` runs 30 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
-- `node tests/run-tests.js` runs 161 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
+- `node tests/run-tests.js` runs 163 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
 - `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
 
 Every roll of the dice in the game comes from one source that the tests seed, so a failure repeats. The page exposes its test hook only when opened with `#test`.
@@ -104,6 +104,7 @@ The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC
 - **Your fleet on the chart.** Each consort is a white pennant with her name. Her card in the fleet screen says where she lies, marks the spot on a corner of the chart beside her picture, and has a button that opens the full chart upon her.
 - **Waiting out a hurricane.** If a hurricane is coming or blowing while you lie in port, the port screen offers to wait it out: the clock runs as fast as the machine allows until it is over, and nothing touches you.
 - **Fleet cards.** The top of each ship's card says what she is doing and where she lies. Each card also lists what is in her hold: the fleet's common cargo is stowed in the flagship first and then in each consort in turn, and a ship trading on her own account shows her own cargo and trading stock.
+- **Dispatches and gazette in port.** Both open from the port screen, by the buttons beside "Weigh anchor" or with L and J.
 - **Chart in port.** The chart opens from the port screen (button or C) without weighing anchor; a course set there is kept for when you sail. While you lie in port the world goes by at the slow pace, and your sailing pace returns when you weigh.
 - **Chart extras.** The great trade routes are pricked out on the chart, and the small chart names the nearest ports.
 - **Flags and paint.** Ships and forts fly the flags of the 1750s: the British red ensign, the Spanish Burgundy cross, the white Bourbon ensign of France and the Dutch tricolour; a privateer flies her patron's. Warships have varnished sides, a black wale and gilded sterns, and open their gun ports when they clear for action. The four flags under the compass are tied in red where nations are at war.
