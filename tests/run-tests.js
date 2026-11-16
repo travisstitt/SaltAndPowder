@@ -18,7 +18,7 @@ const HELPERS = () => {
       const w = g.weather; w.kind = 'clear'; w.k = 0; w.left = 1e7; w.next = null; g.clock = 60;
       T.clear(4000); },
     clear(r){ g.ships.forEach(s => { if (s.owner !== 'player' && !s._t && Math.hypot(s.x - g.p.x, s.y - g.p.y) < r) s.gone = true; }); g.update(.001); },
-    sea(){ g.p.x = (-75 + 98)*g.DEG; g.p.y = (28.2 - 15)*g.DEG; g.p.h = 0; g.p.speed = 0; T.clear(4000); }, // open Caribbean, no land for leagues
+    sea(){ g.p.x = g.X(-75); g.p.y = g.Y(15); g.p.h = 0; g.p.speed = 0; T.clear(4000); }, // open Caribbean, no land for leagues
     run(sec){ for (let t = 0; t < sec; t += .05){ g.ships.forEach(s => { if (s.role === 'hunter' && !s._t) s.gone = true; }); g.update(.05); if (g.state === 'over') break; } },
     foe(cls, owner, role, dx, dy){ const p = g.p, c = Math.cos(p.h), n = Math.sin(p.h), s = g.mk(cls, owner, role, p.x + c*dx - n*dy, p.y + n*dx + c*dy, p.h); s._t = true; s.dest = g.ports[2]; s.cargo = 200; return s; },
     consort(cls, i){ const p = g.p; return g.addFleet({ cls, hf: 1, sails: 100, crew: 30, cap: { name: 'Test Captain', gun: 3, sea: 3 } }, p.x - 60*(i + 1), p.y + 40, p.h); },
@@ -39,9 +39,9 @@ const HELPERS = () => {
   // ---------- boot and world ----------
   let r = await ev(() => { const g = __sp; return { ports: g.ports.length, landAnchors: g.ports.filter(q => g.isLand(q.ox, q.oy)).map(q => q.name), ships: g.ships.length, fleet: !!(g.fleet && g.fleet.lead),
     roles: g.ships.reduce((o, s) => { o[s.role] = (o[s.role] || 0) + 1; return o; }, {}), onLand: g.ships.filter(s => g.isLand(s.x, s.y)).length }; });
-  check('boot: 25 ports', r.ports === 25, r.ports);
+  check('boot: 106 ports', r.ports === 106, r.ports);
   check('boot: every port anchorage is in water', r.landAnchors.length === 0, r.landAnchors);
-  check('boot: merchants, patrols and treasure fleet present', r.roles.merchant >= 12 && r.roles.patrol >= 8 && r.fleet && r.roles.treasure === 2, r.roles);
+  check('boot: merchants, patrols and treasure fleet present', r.roles.merchant >= 12 && r.roles.patrol >= 3 && r.fleet && r.roles.treasure === 2, r.roles);
   check('boot: no ship starts on land', r.onLand === 0, r.onLand);
   r = await ev(() => { const o = {}; for (const d of ['easy', 'normal', 'hard']){ T.reset(d); o[d] = __sp.gold; } T.reset(); return o; });
   check('difficulty: starting purse', r.easy === 300 && r.normal === 0 && r.hard === 0, r);
@@ -165,7 +165,7 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); g.gold = 1234; g.hold.cocoa = 7; g.p.crew = 33; g.p.name = 'Saved Ship'; T.consort('brig', 0); g.setCourse(g.ports[3]); const okW = g.writeSlot('1'); g.gold = 1; g.hold.cocoa = 0;
     g.loadGame(g.readSlot('1')); const a = { okW, gold: g.gold, cocoa: g.hold.cocoa, crew: g.p.crew, name: g.p.name, squad: g.squad().length, course: g.course && g.course.name, state: g.state };
     const code = g.encode(g.snapshot()), d = g.decode(code); a.code = !!d && d.gold === 1234; a.garbage = g.decode('not a code') === null;
-    const old = g.snapshot(); old.deg = 400; old.p.x = 8460; old.p.y = 4200; g.loadGame(old); a.oldOnLand = g.isLand(g.p.x, g.p.y); return a; });
+    const old = g.snapshot(); delete old.proj; old.deg = 400; old.p.x = 8460; old.p.y = 4200; g.loadGame(old); a.oldOnLand = g.isLand(g.p.x, g.p.y); return a; });
   check('saving: a slot restores gold, cargo, crew, name, fleet and course', r.okW && r.gold === 1234 && r.cocoa === 7 && r.crew === 33 && r.name === 'Saved Ship' && r.squad === 1 && r.course === 'Cap-Français' && r.state === 'play', r);
   check('saving: save codes round-trip and bad codes are refused', r.code && r.garbage, r);
   check('saving: a save from the smaller map loads in open water', r.oldOnLand === 0 || r.oldOnLand === false, r.oldOnLand);
@@ -260,9 +260,9 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); const n = g.ports.map(q => q.name), tr = g.ships.filter(s => s.role === 'treasure'), ve = g.ports.find(q => q.name === 'Veracruz'), ha = g.ports.find(q => q.name === 'Havana');
     const near = tr.every(s => Math.min(Math.hypot(s.x - ve.ox, s.y - ve.oy), Math.hypot(s.x - ha.ox, s.y - ha.oy)) < 600), esc = g.ships.filter(s => s.role === 'escort').map(s => s.cls);
     return { n: n.length, has: ['Kingston', 'Cap-Français', 'Port-au-Prince', 'English Harbour', 'St Eustatius'].every(x => n.indexOf(x) >= 0), old: n.indexOf('Tortuga') >= 0 || n.indexOf('Port Royal') >= 0, tr: tr.length, near, esc, goods: g.goodsKeys.length }; });
-  check('ports: the 1750s towns are on the chart and the buccaneer havens are gone', r.n === 25 && r.has && !r.old, r);
+  check('ports: the 1750s towns are on the chart and the buccaneer havens are gone', r.n === 106 && r.has && !r.old, r);
   check('plate fleet: two plate ships sail between Veracruz and Havana under a frigate escort', r.tr === 2 && r.near && r.esc.indexOf('frigate') >= 0, r);
-  check('goods: coffee, indigo and molasses are traded', r.goods === 8, r);
+  check('goods: coffee, indigo and molasses are traded', r.goods === 12, r);
   r = await ev(() => { const g = __sp; T.reset(); const st = g.ports.find(q => q.name === 'St Eustatius'), ha = g.ports.find(q => q.name === 'Havana'), ki = g.ports[0]; g.standing.nl = -60; g.p.x = st.ox; g.p.y = st.oy; g.update(.01); g.tap('dock'); const free = g.state === 'port'; if (free) g.closePort();
     return { free, smug: g.price(ha, 'cloth') > g.price(ki, 'cloth')*2 }; });
   check('free port: St Eustatius trades with anyone, and cloth smuggled into Havana pays double', r.free && r.smug, r);
@@ -288,9 +288,9 @@ const HELPERS = () => {
   check('prize court: the condemnation is read out on a sheet listing each hull', r.open && r.court && r.rows === 2 && await ev(() => { const ok = document.getElementById('paper').hidden && __sp.state === 'port'; __sp.closePort(); return ok; }), r);
   r = await ev(() => { const g = __sp; T.reset(); let i = -1, n = 0; while (i < 0 && n++ < 400){ g.makeOffers(g.ports[0]); i = g.offers.findIndex(o => o.type === 'away'); } if (i < 0) return { found: false }; g.accept(i); const m = g.mission, g0 = g.gold, name = m.name, land = g.isLand(m.x, m.y); const d = g.snapshot(); g.loadGame(d); const kept = g.mission && g.mission.type === 'away'; T.clear(4000);
     g.p.x = g.mission.x + 100; g.p.y = g.mission.y + 60; T.run(.2); return { found: true, name, land, kept, done: !g.mission, paid: g.gold - g0 }; });
-  check('dispatches: letters for a place off the chart are handed to the packet at its edge, and survive a save', r.found && r.name === 'Charleston' && !r.land && r.kept && r.done && r.paid > 200, r);
+  check('dispatches: letters for a place off the chart are handed to the packet at its edge, and survive a save', r.found && r.name === 'Falmouth' && !r.land && r.kept && r.done && r.paid > 200, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.repute('fr', -100); const a = T.foe('frigate', 'fr', 'hunter', 700, 0); T.run(2); const rk = a.raking; const b = T.foe('merchant', 'fr', 'merchant', 0, -2500); g.convoy(b, g.ports[3]); const co = g.ships.filter(s => s.lead === b), esc = co.filter(s => s.role === 'escort').length; a.gone = true; b.dest = g.ports[3];
-    T.run(30); return { rk, n: co.length, esc, near: co.filter(s => s.sinking == null && Math.hypot(s.x - b.x, s.y - b.y) < 700).length }; });
+    co.forEach(s => { s._t = true; }); for (let k = 0; k < 6; k++){ T.clear(5000); T.run(5); } return { rk, n: co.length, esc, near: co.filter(s => s.sinking == null && Math.hypot(s.x - b.x, s.y - b.y) < 700).length }; });
   check('enemy captains steer for your bow or stern, from windward', r.rk === true, r);
   check('convoys: merchantmen sail in company under escort and keep station', r.n >= 3 && r.esc >= 1 && r.near === r.n, r);
   r = await ev(() => { const g = __sp; T.reset(); const ha = g.ports.find(q => q.name === 'Havana'); g.p.x = ha.ox + 500; g.p.y = ha.oy - 900; T.clear(3000); g.hold.cloth = 10; g.gold = 500; T.foe('sloop', 'es', 'patrol', 0, 200); T.run(1); const asked = !document.getElementById('ask').hidden; if (asked) document.getElementById('c_submit').click();
@@ -317,6 +317,28 @@ const HELPERS = () => {
       for (let k = 0; k < 500; k++) g.update(.1); t += 50; g.p.hull = g.p.maxHull; g.p.sails = 100; g.gold = 5000; seenWar = Math.max(seenWar, g.wars.length); if (g.hurr) hurr++; if (g.menuOpen) g.closeMenu(); if (g.state === 'prize') g.settlePrize('loot'); if (g.state !== 'play') break; bad += T.bad(); }
     return { cal: g.cal, t, state: g.state, bad, seenWar, wars: g.wars.length, squad: g.squad().length, legs: i, hurr, gaz: g.gazette.length }; });
   check('long voyage: seven years under way with a fleet, through both declarations of war, hurricanes and the peace', r.cal >= 158 && r.state === 'play' && r.bad === 0 && r.seenWar === 2 && r.wars === 0 && r.legs >= 4 && r.gaz >= 8, r);
+
+  // ---------- the wider world ----------
+  r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); const P = n => g.ports.find(q => q.name === n), k = P('Kingston'), names = ['Louisbourg', 'Halifax', 'Boston', 'Newport', 'New York', 'Philadelphia', 'Norfolk', 'Charleston', 'St Augustine', "St George's", 'New Orleans', 'Charlotte Amalie', 'Monte Cristi'];
+    const reach = names.every(n => { const q = P(n); return q && g.findPath(k.ox, k.oy, q.ox, q.oy).length > 3; }), lat = q => 47.2 - q.y/g.DEG;
+    return { reach, north: lat(P('Louisbourg')) > 45 && lat(P('Boston')) > 42, dk: P('Charlotte Amalie').nk === 'dk' && g.standing.dk != null, land: g.ports.filter(q => q.spec.land).length, big: g.ports.filter(q => q.spec.sz >= 3).length, goods: ['fish', 'flour', 'rice', 'naval'].every(x => g.goodsKeys.indexOf(x) >= 0) }; });
+  check('map: the coast runs north to Louisbourg and every new port can be reached by sea from Kingston', r.reach && r.north, r);
+  check('ports: cities, towns and dozens of landings, with Denmark as a fifth flag', r.dk && r.land >= 40 && r.big >= 9 && r.goods, r);
+  r = await ev(() => { const g = __sp, out = {}; for (const n of ['Kingston', 'Charleston', 'New York', 'Boston']){ g.setStart(n); g.newGame(); const q = g.ports.find(q => q.name === n); out[n] = g.home === n && Math.hypot(g.p.x - q.ox, g.p.y - q.oy) < 5; } g.setStart('Kingston'); return out; });
+  check('start: a voyage can begin from Kingston, Charleston, New York or Boston', r.Kingston && r.Charleston && r['New York'] && r.Boston, r);
+  r = await ev(() => { const g = __sp; T.reset(); g.repute('en', -100); const q = g.ports.find(q => q.name === 'Port Antonio'), k = g.ports[0]; g.p.x = q.ox; g.p.y = q.oy; g.update(.01); g.tap('dock'); const open = g.state === 'port', offers = g.offers.length; let ships = false, marq = false;
+    if (open){ ships = !!document.getElementById('y_brig'); document.querySelector('[data-tab=governor]').click(); marq = !!document.getElementById('marque'); document.querySelector('[data-tab=market]').click(); } const rows = document.querySelectorAll('#ledger [id^=buy_]').length; if (open) g.closePort();
+    g.p.x = k.ox; g.p.y = k.oy; g.update(.01); g.tap('dock'); const shut = g.state === 'play'; return { open, offers, ships, marq, rows, shut }; });
+  check('landings: open to anyone, with a short market and no governor, yard or letters of marque', r.open && r.offers === 0 && !r.ships && !r.marq && r.rows >= 1 && r.rows <= 4 && r.shut, r);
+  r = await ev(() => { const g = __sp; T.reset(); const x = g.X(-79.65), y = g.Y(27.4); g.p.x = x; g.p.y = y; g.p.sail = 0; g.p.speed = 0; T.clear(3000); T.run(20); const drift = y - g.p.y; return { drift, in: !!g.streamAt(x, y), out: g.streamAt(g.X(-70), g.Y(27)) === null }; });
+  check('Gulf Stream: a ship lying to off Florida is set to the north', r.in && r.out && r.drift > 250, r);
+  r = await ev(() => { const g = __sp, out = {}; T.reset(); for (const at of [['Boston'], ['Kingston'], [null, -66, 30]]){ const q = at[0] && g.ports.find(q => q.name === at[0]); g.p.x = q ? q.ox : g.X(at[1]); g.p.y = q ? q.oy : g.Y(at[2]); g.p.sail = 0; for (let i = 0; i < 1800; i++) g.update(.05);
+      const S = g.ships; out[at[0] || 'ocean'] = { near: S.filter(s => Math.hypot(s.x - g.p.x, s.y - g.p.y) < 3500).length, far: S.filter(s => Math.abs(s.x - g.p.x) > 8700 && (s.role === 'merchant' || s.role === 'patrol')).length, fish: S.filter(s => s.role === 'fisher').length, coast: S.filter(s => s.coaster).length, total: S.length }; } out.bad = T.bad(); return out; });
+  check('traffic: busy off the great ports, thin in mid-ocean, and nothing kept beyond the horizon', r.Boston.near >= 10 && r.Kingston.near >= 10 && r.ocean.near <= 5 && r.Boston.far === 0 && r.ocean.far === 0 && r.Boston.fish >= 2 && r.Boston.coast + r.Kingston.coast >= 2 && r.Boston.total < 80 && r.bad === 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const f = T.foe('bermuda', 'fr', 'merchant', 0, 80); f.packet = true; const g0 = g.gold; g.capture(f); g.settlePrize('loot'); return { gained: g.gold - g0, svc: g.navy.pts }; });
+  check('packets: taking an enemy packet yields her dispatches', r.gained >= 150 && r.svc >= 2, r);
+  r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); g.setCal(102); g.calendarTick(); const a = g.ports.find(q => q.name === 'Louisbourg').nk; g.setCal(157); g.calendarTick(); return { a, fl: g.ports.find(q => q.name === 'St Augustine').nk, no: g.ports.find(q => q.name === 'New Orleans').nk, lb: g.ports.find(q => q.name === 'Louisbourg').nk }; });
+  check('history: Louisbourg falls in 1758; at the peace Florida goes to Britain and Louisiana to Spain', r.a === 'en' && r.fl === 'en' && r.no === 'es' && r.lb === 'en', r);
 
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
