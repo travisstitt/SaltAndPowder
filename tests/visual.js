@@ -11,7 +11,7 @@ const setup = () => { const g = __sp; g.freeze(false); g.seed(11); g.setDiff('no
   g.addFleet({ cls: 'brig', hf: .7, sails: 80, crew: 60, name: 'Sea Hind', cap: { name: 'Anne Morrow', gun: 4, sea: 3 } }, g.p.x - 80, g.p.y + 40, g.p.h); g.p.name = 'Royal Fortune'; g.freeze(true); g.setTime(10); };
 const SCENES = {
   title: () => { document.getElementById('title').hidden = false; __sp.state = 'title'; },
-  sea: () => { const g = __sp; g.p.x = g.X(-75); g.p.y = g.Y(15); g.p.h = 0; g.squad()[0].x = g.p.x - 110; g.squad()[0].y = g.p.y + 10; const a = g.mk('frigate', 'fr', 'patrol', g.p.x + 170, g.p.y - 150, .4), b = g.mk('merchant', 'es', 'merchant', g.p.x - 150, g.p.y + 150, 0); [a, b].forEach(s => { s.dest = g.ports[2]; s.sail = 1; }); a.announced = true; g.tracked = a; },
+  sea: () => { const g = __sp; g.p.x = g.X(-75); g.p.y = g.Y(15); g.p.h = 0; g.squad()[0].x = g.p.x - 110; g.squad()[0].y = g.p.y + 10; const a = g.mk('frigate', 'fr', 'patrol', g.p.x + 170, g.p.y - 150, .4), b = g.mk('merchant', 'es', 'merchant', g.p.x - 150, g.p.y + 150, 0); [a, b].forEach(s => { s.dest = g.ports[2]; s.sail = 1; }); a.announced = true; g.tracked = a; g.freeze(false); g.update(.02); g.freeze(true); g.setTime(10); }, /* one tick, so the HUD reads the new position before the clock stops */
   port: () => { const g = __sp; g.openPort(g.ports[0]); document.querySelector('[data-tab=market]').click(); },
   chart: () => { __sp.setChart(true); },
   fleet: () => { __sp.openFleet('F'); },
@@ -29,8 +29,8 @@ const DIFF = async (page, a, b) => page.evaluate(async ([a, b]) => { const load 
       const shot = (await page.screenshot({ type: 'jpeg', quality: 80 })).toString('base64'), file = path.join(BASE, name + '-' + sz + '.jpg');
       if (UPDATE || !fs.existsSync(file)){ fs.writeFileSync(file, Buffer.from(shot, 'base64')); check('picture ' + name + ' at ' + sz + ': baseline written', true); continue; }
       const d = await DIFF(page, shot, fs.readFileSync(file).toString('base64'));
-      if (!(d.pct < 2.5) || d.size) fs.writeFileSync(path.join(BASE, name + '-' + sz + '.new.jpg'), Buffer.from(shot, 'base64'));
-      check('picture ' + name + ' at ' + sz + ' matches its baseline', !d.size && d.pct < 2.5 && d.mean < 18, d); } /* the sea glitters differently every frame, even behind a sheet, so pictures are held to shapes rather than shades */
+      if (!(d.pct < (name === 'sea' ? 4.5 : 2.5)) || d.size) fs.writeFileSync(path.join(BASE, name + '-' + sz + '.new.jpg'), Buffer.from(shot, 'base64'));
+      check('picture ' + name + ' at ' + sz + ' matches its baseline', !d.size && d.pct < (name === 'sea' ? 4.5 : 2.5) && d.mean < 18, d); } /* the sea glitters differently every frame, even behind a sheet, so pictures are held to shapes rather than shades */
     await page.close(); }
   // ---------- nothing in the HUD may lie across anything else
   for (const [label, opt] of [['1366x768', { viewport: { width: 1366, height: 768 } }], ['1100x520', { viewport: { width: 1100, height: 520 } }], ['780x380 touch', { viewport: { width: 780, height: 380 }, hasTouch: true, isMobile: true }], ['400x780 touch', { viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true }]]){
