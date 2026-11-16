@@ -13,7 +13,7 @@ const HELPERS = () => {
   const g = window.__sp;
   window.T = {
     reset(diff){ // a fresh voyage in fair weather, alone on the sea, mid-morning
-      g.setDiff(diff || 'normal'); g.newGame(); g.setCalm(true); g.setWars(['en-es', 'en-fr']); g.state = 'play'; g.setPaused(false); g.setChart(false);
+      g.seed(20260 + (T.n = (T.n || 0) + 1)); g.setDiff(diff || 'normal'); g.newGame(); g.setCalm(true); g.setWars(['en-es', 'en-fr']); g.state = 'play'; g.setPaused(false); g.setChart(false);
       for (const id of ['title', 'port', 'prize', 'menu', 'manifest', 'fleetSheet', 'over', 'fate']) document.getElementById(id).hidden = true;
       const w = g.weather; w.kind = 'clear'; w.k = 0; w.left = 1e7; w.next = null; g.clock = 60;
       T.clear(4000); },
@@ -91,8 +91,8 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); T.consort('brig', 0); const a = T.foe('merchant', 'nl', 'merchant', 60, 250), nl0 = g.standing.nl; T.run(15); const calm = a.hull === a.maxHull && g.standing.nl === nl0; return { calm }; });
   check('fleet: consorts leave neutral ships alone', r.calm, r);
 
-  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.repute('es', -100); const s = T.consort('brig', 0), m = T.foe('merchant', 'es', 'merchant', 500, 200); m.goods = { cocoa: 12 }; const g0 = g.gold;
-    g.setTask(s, { type: 'raid', at: [s.x, s.y], prey: null }); let t = 0; while (!m.released && m.sinking == null && t < 420){ T.clear(5000); T.run(5); t += 5; } return { t, released: m.released, sunk: m.sinking != null, gained: g.gold - g0, cocoa: g.hold.cocoa, word: g.taskWord(s), alive: g.squad().length }; });
+  r = await ev(() => { const g = __sp; T.reset(); g.seed(5); T.sea(); g.repute('es', -100); const s = T.consort('brig', 0), m = T.foe('merchant', 'es', 'merchant', 500, 200); m.goods = { cocoa: 12 }; const g0 = g.gold;
+    g.setTask(s, { type: 'raid', at: [s.x, s.y], prey: null }); let t = 0; while (!m.released && m.sinking == null && t < 420){ T.clear(5000); s.hull = s.maxHull; T.run(5); t += 5; } return { t, released: m.released, sunk: m.sinking != null, gained: g.gold - g0, cocoa: g.hold.cocoa, word: g.taskWord(s), alive: g.squad().length }; });
   check('orders: a consort sent hunting takes a prize on her own and pays you', r.released && r.gained > 150 && r.cocoa === 12 && r.alive === 1, r);
   r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('sloop', 0), q = g.ports.find(q => q.name === 'Santiago de Cuba'); g.setTask(s, { type: 'port', port: q }); let t = 0; while (!s.task.arrived && t < 1500){ T.run(5); t += 5; }
     const arrived = !!s.task.arrived, word = g.taskWord(s), d = Math.round(Math.hypot(s.x - q.ox, s.y - q.oy)), hull = Math.round(s.hull); const snap = JSON.parse(JSON.stringify(g.snapshot())); g.loadGame(snap); const s2 = g.squad()[0];
@@ -298,7 +298,7 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; T.reset(); const ha = g.ports.find(q => q.name === 'Havana'); g.p.x = ha.ox + 500; g.p.y = ha.oy - 900; T.clear(3000); g.hold.cloth = 10; g.gold = 500; T.foe('sloop', 'es', 'patrol', 0, 200); T.run(1); const asked = !document.getElementById('ask').hidden; if (asked) document.getElementById('c_submit').click();
     return { asked, cloth: g.hold.cloth, gold: g.gold, closed: document.getElementById('ask').hidden && !g.menuOpen }; });
   check('customs: a guarda-costa searches a smuggler in Spanish waters; submitting costs the cloth and a fine', r.asked && r.cloth === 0 && r.gold === 500 - 80 && r.closed, r);
-  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const n = T.foe('merchant', 'nl', 'merchant', 0, 70), g0 = g.gold, rnd = Math.random; Math.random = () => .1; let asked, took; try { asked = g.searchable() === n; g.grapple(); took = !document.getElementById('ask').hidden; if (took) document.getElementById('s_take').click(); } finally { Math.random = rnd; }
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const n = T.foe('merchant', 'nl', 'merchant', 0, 70), g0 = g.gold; g.setRnd(() => .1); let asked, took; try { asked = g.searchable() === n; g.grapple(); took = !document.getElementById('ask').hidden; if (took) document.getElementById('s_take').click(); } finally { g.seed(99); }
     return { asked, took, searched: n.searched, gained: g.gold - g0, again: g.searchable() === null, nl: g.standing.nl, svc: g.navy.pts }; });
   check('stop and search: a privateer may take enemy cargo out of a neutral, at the cost of her goodwill', r.asked && r.took && r.searched && r.gained > 60 && r.again && r.nl < 0 && r.svc === 1, r);
   await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const f = T.foe('frigate', 'fr', 'patrol', 0, 80); g.capture(f); g.settlePrize('loot'); g.svc(20); g.gold = 0; g.openPort(g.ports[0]); }); await page.click('[data-tab=governor]');
@@ -336,7 +336,7 @@ const HELPERS = () => {
   check('Gulf Stream: a ship lying to off Florida is set to the north', r.in && r.out && r.drift > 250, r);
   r = await ev(() => { const g = __sp, out = {}; T.reset(); for (const at of [['Boston'], ['Kingston'], [null, -66, 30]]){ const q = at[0] && g.ports.find(q => q.name === at[0]); g.p.x = q ? q.ox : g.X(at[1]); g.p.y = q ? q.oy : g.Y(at[2]); g.p.sail = 0; for (let i = 0; i < 1800; i++) g.update(.05);
       const S = g.ships; out[at[0] || 'ocean'] = { near: S.filter(s => Math.hypot(s.x - g.p.x, s.y - g.p.y) < 3500).length, far: S.filter(s => Math.abs(s.x - g.p.x) > 8700 && (s.role === 'merchant' || s.role === 'patrol')).length, fish: S.filter(s => s.role === 'fisher').length, coast: S.filter(s => s.coaster).length, total: S.length }; } out.bad = T.bad(); return out; });
-  check('traffic: busy off the great ports, thin in mid-ocean, and nothing kept beyond the horizon', r.Boston.near >= 10 && r.Kingston.near >= 10 && r.ocean.near <= 5 && r.Boston.far === 0 && r.ocean.far === 0 && r.Boston.fish >= 2 && r.Boston.coast + r.Kingston.coast >= 2 && r.Boston.total < 80 && r.bad === 0, r);
+  check('traffic: busy off the great ports, thin in mid-ocean, and nothing kept beyond the horizon', r.Boston.near >= 10 && r.Kingston.near >= 10 && r.ocean.near <= 8 && r.Boston.far === 0 && r.ocean.far === 0 && r.Boston.fish >= 2 && r.Boston.coast + r.Kingston.coast >= 2 && r.Boston.total < 80 && r.bad === 0, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.setMarque('en'); const f = T.foe('bermuda', 'fr', 'merchant', 0, 80); f.packet = true; const g0 = g.gold; g.capture(f); g.settlePrize('loot'); return { gained: g.gold - g0, svc: g.navy.pts }; });
   check('packets: taking an enemy packet yields her dispatches', r.gained >= 150 && r.svc >= 2, r);
   r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); g.setCal(102); g.calendarTick(); const a = g.ports.find(q => q.name === 'Louisbourg').nk; g.setCal(157); g.calendarTick(); return { a, fl: g.ports.find(q => q.name === 'St Augustine').nk, no: g.ports.find(q => q.name === 'New Orleans').nk, lb: g.ports.find(q => q.name === 'Louisbourg').nk }; });

@@ -45,7 +45,19 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## Tests
 
-`node tests/run-tests.js` runs 143 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
+Three suites, all in headless Chromium (they need Playwright):
+
+- `node tests/rules.js` runs 22 fast checks in about two seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
+- `node tests/run-tests.js` runs 143 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
+- `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
+
+Every roll of the dice in the game comes from one source that the tests seed, so a failure repeats. The page exposes its test hook only when opened with `#test`.
+
+## Building
+
+`index.html` is built from `src/` by `python3 build.py`: the page template, the embedded typefaces, and the script in 21 sections under `src/js/` that are joined in name order. The sections share one scope and are not modules. Edit the sources and rebuild; do not edit `index.html` by hand.
+
+The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC, all under the SIL Open Font License) are embedded, so the game needs no network and looks the same offline.
 
 ## How it plays
 
