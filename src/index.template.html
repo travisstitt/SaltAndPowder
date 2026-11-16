@@ -210,6 +210,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 .portfoot{display:flex;gap:8px;margin-top:.6rem}.portfoot .primary{flex:1;margin:0}.portfoot #portChart{flex:none;padding-inline:1.2rem}
 .paper .dbtns{display:flex;flex-wrap:wrap;gap:6px;margin:-.2rem 0 .8rem}.paper .dbtns button{background:#3a2614;color:#f2e7c6;border-color:#3a2614;font-family:"Alegreya Sans",sans-serif;font-size:.9rem;padding:4px 10px}.paper .dbtns button:hover:not(:disabled){background:#5a4024}
 #fleetCol.many .shipcard{padding:4px 8px;gap:2px}#fleetCol.many .shipcard>*:nth-child(n+3){display:none}
+#shipNow{margin:.5rem 0 .2rem;padding:.35rem .7rem;border-left:3px solid var(--brass);background:rgba(214,165,78,.09);color:var(--bone);font-size:.98rem;line-height:1.35}
 </style>
 
 </head>
@@ -334,7 +335,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
       <div class="shiplist" id="shipList"></div>
       <div class="shipdetail">
         <canvas id="shipPic" width="640" height="260" aria-hidden="true"></canvas>
-        <div><strong id="shipHead"></strong><br><span class="note" id="shipSub"></span></div>
+        <div><strong id="shipHead"></strong><br><span class="note" id="shipSub"></span><p id="shipNow" hidden></p></div>
         <div class="seg" id="nameRow"><input id="shipNameIn" type="text" maxlength="22" autocomplete="off" spellcheck="false" aria-label="Ship's name"><button type="button" id="shipNameBtn">Rename her</button></div>
         <ul class="ledger panel" id="shipRows"></ul>
       </div>

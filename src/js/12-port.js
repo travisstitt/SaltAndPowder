@@ -11,6 +11,11 @@ function openPort(port){ if (paceOut == null){ paceOut = paceIdx; setPace(0, tru
   makeOffers(port); autosave();
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
 function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true); paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
+let waiting = false;
+function waitOut(){ if (waiting || !hurr) return; waiting = true; const port = curPort; /* the hours go by as fast as they can be reckoned, a slice each frame, until the storm is past */
+  const step = () => { const t0 = performance.now(); let n = 0; while (hurr && state === 'port' && n++ < 6000 && performance.now() - t0 < 13) update(.1);
+    if (hurr && state === 'port'){ requestAnimationFrame(step); return; } waiting = false; if (state === 'port' && !menuOpen && !chartOpen) renderPort(); if (!hurr) say('The hurricane has blown itself out. The sky is clearing over ' + port.name + '.'); };
+  step(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
 /* one row of a ledger: a name, a line of detail, a value, and any number of buttons */
 function uiRow(ul, name, desc, amt, btns, rerender, cls){
@@ -31,7 +36,7 @@ function renderPort(focusId){
   const ul = $('ledger'); ul.textContent = '';
   const R = (name, desc, amt, btns) => uiRow(ul, name, desc, amt, btns, renderPort), T = (cls, t) => ledgerText(ul, cls, t);
   if (hurr){ T('sec', hurr.stage ? 'A hurricane is blowing' : 'A hurricane is coming'); /* in harbour you are safe; this passes the time until it is over */
-    R('Wait out the hurricane', (hurr.stage ? 'It is on the coast now. ' : 'The glass is falling and a long swell is running in. ') + 'Lie here at anchor, with topmasts struck, until it has passed. Nothing can touch you in port; the world outside is not so lucky.', '', [['waitHurr', 'Wait it out', true, () => { let n = 0; while (hurr && n++ < 40) ashore(10); if (!hurr) later(() => say('The hurricane has blown itself out. The sky is clearing over ' + curPort.name + '.'), 60); }]]); }
+    R('Wait out the hurricane', (hurr.stage ? 'It is on the coast now. ' : 'The glass is falling and a long swell is running in. ') + 'Lie here at anchor, with topmasts struck, until it has passed. Nothing can touch you in port; the world outside is not so lucky.', '', [['waitHurr', waiting ? 'Riding it out…' : 'Wait it out', !waiting, waitOut]]); }
   if (portTab === 'yard'){
     const all = [p].concat(squad().filter(inCompany)), total = all.reduce((n, s) => n + hurt(s), 0), pay = Math.min(total, gold);
     T('sec', 'Shipwright');

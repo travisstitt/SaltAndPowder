@@ -61,6 +61,17 @@ function drawPic(s){
     const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff'; g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke(); g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
     g.strokeStyle = 'rgba(214,165,78,.9)'; g.lineWidth = 2; g.strokeRect(ix + 1, iy + 1, iw - 2, ih - 2); }
 }
+function stowage(){ /* the fleet's common cargo, stowed ship by ship: flagship first, then each consort that is not trading on her own account */
+  const out = new Map(), left = Object.assign({}, hold), order = [p].concat(squad().filter(o => !(o.task && o.task.type === 'trade')));
+  order.forEach((s, i) => { let room = s.t.hold; const m = {}; for (const g of GK){ if (room <= 0) break; const n = Math.min(left[g], room); if (n > 0){ m[g] = n; left[g] -= n; room -= n; } } out.set(s, m); });
+  const over = GK.reduce((n, g) => n + left[g], 0); if (over > 0){ const m = out.get(p); GK.forEach(g => { if (left[g] > 0) m[g] = (m[g] || 0) + left[g]; }); } return out; }
+function holdLine(s){ const t = s.task && s.task.type === 'trade' ? s.task : null;
+  if (t) return (t.cargo ? t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ', bought for ' + t.cargo.cost + ' gold' : 'In ballast') + ' · ' + Math.round(t.funds) + ' gold of trading stock in hand. Her hold is her own while she trades.';
+  const m = stowage().get(s) || {}, ks = GK.filter(g => m[g] > 0), used = ks.reduce((n, g) => n + m[g], 0);
+  return (ks.length ? ks.map(g => GOODS[g][0] + ' ' + m[g] + ' t').join(' · ') : 'Empty') + '. ' + (s === p ? 'The fleet\'s cargo is stowed in the flagship first, then in each consort in turn.' : 'She carries what the ships ahead of her cannot.'); }
+function nowLine(s){ /* what she is about, and where */
+  const doing = s === p ? (state === 'port' && curPort ? 'At anchor at ' + curPort.name : course ? (autoHelm ? 'On a course for ' : 'Course marked for ') + course.name : p.sail > 0 ? 'Under way, in your own hand' : 'Lying to') : taskWord(s);
+  return doing + '. ' + whereIs(s); }
 const PTS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
 function whereIs(s){ const off = offWhere(s.x, s.y).replace(/^ /, ''); if (s === p) return 'Your flagship lies ' + off + '.'; const d = Math.hypot(s.x - p.x, s.y - p.y), lg = Math.round(d/DEG*20);
   return lg < 2 ? 'In company with the flagship, ' + off + '.' : lg + ' leagues ' + PTS[Math.round(Math.atan2(s.y - p.y, s.x - p.x)/(Math.PI/4) + 8) % 8] + ' of the flagship, ' + off + '.'; }
@@ -84,6 +95,7 @@ function renderFleet(focusId){
   if (kind === 'L'){ const d = laidUp[idx], k = CLASSES[d.cls], tmp = makeShip(d.cls, 'player', 'fleet', 0, 0, 0), v = Math.round(k.value*.35*d.hf);
     tmp.sails = d.sails; tmp.hull = tmp.maxHull*d.hf; drawPic(tmp);
     $('shipHead').textContent = (d.name || cap1(k.cname)) + ', a ' + k.cname + ' laid up at ' + homeName; $('nameRow').hidden = true;
+    $('shipNow').textContent = 'Laid up at ' + homeName + ', out of commission. Her hold is empty.'; $('shipNow').hidden = false;
     $('shipSub').textContent = 'Rated ' + k.rate + ' guns · ' + k.guns + ' a side in play · hull ' + Math.round(d.hf*100) + '% · crew ' + d.crew + ' · ' + (d.cap && !d.cap.mate ? 'Capt. ' + d.cap.name + ' ' + stars(d.cap) : 'no captain');
     R('Recall her to the fleet', atHome ? (sq.length < MAXSQ ? 'She rejoins you here.' : 'Your fleet is full at ' + MAXSQ + ' consorts.') : 'You must be in port at ' + homeName + '.', '', [['lr', 'Recall', atHome && sq.length < MAXSQ, () => { laidUp.splice(idx, 1); addFleet(d, curPort.ox, curPort.oy, curPort.out); fleetSel = 'S' + (squad().length - 1); }]]);
     R('Sell her', atHome ? 'The yard at ' + homeName + ' will take her. Her captain stays with you as a spare.' : 'You must be in port at ' + homeName + '.', v + ' gold', [['ls', 'Sell', atHome, () => { gold += v; if (d.cap && !d.cap.mate && spares.length < 6) spares.push(d.cap); laidUp.splice(idx, 1); fleetSel = 'F'; }]]);
@@ -91,7 +103,9 @@ function renderFleet(focusId){
     $('shipHead').textContent = s.name + (flag ? ', your flagship, a ' : ', a ') + s.t.cname;
       $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
-    R('Where she is', whereIs(s) + ' Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
+    $('shipNow').textContent = nowLine(s); $('shipNow').hidden = false;
+    R('Where she is', 'Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
+    { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0; R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
     if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
     if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');

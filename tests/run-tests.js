@@ -397,9 +397,17 @@ const HELPERS = () => {
   check('trader: when her stock runs low she lies in port and writes for funds, and sending them sets her trading again', r.ask && /Waiting for funds/.test(r.word) && r.had && r.sent === 240 && r.funds === 250 && !r.need, r);
 
   await ev(() => { const g = __sp; T.reset(); g.openPort(g.ports[0]); }); r = { before: await ev(() => !!document.getElementById('waitHurr')) }; await ev(() => __sp.startHurricane()); await page.waitForTimeout(100);
-  r.offered = await ev(() => !!document.getElementById('waitHurr')); const h0 = await ev(() => ({ hull: __sp.p.hull, sails: __sp.p.sails, cal: __sp.clock })); await page.click('#waitHurr'); await page.waitForTimeout(150);
+  r.offered = await ev(() => !!document.getElementById('waitHurr')); const h0 = await ev(() => ({ hull: __sp.p.hull, sails: __sp.p.sails, cal: __sp.clock })); const w0 = Date.now(); await page.click('#waitHurr'); await page.waitForFunction(() => !__sp.hurr && !__sp.waiting, null, { timeout: 20000 }); r.ms = Date.now() - w0; await page.waitForTimeout(100);
   r.after = await ev(h0 => { const g = __sp, a = { over: !g.hurr && !g.weather.hur, safe: g.p.hull === h0.hull && g.p.sails === h0.sails, passed: g.clock - h0.cal, state: g.state, gone: !document.getElementById('waitHurr') }; g.closePort(); return a; }, h0);
-  check('port: in a hurricane you can wait it out at anchor, unharmed, and the offer goes when it has passed', !r.before && r.offered && r.after.over && r.after.safe && r.after.passed >= 60 && r.after.state === 'port' && r.after.gone, r);
+  check('port: in a hurricane you can wait it out at anchor, unharmed, and the offer goes when it has passed', !r.before && r.offered && r.after.over && r.after.safe && r.after.passed >= 60 && r.after.state === 'port' && r.after.gone && r.ms < 8000, r);
+
+  r = await ev(() => { const g = __sp; T.reset(); g.gold = 1000; const a = T.consort('brig', 0), b = T.consort('sloop', 1); g.hold.rum = 30; g.hold.cocoa = 60; const st = g.stowage(), sum = s => Object.values(st.get(s) || {}).reduce((n, v) => n + v, 0);
+    g.startTrade(b, [g.ports[0], g.ports.find(q => q.name === 'Santiago de Cuba')], null); g.openFleet('F'); const fNow = document.getElementById('shipNow').textContent, fHold = [...document.querySelectorAll('#shipRows li')].find(li => /^In her hold/.test(li.textContent)).textContent;
+    g.openFleet('S0'); const aNow = document.getElementById('shipNow').textContent, aHold = [...document.querySelectorAll('#shipRows li')].find(li => /^In her hold/.test(li.textContent)).textContent;
+    g.openFleet('S1'); const bNow = document.getElementById('shipNow').textContent, bHold = [...document.querySelectorAll('#shipRows li')].find(li => /^In her hold/.test(li.textContent)).textContent; g.closeMenu();
+    return { flag: sum(g.p), brig: sum(a), sloop: sum(b), cap: g.p.t.hold, fNow, fHold, aNow, aHold, bNow, bHold }; });
+  check('fleet card: each ship shows what is in her hold, the common cargo stowed flagship first', r.flag === r.cap && r.brig === 90 - r.cap && r.sloop === 0 && /Rum 30 t/.test(r.fHold) && /Cocoa \d+ t/.test(r.aHold) && /trading stock/.test(r.bHold), r);
+  check('fleet card: the top of each card says what she is doing and where she lies', /Kingston/.test(r.fNow) && /^With the fleet\. /.test(r.aNow) && /^(Trading|Loading)/.test(r.bNow) && /Kingston|flagship/.test(r.bNow), r);
 
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
