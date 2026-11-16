@@ -66,7 +66,7 @@ function stowage(){ /* the fleet's common cargo, stowed ship by ship: flagship f
   order.forEach((s, i) => { let room = s.t.hold; const m = {}; for (const g of GK){ if (room <= 0) break; const n = Math.min(left[g], room); if (n > 0){ m[g] = n; left[g] -= n; room -= n; } } out.set(s, m); });
   const over = GK.reduce((n, g) => n + left[g], 0); if (over > 0){ const m = out.get(p); GK.forEach(g => { if (left[g] > 0) m[g] = (m[g] || 0) + left[g]; }); } return out; }
 function holdLine(s){ const t = s.task && s.task.type === 'trade' ? s.task : null;
-  if (t) return (t.cargo ? t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ', bought for ' + t.cargo.cost + ' gold' : 'In ballast') + ' · ' + Math.round(t.funds) + ' gold of trading stock in hand. Her hold is her own while she trades.';
+  if (t) return (t.cargo ? t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + ', bought for ' + t.cargo.cost + ' gold' : 'In ballast') + ' · ' + Math.round(t.funds) + ' gold of trading stock in hand. ' + (s.docked ? (t.need ? 'She waits for funds.' : t.cargo ? 'She sails for ' + t.dest.name + ' as soon as she is loaded; she does not wait for a full hold.' : 'She is looking for a cargo that will pay.') : 'Bound for ' + t.dest.name + '.');
   const m = stowage().get(s) || {}, ks = GK.filter(g => m[g] > 0), used = ks.reduce((n, g) => n + m[g], 0);
   return (ks.length ? ks.map(g => GOODS[g][0] + ' ' + m[g] + ' t').join(' · ') : 'Empty') + '. ' + (s === p ? 'The fleet\'s cargo is stowed in the flagship first, then in each consort in turn.' : 'She carries what the ships ahead of her cannot.'); }
 function nowLine(s){ /* what she is about, and where */

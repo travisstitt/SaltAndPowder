@@ -431,6 +431,10 @@ const HELPERS = () => {
   r.ledger = await ev(() => { const a = { open: !document.getElementById('paper').hidden, mast: document.querySelector('#paper .mast').textContent, book: /price book/.test(document.getElementById('paperBody').textContent) }; __sp.closeMenu(); return a; });
   check('chart and ledger: the price book can be shown on the chart a good at a time, and K opens the trade ledger', /^Prices: Sugar/.test(r.label) && r.ledger.open && r.ledger.mast === 'Trade Ledger' && r.ledger.book, r);
 
+  r = await ev(() => { const g = __sp; T.reset(); const s = T.consort('brig', 0), k = g.ports[0], sc = g.ports.find(q => q.name === 'Santiago de Cuba'); g.gold = 600; s.doc.cap = 500; g.openPort(k); g.startTrade(s, [k, sc], null); let n = 0; while (!s.docked && n++ < 400) g.update(.05); const loaded = !!s.docked; let m = 0; while (m++ < 1200 && Math.hypot(s.x - k.ox, s.y - k.oy) < 700) g.update(.05);
+    const away = Math.round(Math.hypot(s.x - k.ox, s.y - k.oy)), part = s.task.cargo && s.task.cargo.tons < s.t.hold, line = g.holdLine(s), still = g.state === 'port'; g.closePort(); return { loaded, away, secs: m*.05, part, tons: s.task.cargo && s.task.cargo.tons, hold: s.t.hold, line, still }; });
+  check('trader: she loads and puts to sea from the port the flagship is lying in, part-laden if that is what her stock buys', r.loaded && r.away >= 700 && r.secs < 40 && r.tons > 0 && r.still && /^\d+ tons of/.test(r.line) && /Bound for Santiago/.test(r.line), r);
+
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
   const perr = []; phone.on('pageerror', e => perr.push(e.message));
