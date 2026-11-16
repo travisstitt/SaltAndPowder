@@ -45,7 +45,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## Tests
 
-`node tests/run-tests.js` runs 141 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
+`node tests/run-tests.js` runs 143 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
 
 ## How it plays
 

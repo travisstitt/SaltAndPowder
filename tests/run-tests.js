@@ -101,8 +101,8 @@ const HELPERS = () => {
   check('orders: an absent ship keeps her place and orders through a save, and rejoins when you arrive', r.kept && r.rejoined, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); g.wind.dir = g.p.h + .8; g.p.sail = 1; T.run(25); return Math.round(Math.hypot(s.x - g.p.x, s.y - g.p.y)); });
   check('orders: a ship told to hold stays behind', r > 1200, r);
-  r = await ev(() => { const g = __sp; T.reset(); T.consort('sloop', 0); const s = g.squad()[0]; g.setTask(s, { type: 'raid', at: [s.x + 3000, s.y], prey: null }); s.x += 3000; const a = T.foe('brig', 'pirate', 'hunter', 3000, 150); a._t = true; g.openPort(g.ports[0]); g.ashore(120); const hull = s.hull, ahull = a.hull; g.closePort(); return { hull, max: s.maxHull, ahull, amax: a.maxHull }; });
-  check('safe harbour: while you are in port even a distant consort neither takes nor gives fire', r.hull === r.max && r.ahull === r.amax, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.consort('sloop', 0); const s = g.squad()[0]; g.setTask(s, { type: 'raid', at: [s.x + 3000, s.y], prey: null }); s.x += 3000; const a = T.foe('brig', 'pirate', 'hunter', 3000, 150); a._t = true; g.openPort(g.ports[0]); g.ashore(120); const hull = s.hull, ahull = a.hull, hit = !!a.hitByPlayer; g.closePort(); return { hull, max: s.maxHull, ahull, amax: a.maxHull, hit }; });
+  check('safe harbour: while you are in port even a distant consort neither takes nor gives fire', r.hull === r.max && !r.hit, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const a = T.foe('merchant', 'es', 'merchant', 0, 150); for (let i = 0; i < 6; i++){ g.p.rl[0] = g.p.rl[1] = 0; g.fire(g.p, 1); T.run(.6); } const n = g.smokes.length; a.gone = true; g.balls.length = 0; T.run(40); return { n, later: g.smokes.length }; });
   check('gunsmoke: hangs after firing in proportion to the guns, then clears', r.n >= 18 && r.later < r.n*.4, r);
   r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('brig', 0), e = T.foe('brig', 'pirate', 'hunter', 400, 300); g.openOrders(s); const open = !document.getElementById('orders').hidden; document.getElementById('o_foe0').click(); const chase = s.task && s.task.type === 'chase' && s.task.prey === e;
@@ -220,6 +220,8 @@ const HELPERS = () => {
   check('chart: opens, zooms and drags without closing', r && (await ev(() => __sp.chartOpen)));
   await page.click('#czIn'); await page.keyboard.press('Equal'); await page.keyboard.press('ArrowLeft'); check('chart: zoom buttons and keys leave it open', await ev(() => __sp.chartOpen));
   await page.keyboard.press('Escape'); await page.waitForTimeout(100); await page.keyboard.press('KeyC'); await page.waitForTimeout(300);
+  const z0 = await ev(() => __sp.chartZ); for (let i = 0; i < 5; i++) await page.click('#czOut'); r = await ev(() => { const g = __sp, m = g.chartRect(); return { z1: g.chartZ, clear: m.y >= g.flagsEnd }; });
+  check('chart: opens zoomed in on your own waters and zooms out to the whole', z0 === 3 && r.z1 === 1, [z0, r]); check('small chart: sits clear of the compass and the flags', r.clear, r);
   const pt = await ev(() => { const g = __sp, q = g.ports.find(q => q.name === 'Cartagena'), aw = innerWidth - 32, ah = innerHeight - 14 - 12 - 62, k = Math.min(aw/g.W, ah/g.H), w = Math.min(aw, g.W*k), h = Math.min(ah, g.H*k); return [16 + (aw - w)/2 + q.x*k, 14 + (ah - h)/2 + q.y*k]; });
   await page.mouse.click(pt[0], pt[1]); await page.waitForTimeout(200); r = await ev(() => [__sp.course && __sp.course.name, __sp.autoHelm, __sp.chartOpen]); check('chart: clicking a port sets a course', r[0] === 'Cartagena' && r[1] && !r[2], r);
   await page.keyboard.down('KeyA'); await page.waitForTimeout(300); await page.keyboard.up('KeyA'); r = await ev(() => [__sp.autoHelm, !!__sp.course]); check('helmsman: touching the helm takes over but keeps the course', !r[0] && r[1], r);
