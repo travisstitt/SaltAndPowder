@@ -13,7 +13,8 @@ const darkness = () => clamp((.12 - sunAt())/.5, 0, 1)*.6;
 const windMul = () => 1 + (weather.hur ? .95 : WX[weather.kind][1])*weather.k;
 const vis = () => clamp(1 - darkness()*.45 - WX[weather.kind][2]*weather.k, .35, 1);
 function startHurricane(){ if (hurr) return; hurr = { stage: 0, t: 40, x: p.x + 2500, y: p.y + 900, vx: -2500/40, vy: -900/40 }; hurrYear = calYear();
-  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.'); if (state === 'port' && !menuOpen && !chartOpen) renderPort(); }
+  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.');
+    if (state === 'port' && !menuOpen && !chartOpen) renderPort(); }
 function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*dt*(hurr.stage ? .35 : 1); hurr.y += hurr.vy*dt*(hurr.stage ? .35 : 1);
   if (hurr.stage === 0){ if (hurr.t <= 0){ hurr.stage = 1; hurr.t = rand(60, 90);
     w.kind = 'storm'; w.next = null; w.k = Math.max(w.k, .35); w.hur = true; if (state === 'play') say('The hurricane is on you. Bare poles, and keep her head to the sea.'); } return; }
@@ -26,7 +27,10 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
       o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
-    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); { const near = ports.filter(q => !q.spec.land && Math.hypot(q.x - p.x, q.y - p.y) < 3000).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (near){ marketEvent(near, 'flour', 1.4, 3, null); marketEvent(near, 'naval', 1.4, 3, 'After the hurricane ' + near.name + ' is crying out for provisions and for spars, cordage and tar.'); } } if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
+    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news');
+      { const near = ports.filter(q => !q.spec.land && Math.hypot(q.x - p.x, q.y - p.y) < 3000).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+      if (near){ marketEvent(near, 'flour', 1.4, 3, null); marketEvent(near, 'naval', 1.4, 3, 'After the hurricane ' + near.name + ' is crying out for provisions and for spars, cordage and tar.');
+      } } if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
 function weatherTick(dt){
   const w = weather; w.left -= dt; if (hurr) hurricaneTick(dt);
   if (w.left <= 0 && !w.next){ const r = rnd(); const lat = p ? LAT1 - p.y/DEG : 20, mo = calMon(), fogB = lat > 39 ? .16 : 0, galeB = lat > 34 && (mo >= 10 || mo <= 2) ? .13 : 0;
@@ -45,7 +49,7 @@ function weatherTick(dt){
 let course = null, autoHelm = false, routeLine = null, routeT = 0, fleetTarget = null, paused = false, lastDay = 0, camNow = { x: 0, y: 0 };
 function setCourse(q){ course = q || null; autoHelm = !!q; routeLine = null; routeT = 0; p.path = null; p.losT = 0;
   if (q){ if (p.sail === 0 && state === 'play') p.sail = 1; say('Course set for ' + q.name + '. The helmsman has her; touch the helm to take over.'); } else say('Course cleared.'); }
-const wageBill = () => Math.ceil(eco.wage*(inService() && navy.rank >= 4 ? .15 : .3)*(Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6));
+const wageBill = () => Math.ceil(eco.wage*(inService() && navy.rank >= 4 ? .4 : .8)*(Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6));
 function payWages(day){ if (day < 1) return; const w = wageBill(); // the first days are sailed on the promise of shares
   if (gold >= w){ gold -= w; floaters.push({ x: p.x, y: p.y - 30, txt: '−' + w + ' wages', life: 2 }); cheer(1); }
   else { gold = 0; const lost = Math.max(1, Math.round(p.crew*.1)); p.crew = Math.max(5, p.crew - lost);

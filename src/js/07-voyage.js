@@ -1,4 +1,5 @@
-function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && recall('tut') !== '0' && location.hash !== '#test' ? 0 : -1; if ($('tutor')) $('tutor').hidden = true; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
+function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && recall('tut') !== '0' && location.hash !== '#test' ? 0 : -1;
+  if ($('tutor')) $('tutor').hidden = true; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
   ships = []; balls = []; pending = []; crates = []; parts = []; floaters = []; smokes.length = 0; orderSel = null; picking = false;
   if (saved && DIFFS[saved.diff]) diff = saved.diff;
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
@@ -21,9 +22,11 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && 
       if (Array.isArray(saved.gaz)) gazette = saved.gaz.slice(0, 40).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), t: String(v.t).slice(0, 300), k: v.k === 'you' ? 'you' : 'news' }));
       if (saved.navy && NAT[saved.navy.k]) navy = { k: saved.navy.k, pts: clamp(saved.navy.pts|0, 0, 999), rank: clamp(saved.navy.rank|0, 0, NAVY.length - 1) };
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
-      if (saved.book && typeof saved.book === 'object') for (const n in saved.book){ if (!ports.some(q => q.name === n)) continue; book[n] = {}; for (const g of GK){ const v = saved.book[n][g]; if (Array.isArray(v)) book[n][g] = [clamp(v[0]|0, 1, 999), v[1]|0]; } }
+      if (saved.book && typeof saved.book === 'object') for (const n in saved.book){ if (!ports.some(q => q.name === n)) continue;
+        book[n] = {}; for (const g of GK){ const v = saved.book[n][g]; if (Array.isArray(v)) book[n][g] = [clamp(v[0]|0, 1, 999), v[1]|0]; } }
       if (Array.isArray(saved.ledger)) ledger = saved.ledger.slice(0, 40).filter(v => v && GOODS[v.g]).map(v => ({ m: v.m|0, ship: String(v.ship).slice(0, 30), g: v.g, tons: v.tons|0, port: String(v.port).slice(0, 30), profit: v.profit|0 }));
-      if (saved.contract && GOODS[saved.contract.g]){ const cq = ports.find(q => q.name === saved.contract.port); if (cq) contract = { type: 'freight', g: saved.contract.g, tons: clamp(saved.contract.tons|0, 1, 400), port: cq, until: saved.contract.until|0, reward: clamp(saved.contract.reward|0, 0, 9999), nk: NAT[saved.contract.nk] ? saved.contract.nk : 'en', rep: 4 }; }
+      if (saved.contract && GOODS[saved.contract.g]){ const cq = ports.find(q => q.name === saved.contract.port);
+        if (cq) contract = { type: 'freight', g: saved.contract.g, tons: clamp(saved.contract.tons|0, 1, 400), port: cq, until: saved.contract.until|0, reward: clamp(saved.contract.reward|0, 0, 9999), nk: NAT[saved.contract.nk] ? saved.contract.nk : 'en', rep: 4 }; }
       if (saved.store2) GK.forEach(g => { store2[g] = clamp(saved.store2[g]|0, 0, 400); });
       if (Array.isArray(saved.press)) saved.press.forEach(v => { const q = ports.find(x => x.name === v[0]); if (!q) return; q.pr = {}; for (const g of GK) if (v[1] && +v[1][g]) q.pr[g] = clamp(+v[1][g], -.4, .4); q.ev = (Array.isArray(v[2]) ? v[2] : []).filter(e => e && GOODS[e.g]).map(e => ({ g: e.g, mul: clamp(+e.mul || 1, .5, 2), until: e.until|0 })); });
       if (Array.isArray(saved.dispatches)) dispatches = saved.dispatches.slice(0, 30).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), who: String(v.who).slice(0, 60), t: String(v.t).slice(0, 400), id: 0, ask: null }));
@@ -76,7 +79,8 @@ const cargoRoll = () => Math.round(rand(120, 300) + Math.min(400, plunder*.04));
 const latOf = q => LAT1 - q.y/DEG, winter = () => calMon() >= 11 || calMon() <= 2;
 const iced = q => winter() && latOf(q) > 44.2; /* Louisbourg, Canso, Halifax and Fundy are shut by ice and gales from December to March */
 const BUBBLE = 6500, FAR = 8600; /* the sea is peopled around you: ships are raised within the bubble and forgotten beyond it */
-const dP = q => Math.hypot(q.ox - p.x, q.oy - p.y);
+let focus = null, outposts = [], saveWarned = false; /* focus: the ship the sea is being peopled around, when it is not the flagship */
+const dP = q => Math.hypot(q.ox - (focus || p).x, q.oy - (focus || p).y);
 function pickDest(from, short){ const c = ports.filter(q => q !== from).sort((a, b) => Math.hypot(a.ox-from.ox, a.oy-from.oy) - Math.hypot(b.ox-from.ox, b.oy-from.oy)).slice(0, 6);
   if (!short && rnd() < .45){ const big = ports.filter(q => q !== from && q.spec.sz >= 2 && Math.hypot(q.ox-from.ox, q.oy-from.oy) < 15000);
     if (big.length) return big[rnd()*big.length|0]; } /* the long hauls between the great ports */
@@ -97,8 +101,8 @@ function spawnMerchant(first){
   else if (a.nk === 'es' && s.cls === 'merchant' && rnd() < .18){ s.rich = true;
     s.cargo = Math.round(rand(600, 1100)); s.t.name = 'Spanish register ship'; s.t.chests = true;
     s.t.tag = '#ffe07a'; } /* a lone register ship, licensed to carry silver */
-  const path = findPath(a.ox, a.oy, s.dest.ox, s.dest.oy); let w = null; for (let k = 0; k < 5 && !w; k++){ const v = path[rnd()*path.length*.85|0], dv = Math.hypot(v[0]-p.x, v[1]-p.y);
-    if (dv > 1500 && dv < 4800) w = v; }
+  const path = findPath(a.ox, a.oy, s.dest.ox, s.dest.oy); let w = null; for (let k = 0; k < 5 && !w; k++){ const v = path[rnd()*path.length*.85|0], dv = Math.hypot(v[0]-(focus || p).x, v[1]-(focus || p).y);
+    if (dv > (focus ? 700 : 1500) && dv < 4800 && Math.hypot(v[0]-p.x, v[1]-p.y) > 1500) w = v; }
   if (w){ s.x = w[0]; s.y = w[1]; } else if (dP(a) < 1500 || dP(a) > 5200) return; /* she must come into sight, not appear in it */
   ships.push(s); if (!s.rich && !coaster && !packet && foesOf(a.nk).length && rnd() < .34) convoy(s, a);
 }

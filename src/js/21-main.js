@@ -19,11 +19,14 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
-  press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book; }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
+  press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book;
+    }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
   waitOut, get waiting(){ return waiting; }, stowage, holdLine, nowLine,
+  get ghosts2(){ return ghosts2; }, get outposts(){ return outposts; },
   TRAITS, DIVS, get eco(){ return eco; }, setEco, get contract(){ return contract; }, set contract(v){ contract = v; }, get tutI(){ return tutI; }, set tutI(v){ tutI = v; }, tutTick, TUT,
   tradeSail, pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
-  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
+  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches;
+    }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;
     }, get morale(){ return morale; }, set morale(v){ morale = v; }, get officers(){ return officers;

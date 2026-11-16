@@ -9,7 +9,7 @@ function paintTown(){
     g.lineWidth = 2.4; g.stroke();
   // ships, drawn exactly as they are under way: a trader at the jetty, and your own at anchor
   const main = cx, ghosts = A.ships.map(v => Object.assign(makeShip(v.cls, v.owner, v.role, v.x, v.y, v.h), { sail: 0, pol: .5, speed: 0, heel: 0 }));
-  [p].concat(squad().filter(inCompany)).forEach((o, i) => { const k = Math.ceil(i/2), sd = i % 2 ? 1 : -1; ghosts.push(Object.assign({}, o, { x: A.anchor[0] + (i ? sd*k*92 : 0), y: A.anchor[1] + (i ? 16 + (k - 1)*6 : 0) + Math.sin(time*1.3 + i)*1.2, h: -Math.PI/2 + .12*sd*(i ? 1 : 0), sail: 0, pol: .5, speed: 0, heel: Math.sin(time*.9 + i*2)*.08, sinking: null })); });
+  [p].concat(squad().filter(inCompany), squad().filter(o => o.docked === curPort)).forEach((o, i) => { const k = Math.ceil(i/2), sd = i % 2 ? 1 : -1; ghosts.push(Object.assign({}, o, { x: A.anchor[0] + (i ? sd*k*92 : 0), y: A.anchor[1] + (i ? 16 + (k - 1)*6 : 0) + Math.sin(time*1.3 + i)*1.2, h: -Math.PI/2 + .12*sd*(i ? 1 : 0), sail: 0, pol: .5, speed: 0, heel: Math.sin(time*.9 + i*2)*.08, sinking: null })); });
   cx = g; try { for (const o of ghosts){ g.save(); g.translate(o.x, o.y); g.scale(1.25, 1.25); g.translate(-o.x, -o.y); drawShip(o); g.restore(); } } finally { cx = main; }
   for (const f of A.flags){ const x = f[0], y = f[1], wd = wind.dir, fw = Math.sin(time*6 + x)*3.5, L = f[2]; g.lineCap = 'round';
     { const pts = []; for (let j = 0; j <= 4; j++){ const d = j/4, o = Math.sin(d*Math.PI)*fw;
@@ -56,9 +56,13 @@ function drawPic(s){
   if (miniC && s.x != null && s.owner === 'player'){ /* where she is: a corner of the chart about her */
     const iw = Math.round(w*.3), ih = Math.round(h*.52), ix = w - iw - 8, iy = h - ih - 8, span = 7000, k2 = iw/span, sc = miniC.width/W, ox = clamp(s.x - span/2, 0, W - span), oy = clamp(s.y - ih/k2/2, 0, H - ih/k2);
     g.drawImage(miniC, ox*sc, oy*sc, span*sc, ih/k2*sc, ix, iy, iw, ih); g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();
-    for (const q of ports){ if (q.spec.land || q.spec.sz < 2 && q.name !== homeName) continue; const qx = ix + (q.x - ox)*k2, qy = iy + (q.y - oy)*k2; if (qx < ix || qx > ix + iw || qy < iy || qy > iy + ih) continue; g.fillStyle = q.name === homeName ? HOMEC : '#ffd24a'; circle(g, qx, qy, 3); g.fill(); }
+    for (const q of ports){ if (q.spec.land || q.spec.sz < 2 && q.name !== homeName) continue;
+      const qx = ix + (q.x - ox)*k2, qy = iy + (q.y - oy)*k2; if (qx < ix || qx > ix + iw || qy < iy || qy > iy + ih) continue;
+      g.fillStyle = q.name === homeName ? HOMEC : '#ffd24a'; circle(g, qx, qy, 3); g.fill(); }
     if (s !== p){ g.fillStyle = '#c8321e'; circle(g, ix + (p.x - ox)*k2, iy + (p.y - oy)*k2, 4); g.fill(); }
-    const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff'; g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke(); g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
+    const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff';
+      g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke();
+      g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
     g.strokeStyle = 'rgba(214,165,78,.9)'; g.lineWidth = 2; g.strokeRect(ix + 1, iy + 1, iw - 2, ih - 2); }
 }
 function stowage(){ /* the fleet's common cargo, stowed ship by ship: flagship first, then each consort that is not trading on her own account */
@@ -105,7 +109,8 @@ function renderFleet(focusId){
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
     $('shipNow').textContent = nowLine(s); $('shipNow').hidden = false;
     R('Where she is', 'Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
-    { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0; R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
+    { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0;
+      R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
     if (flag) R('Fleet overview', 'Every ship on one sheet: what she is doing, where, her state and her last word, with orders for a whole division.', '', [['toOverview', 'Open the overview', true, () => openPaper('overview')]]);
     if (flag) R('Trade ledger', 'What your traders have made, month by month, and the price book.', '', [['toLedger', 'Open the ledger', true, () => openPaper('ledger')]]);
     if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
@@ -136,7 +141,8 @@ function renderFleet(focusId){
           ['as_sail', 'Sail now', !!(t2 && s.docked), () => tradeSail(s)], ['as_two', 'Two ports', true, () => pickOnChart(s, 'two')], ['as_area', 'An area', true, () => pickOnChart(s, 'area')]]);
         if (t2 && s.docked) ledgerText(ul, 'txt', '"Sail now" sends her out of ' + s.docked.name + ' at once with whatever is in her hold, for her next port of call.');
         [['margin', 'Least profit she will load for', 'A higher mark means fewer cargoes and surer ones.'], ['contra', 'Contraband', 'Cloth into Spanish ports, and provisions to the French in wartime.'], ['risk', 'Ports she will use', 'Whether she calls where your standing is poor.'], ['ware', 'Your warehouse', 'At your home port she can load what you have stored and sell it where it fetches most.'], ['insure', 'Insurance', 'If she is lost, the underwriters pay back the cargo and her trading stock.']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k])); R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
-        { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4); if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
+        { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4);
+          if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
         R('Her trading stock', 'The gold she takes from your purse to trade with. It comes back when she is given other orders. If it runs too low to load a cargo, her captain writes to ask for more.', '', [['so_cap', DOCS.cap[ci][1], !t2, () => { s.doc.cap = DOCS.cap[(ci + 1) % DOCS.cap.length][0]; }]]); }
       R('Division', 'Ships of one division can be given a single order from the fleet overview.', '', [['so_div', DIVS[s.div|0], true, () => { s.div = ((s.div|0) + 1) % DIVS.length; }]]);
       ledgerText(ul, 'sec', 'Standing orders');

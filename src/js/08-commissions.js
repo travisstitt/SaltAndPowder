@@ -46,7 +46,8 @@ function restoreMission(m){
   else if (m.type === 'pirate' && CLASSES[m.cls]){ mission = Object.assign(base, { cls: m.cls, from: ports[0] });
     spawnQuarry(m.sx > 100 && m.sy > 100 && m.sx < W-100 && m.sy < H-100 && !isNear(m.sx, m.sy) ? [+m.sx, +m.sy] : waterNear(p.x, p.y, 1500)); }
   else if (m.type === 'treasure') mission = base;
-  else if (m.type === 'freight' && GOODS[m.g]){ const q = ports.find(q => q.name === m.port); if (q) mission = Object.assign(base, { g: m.g, tons: clamp(m.tons|0, 1, 400), port: q, until: m.until|0 }); }
+  else if (m.type === 'freight' && GOODS[m.g]){ const q = ports.find(q => q.name === m.port);
+    if (q) mission = Object.assign(base, { g: m.g, tons: clamp(m.tons|0, 1, 400), port: q, until: m.until|0 }); }
   else if (m.type === 'siege' && NAT[m.foe]){ const q = ports.find(q => q.name === m.port);
     if (q) mission = Object.assign(base, { foe: m.foe, port: q, need: (m.need|0) || 2, have: m.have|0, until: m.until|0, svc: clamp(m.svc|0, 0, 10) }); }
   else if (m.type === 'escort' && Array.isArray(m.tr) && m.tr.length){ const dest = ports.find(q => q.name === 'Fort-Royal');

@@ -14,13 +14,19 @@ let chartMark = null, tutI = -1; /* the first voyage, a step at a time */
 const TUT = [['Press W twice to make full sail.', () => p.sail >= 1], ['Steer with A and D. Bring the wind over your quarter and watch your speed on the compass.', () => p.speed > 60], ['Fire a broadside with Q or E. Guns fire sideways.', () => p.rl[0] > 0 || p.rl[1] > 0], ['Open the chart with C and click a port to set a course.', () => !!course],
   ['The helmsman has her. Press 5 to make the passage faster, and F to drop anchor when you arrive.', () => state === 'port'], ['In port, open the Market and buy something made here cheaply.', () => holdUsed() > 0], ['See the Governor for a commission, then weigh anchor.', () => state === 'play' && clock > 30],
   ['Sell your cargo where it is wanted. A ship that strikes her colours can be boarded with B; add her to your fleet from the prize screen.', () => squad().length > 0 || plunder > 300], ['You have the way of it. The fleet screen (V), the dispatches (L) and the ledger (K) will matter as you grow.', () => true]];
-function tutTick(){ if (tutI < 0 || tutI >= TUT.length) return; const e = $('tutor'); if (TUT[tutI][1]()){ tutI++; if (tutI >= TUT.length){ e.hidden = true; store('tut', '0'); return; } } e.hidden = state !== 'play' && state !== 'port'; setT($('tutText'), 'First voyage, ' + (tutI + 1) + ' of ' + TUT.length + ': ' + TUT[tutI][0]); } /* a ship of yours picked out on the chart */
+function tutTick(){ if (tutI < 0 || tutI >= TUT.length) return; const e = $('tutor');
+  if (TUT[tutI][1]()){ tutI++; if (tutI >= TUT.length){ e.hidden = true; store('tut', '0');
+  return; } } e.hidden = state !== 'play' && state !== 'port'; setT($('tutText'), 'First voyage, ' + (tutI + 1) + ' of ' + TUT.length + ': ' + TUT[tutI][0]);
+  } /* a ship of yours picked out on the chart */
 function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
   if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
-  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick && chartPick.group){ chartPick = null; later(() => { if (!chartOpen && !menuOpen) openPaper('overview'); }, 0); }
-  if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0); } /* a choice abandoned goes back to her card */
+  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick && chartPick.group){ chartPick = null;
+    later(() => { if (!chartOpen && !menuOpen) openPaper('overview'); }, 0); }
+  if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0);
+    } /* a choice abandoned goes back to her card */
   held.left = held.right = false; $('chartTools').hidden = !chartOpen;
-  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
+  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : '';
+    if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
@@ -93,7 +99,8 @@ $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.leng
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
 $('tutSkip').addEventListener('click', () => { tutI = -1; $('tutor').hidden = true; store('tut', '0'); });
-$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches')); $('portGaz').addEventListener('click', () => openPaper('gazette'));
+$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches'));
+  $('portGaz').addEventListener('click', () => openPaper('gazette'));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }

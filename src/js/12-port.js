@@ -1,7 +1,14 @@
-function freightOffer(port){ if (port.freight === undefined || port.freight && port.freight.made < calIdx() - 2){ port.freight = null; if (rnd() < .6){ const dests = ports.filter(q => q !== port && !q.spec.land && admits(q) && q.spec.dm.length && Math.hypot(q.ox - port.ox, q.oy - port.oy) < 9000); if (dests.length){ const q = dests[rnd()*dests.length|0], g = q.spec.dm[rnd()*q.spec.dm.length|0], tons = 20 + 10*(rnd()*4|0), d = Math.hypot(q.ox - port.ox, q.oy - port.oy);
+function freightOffer(port){ if (port.freight === undefined || port.freight && port.freight.made < calIdx() - 2){ port.freight = null;
+  if (rnd() < .6){ const dests = ports.filter(q => q !== port && !q.spec.land && admits(q) && q.spec.dm.length && Math.hypot(q.ox - port.ox, q.oy - port.oy) < 9000);
+  if (dests.length){ const q = dests[rnd()*dests.length|0], g = q.spec.dm[rnd()*q.spec.dm.length|0], tons = 20 + 10*(rnd()*4|0), d = Math.hypot(q.ox - port.ox, q.oy - port.oy);
       port.freight = { g, tons, port: q, months: 3 + Math.round(d/2500), reward: Math.round(tons*GOODS[g][1]*1.9 + d*.03), made: calIdx() }; } } } return port.freight; }
-function freightCheck(port){ const m = contract; if (m && m.port === port && hold[m.g] >= m.tons){ hold[m.g] -= m.tons; contract = null; earn(Math.round(m.reward*eco.trade), p.x, p.y); repute(m.nk, m.rep); chime(); gaz('The ' + p.name + ' landed ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' at ' + port.name + ' under contract.', 'you'); later(() => say('The consignee at ' + port.name + ' takes delivery of ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' and pays ' + Math.round(m.reward*eco.trade) + ' gold.'), 300); } }
-function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ paceOut = paceIdx; setPace(0, true); } /* in harbour the world goes by slowly; your sailing pace comes back when you weigh */ port.greased = false; { const m = Math.floor(clock/MONTH);
+function freightCheck(port){ const m = contract; if (m && m.port === port && hold[m.g] >= m.tons){ hold[m.g] -= m.tons;
+  contract = null; earn(Math.round(m.reward*eco.trade), p.x, p.y); repute(m.nk, m.rep);
+  chime(); gaz('The ' + p.name + ' landed ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' at ' + port.name + ' under contract.', 'you');
+  later(() => say('The consignee at ' + port.name + ' takes delivery of ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' and pays ' + Math.round(m.reward*eco.trade) + ' gold.'), 300); } }
+function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ paceOut = paceIdx;
+  setPace(0, true); } /* in harbour the world goes by slowly; your sailing pace comes back when you weigh */ port.greased = false;
+  { const m = Math.floor(clock/MONTH);
   if (m > lastCall || lastCall === 0) cheer(3); lastCall = m; } payCourt(port); setChart(false);
   state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
@@ -13,11 +20,14 @@ function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ p
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));
   makeOffers(port); autosave();
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
-function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true); paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
+function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true);
+  paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true;
+  state = 'play'; document.activeElement && document.activeElement.blur(); }
 let waiting = false;
 function waitOut(){ if (waiting || !hurr) return; waiting = true; const port = curPort; /* the hours go by as fast as they can be reckoned, a slice each frame, until the storm is past */
   const step = () => { const t0 = performance.now(); let n = 0; while (hurr && state === 'port' && n++ < 6000 && performance.now() - t0 < 13) update(.1);
-    if (hurr && state === 'port'){ requestAnimationFrame(step); return; } waiting = false; if (state === 'port' && !menuOpen && !chartOpen) renderPort(); if (!hurr) say('The hurricane has blown itself out. The sky is clearing over ' + port.name + '.'); };
+    if (hurr && state === 'port'){ requestAnimationFrame(step); return; } waiting = false;
+      if (state === 'port' && !menuOpen && !chartOpen) renderPort(); if (!hurr) say('The hurricane has blown itself out. The sky is clearing over ' + port.name + '.'); };
   step(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
 /* one row of a ledger: a name, a line of detail, a value, and any number of buttons */
@@ -32,7 +42,7 @@ const hurt = s => Math.ceil(s.maxHull - s.hull) + Math.ceil(100 - s.sails);
 function mend(s, c){ const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hull = Math.min(s.maxHull, s.hull + h);
   c -= h; const v = Math.min(c, Math.ceil(100 - s.sails)); s.sails = Math.min(100, s.sails + v); return c - v; }
 function renderPort(focusId){
-  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + (curPort.spec.land ? ' landing' : curPort.spec.sz >= 3 ? ' city' : curPort.spec.sz === 2 ? ' town' : ' port') + (curPort.spec.free ? ' · free port' : '') + (curPort.name === homeName ? ' · your home port' : '');
+  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + (curPort.spec.land ? ' landing' : curPort.spec.sz >= 3 ? ' city' : curPort.spec.sz === 2 ? ' town' : ' port') + (curPort.spec.free ? ' · free port' : '') + (wars.size && foesOf(curPort.nk).length ? ' · at war' : '') + (hurr ? ' · hurricane ' + (hurr.stage ? 'blowing' : 'coming') : '') + (dispNew ? ' · ' + dispNew + ' dispatch' + (dispNew > 1 ? 'es' : '') + ' unread' : '') + (squad().some(o => o.docked === curPort) ? ' · ' + squad().filter(o => o.docked === curPort).map(o => o.name).join(', ') + ' lying here' : '') + (curPort.name === homeName ? ' · your home port' : '');
     $('portGold').textContent = gold;
   document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === portTab)));
   paintTown();
@@ -60,16 +70,18 @@ function renderPort(focusId){
     T('txt', 'Hold: ' + holdUsed() + ' of ' + holdCap() + ' tons across your fleet. Goods are cheap where they are made and dear where they are wanted.');
     if (curPort.spec.land) T('txt', 'A landing deals only in what it makes and what it lacks. No customs officer has ever been seen here.');
     const sellGoods = (g, n) => { const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9));
-      if (g === 'cloth' && curPort.home === 'es' && curPort.nk === 'es' && !curPort.spec.land && !curPort.greased && rnd() < .22){ const fine = Math.min(gold, n*4); hold[g] -= n; gold -= fine; repute('es', -2); later(() => say('The customs officers were waiting on the quay. Your ' + n + ' tons are seized and you are fined ' + fine + ' gold.'), 50); return; }
+      if (g === 'cloth' && curPort.home === 'es' && curPort.nk === 'es' && !curPort.spec.land && !curPort.greased && rnd() < .22){ const fine = Math.min(gold, n*4);
+        hold[g] -= n; gold -= fine; repute('es', -2); later(() => say('The customs officers were waiting on the quay. Your ' + n + ' tons are seized and you are fined ' + fine + ' gold.'), 50); return; }
       gold += Math.round(n*sell*eco.trade); hold[g] -= n; press(curPort, g, -n); repute(curPort.nk, .05*n); };
     GK.forEach(g => { if (curPort.spec.land && curPort.spec.mk.indexOf(g) < 0 && curPort.spec.dm.indexOf(g) < 0) return; const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9)), room = Math.max(0, Math.min(holdCap() - holdUsed(), Math.floor(gold/pr))), n = Math.min(10, room), have = hold[g], bk = bestKnown(g, curPort.name), ev = (curPort.ev || []).find(e => e.g === g && e.until >= calIdx());
       const tip = bk.hi && bk.hi[1] > pr*1.12 ? ' · ' + bk.hi[1] + ' at ' + bk.hi[0] + ' ' + ago(bk.hi[2]) : bk.lo && bk.lo[1] < pr*.85 ? ' · only ' + bk.lo[1] + ' at ' + bk.lo[0] + ' ' + ago(bk.lo[2]) : '';
-      uiRow(ul, GOODS[g][0], (ev ? (ev.mul > 1 ? 'short here · ' : 'a glut here · ') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here, cheap · ' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain · ' : 'wanted here · ') : '') + 'hold ' + have + ' t' + tip, pr + ' a ton', [
+      uiRow(ul, GOODS[g][0], (ev ? (ev.mul > 1 ? 'short here · ' : 'a glut here · ') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here, cheap · ' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain · ' : 'wanted here · ') : '') + 'hold ' + have + ' t' + tip, pr + ' a ton' + (mkt(curPort, g) > 1.04 ? ' ▲' : mkt(curPort, g) < .96 ? ' ▼' : ''), [
         ['buy_' + g, 'Buy ' + (n || 10), n > 0, () => { gold -= n*pr; hold[g] += n; press(curPort, g, n); }], ['buymax_' + g, 'Fill', room > 10, () => { gold -= room*pr; hold[g] += room; press(curPort, g, room); }],
         ['sell10_' + g, 'Sell 10', have > 10, () => sellGoods(g, 10)], ['sell_' + g, have ? 'Sell ' + have + ' for ' + have*sell : 'Sell all', have > 0, () => sellGoods(g, have)]], renderPort, 'tight'); });
     if (contract) T('txt', 'Freight in hand: ' + contract.tons + ' tons of ' + GOODS[contract.g][0].toLowerCase() + ' for ' + contract.port.name + ' by ' + MONTHS[contract.until % 12] + ', ' + contract.reward + ' gold on delivery. You hold ' + hold[contract.g] + ' tons.');
     if (!curPort.spec.land && !contract){ const fr = freightOffer(curPort); if (fr) R('Freight wanted: ' + fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' for ' + fr.port.name, 'A merchant here will pay well above the market for it landed at ' + fr.port.name + ' within ' + fr.months + ' months. You find the goods; he pays on delivery.', fr.reward + ' gold', [['freight', 'Take the contract', true, () => { contract = { type: 'freight', nk: curPort.nk, g: fr.g, tons: fr.tons, port: fr.port, until: calIdx() + fr.months, reward: fr.reward, rep: 4, title: 'Land ' + fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' at ' + fr.port.name }; curPort.freight = null; }]]); }
-    if (curPort.name === homeName){ T('sec', 'Your warehouse'); const used = GK.reduce((n, g) => n + (store2[g] || 0), 0); T('txt', used + ' of 400 tons stored. Goods kept here wait for a better price or a contract.');
+    if (curPort.name === homeName){ T('sec', 'Your warehouse'); const used = GK.reduce((n, g) => n + (store2[g] || 0), 0);
+      T('txt', used + ' of 400 tons stored. Goods kept here wait for a better price or a contract.');
       GK.forEach(g => { const have = hold[g], st = store2[g] || 0; if (!have && !st) return; const inn = Math.min(have, 400 - used), out = Math.min(st, Math.max(0, holdCap() - holdUsed()));
         uiRow(ul, GOODS[g][0], 'aboard ' + have + ' t · stored ' + st + ' t', '', [['store_' + g, 'Store ' + inn, inn > 0, () => { hold[g] -= inn; store2[g] = st + inn; }], ['take_' + g, 'Take ' + out, out > 0, () => { store2[g] = st - out; hold[g] += out; }], ['sellst_' + g, 'Sell stored', st > 0, () => { const sell = Math.max(1, Math.round(price(curPort, g)*.9)); gold += st*sell; press(curPort, g, -st); store2[g] = 0; }]], renderPort, 'tight'); }); }
     if (curPort.home === 'es' && curPort.nk === 'es' && hold.cloth > 0 && !curPort.greased){ const c = 20 + hold.cloth*3;

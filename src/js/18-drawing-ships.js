@@ -32,7 +32,7 @@ function drawShip(s){
     cx.lineTo(L*.42, 0); cx.stroke(); cx.lineCap = 'butt'; } /* raked: the shot tears down the length of her */
   // deck furniture tells the classes apart
   cx.fillStyle = 'rgba(30,18,8,.75)'; cx.fillRect(-L*.05, -Wd*.1, L*.09, Wd*.2); cx.strokeStyle = 'rgba(150,110,60,.5)'; cx.lineWidth = .6; cx.strokeRect(-L*.05, -Wd*.1, L*.09, Wd*.2);
-  if (T.cargo){ for (const v of [[.07, -.16, 7], [.07, .1, 6], [-.02, -.04, 6.5], [-.3, 0, 6]]){ cx.fillStyle = '#8f6537';
+  if (T.cargo && !(s.task && s.task.type === 'trade' && !s.task.cargo)){ for (const v of [[.07, -.16, 7], [.07, .1, 6], [-.02, -.04, 6.5], [-.3, 0, 6]]){ cx.fillStyle = '#8f6537';
     cx.fillRect(v[0]*L, v[1]*Wd, v[2], v[2]); cx.strokeStyle = '#4e3418'; cx.lineWidth = .8;
     cx.strokeRect(v[0]*L, v[1]*Wd, v[2], v[2]); }
     for (const v of [[.34, -.1], [.34, .1], [-.1, .2]]){ cx.fillStyle = '#6f4b25'; circle(cx, v[0]*L, v[1]*Wd, 2.6); cx.fill(); cx.strokeStyle = '#c9a25e'; cx.lineWidth = .7; cx.stroke(); } }

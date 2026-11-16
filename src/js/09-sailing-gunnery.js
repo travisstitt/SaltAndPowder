@@ -84,7 +84,8 @@ function sink(s){
   for (let k = 0; k < 7; k++) parts.push({ k:'splash', x: s.x + rand(-28,28), y: s.y + rand(-28,28), vx:0, vy:0, life: rand(.6,1.8), max:1.8, size: rand(4,9) });
   boom(clamp(1 - Math.hypot(s.x-p.x, s.y-p.y)/900, 0, 1)*.3, 200);
   if (s === p){ overT = 2.4; return; }
-  if (s.role === 'fleet' && s.task && s.task.type === 'trade' && s.task.cargo && s.task.cargo.ins){ const back = Math.round(s.task.cargo.cost + s.task.funds); gold += back; later(() => say('The underwriters pay ' + back + ' gold on the ' + s.name + ' and her cargo.'), 4000); }
+  if (s.role === 'fleet' && s.task && s.task.type === 'trade' && s.task.cargo && s.task.cargo.ins){ const back = Math.round(s.task.cargo.cost + s.task.funds);
+    gold += back; later(() => say('The underwriters pay ' + back + ' gold on the ' + s.name + ' and her cargo.'), 4000); }
   if (s.role === 'fleet'){ newsLog.unshift('Lost in action: the ' + s.name + ', your ' + s.t.cname + '.');
     newsLog.length = Math.min(newsLog.length, 4); say('The ' + s.name + ', your ' + s.t.cname + ', is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.'));
     s.sinking = 2.6; later(trimHold, 0); return; }

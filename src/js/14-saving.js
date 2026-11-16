@@ -9,7 +9,8 @@ function snapshot(){
 }
 function readSlot(id){ try { const d = JSON.parse(recall('save.' + id)); return d && d.p ? d : null; } catch (_){ return null; } }
 function writeSlot(id){ const d = snapshot(); store('save.' + id, JSON.stringify(d)); const b = readSlot(id); return !!b && b.t === d.t; }
-function autosave(){ if (p && p.alive) writeSlot('auto'); }
+function autosave(){ if (p && p.alive && !writeSlot('auto') && !saveWarned){ saveWarned = true;
+  say('The log could not be written: this browser\'s storage is full or closed. Copy a save code from the log book to keep your voyage.'); } }
 function latest(){ return SLOTS.map(v => readSlot(v[0])).filter(Boolean).sort((a, b) => b.t - a.t)[0] || null; }
 function canSave(){ return (state === 'play' || state === 'port') && p.alive && !melee &&
   !(state === 'play' && (balls.length || ships.some(s => s.announced && !s.surrendered && !s.released && Math.hypot(s.x-p.x, s.y-p.y) < 900))); }
@@ -54,7 +55,8 @@ function setStart(v){ startName = STARTS[v] ? v : 'Kingston'; document.querySele
 document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => setStart(b.dataset.start))); setStart('Kingston');
 function setFoul(v){ fouling = !!v; store('foul', fouling ? '1' : '0'); const b = $('foulBtn'); b.setAttribute('aria-pressed', fouling); b.textContent = 'Hull fouling: ' + (fouling ? 'on' : 'off'); }
 $('foulBtn').addEventListener('click', () => setFoul(!fouling)); setFoul(recall('foul') === '1');
-document.querySelectorAll('[data-eco]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.eco, i = ECOV.findIndex(o => o[0] === eco[k]); setEco(k, ECOV[(i + 1) % ECOV.length][0]); })); try { const e0 = JSON.parse(recall('eco') || '{}'); for (const k in ECO) if (ECOV.some(o => o[0] === e0[k])) eco[k] = e0[k]; } catch (_){ } setEco();
+document.querySelectorAll('[data-eco]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.eco, i = ECOV.findIndex(o => o[0] === eco[k]); setEco(k, ECOV[(i + 1) % ECOV.length][0]); }));
+  try { const e0 = JSON.parse(recall('eco') || '{}'); for (const k in ECO) if (ECOV.some(o => o[0] === e0[k])) eco[k] = e0[k]; } catch (_){ } setEco();
 function setEra(v){ startCal = ERAS[v] ? +v : 72; document.querySelectorAll('[data-era]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.era === startCal));
   $('eraNote').textContent = ERAS[startCal]; }
 document.querySelectorAll('[data-era]').forEach(b => b.addEventListener('click', () => setEra(b.dataset.era))); setEra(72);
@@ -80,8 +82,11 @@ $('loadCode').addEventListener('click', () => { const d = decode($('saveCode').v
 /* ---------- Toast ---------- */
 let toastT = 0;
 const toastQ = []; let toastAge = 9;
-function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
+function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off');
+  toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
 function say(msg){ if (toastT > 0 && toastAge < 1.6 && $('toast').textContent !== msg){ if (toastQ.length < 5) toastQ.push(msg); return; } showToast(msg); }
-function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift()); return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift()); else $('toast').classList.add('off'); } } }
+function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift());
+  return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift());
+  else $('toast').classList.add('off'); } } }
 
 /* ---------- Update ---------- */

@@ -221,6 +221,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 @media (max-width:620px){.ledger li.tight{grid-template-columns:1fr;gap:3px}.ledger li.tight .btns{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.ledger li.tight .btns button{flex:1;white-space:nowrap}.ledger li.tight .amt{flex-basis:100%}}
 #tutor{pointer-events:auto;background:rgba(214,165,78,.14);border:1px solid var(--brass);border-radius:4px;padding:6px 8px;font-size:13.5px;line-height:1.35;color:var(--bone);max-width:260px}#tutSkip{font-size:11.5px;padding:1px 6px;margin-top:4px}
 .paper .dbtns i{font-style:italic}.paper p i{opacity:.85}
+.paper .seal{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.45em;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 0 0 1px rgba(58,38,20,.5);vertical-align:-.05em}.paper .bar{height:6px;background:#1f6b3a;border-radius:2px;margin:-2px 0 6px}.paper .bar.neg{background:#8c2a1c}
 </style>
 
 </head>
@@ -860,7 +861,8 @@ function trimHold(){ let over = holdUsed() - holdCap(); for (const g of GK){ if 
 function setForm(k){ formation = FORMS[k] ? k : 'column'; $('formBtn').textContent = FORMS[formation]; }
 function setOrders(k){ orders = ORDERS[k] ? k : 'line'; $('orderBtn').textContent = ORDERS[orders]; }
 let dispatches = [], dispNew = 0, shipSeq = 0;
-function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null }); if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
+function dispatch(s, text, askFor){ dispatches.unshift({ d: dateStr(), who: s ? (s.cap.mate ? 'The mate of the ' : 'Capt. ' + s.cap.name + ', ') + s.name : 'Fleet', t: text, id: s ? s.id : 0, ask: askFor || null, x: s ? Math.round(s.x) : 0, y: s ? Math.round(s.y) : 0 });
+  if (dispatches.length > 40) dispatches.length = 40; dispNew++; dispBadge();
   if (state === 'play' || state === 'port') say('Dispatch from the ' + (s ? s.name : 'fleet') + ': ' + text); }
 function dispBadge(){ for (const id of ['dispBtn', 'portDisp']){ const b = $(id); if (b) b.textContent = 'Dispatches' + (dispNew ? ' · ' + dispNew : ''); } }
 const DOC0 = { wx:'port', dmg:.33, foe:'equal', allow:150, after:'station', cap:250, margin:.12, contra:'avoid', risk:'any', ware:'off', insure:'off' };
@@ -874,47 +876,69 @@ function afterRepairs(s, how){ how = how || s.doc.after; if (how === 'stay') ret
 function payRepairs(s, how){ const c = Math.min(gold, repairCost(s)); gold -= c; mend(s, c); afterRepairs(s, how); return c; }
 function dock(s, port){ /* a consort goes in: safe from weather and the enemy until she sails again */
   s.docked = port; s.x = port.ox; s.y = port.oy; s.speed = 0; s.sail = 0; s.sailCap = null; s.evade = null; const t = s.task, cost = repairCost(s), why = t && t.why;
-  if (t && t.mail && mission && mission.type === 'deliver' && mission.port === port){ dispatch(s, 'The governor\'s dispatches are delivered at ' + port.name + '. ' + docWord('after', 'join') + '.'); complete(); setTask(s, { type: 'fleet' }); return; }
+  if (t && t.mail && mission && mission.type === 'deliver' && mission.port === port){ dispatch(s, 'The governor\'s dispatches are delivered at ' + port.name + '. ' + docWord('after', 'join') + '.');
+    complete(); setTask(s, { type: 'fleet' }); return; }
   if (t && t.type === 'trade'){ tradeCall(s, port); if (cost > 8 && cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); } return; }
-  if (cost > 8){ if (cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost); dispatch(s, 'In at ' + port.name + (why === 'weather' ? ' out of the weather' : '') + '. Repairs made good for ' + cost + ' gold, within my allowance. ' + docWord('after', s.doc.after) + '.'); if (why !== 'weather') afterRepairs(s); }
+  if (cost > 8){ if (cost <= s.doc.allow && gold >= cost){ gold -= cost; mend(s, cost);
+    dispatch(s, 'In at ' + port.name + (why === 'weather' ? ' out of the weather' : '') + '. Repairs made good for ' + cost + ' gold, within my allowance. ' + docWord('after', s.doc.after) + '.');
+    if (why !== 'weather') afterRepairs(s); }
     else dispatch(s, 'In at ' + port.name + ' with hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent and sails at ' + Math.round(s.sails) + '. The yard asks ' + cost + ' gold to make her good. I await your orders.', 'repair'); }
   else if (why) dispatch(s, 'Safe in at ' + port.name + (why === 'weather' ? ', out of the weather. I shall sail again when it clears.' : '.'));
   else say('The ' + s.name + ' is in at ' + port.name + ' and lies safe at anchor there.'); }
-function runFor(s, q, why){ if (s.task && s.task.type !== 'port' && s.task.type !== 'fleet') s.prev = s.task; else if (!s.task || s.task.type === 'fleet') s.prev = null; setTask(s, { type: 'port', port: q, flee: true, why });
+function runFor(s, q, why){ if (s.task && s.task.type !== 'port' && s.task.type !== 'fleet') s.prev = s.task;
+  else if (!s.task || s.task.type === 'fleet') s.prev = null; setTask(s, { type: 'port', port: q, flee: true, why });
   dispatch(s, why === 'weather' ? 'Glass falling. I am running for ' + q.name + '.' : 'Hull at ' + Math.round(s.hull/s.maxHull*100) + ' per cent, sails at ' + Math.round(s.sails) + '. I am breaking off for ' + q.name + '.'); }
 const CAPS = [100, 250, 500, 1000];
 const etaTo = (s, a, b) => Math.hypot(b.ox - a.ox, b.oy - a.oy)/(s.t.speed*.6);
 function tradePlan(s, from, t){ /* the best cargo and port from here: what it costs now against what it should fetch when she lands it, with a margin for luck */
   let best = null; const ports2 = t.set.filter(q => q !== from && admits(q) && !(s.doc.risk === 'safe' && standing[q.nk] < -8));
-  for (const q of ports2){ const when = clock + etaTo(s, from, q); for (const g of GK){ if (from.spec.land && from.spec.mk.indexOf(g) < 0) continue; if (q.spec.land && q.spec.dm.indexOf(g) < 0 && q.spec.mk.indexOf(g) < 0) continue;
+  for (const q of ports2){ const when = clock + etaTo(s, from, q); for (const g of GK){ if (from.spec.land && from.spec.mk.indexOf(g) < 0) continue;
+    if (q.spec.land && q.spec.dm.indexOf(g) < 0 && q.spec.mk.indexOf(g) < 0) continue;
     if (s.doc.contra === 'avoid' && (g === 'cloth' && q.home === 'es' && q.nk === 'es' || (g === 'flour' || g === 'fish') && q.nk === 'fr' && atWar('en', 'fr'))) continue;
-    const buy = price(from, g), sell = Math.min(price(q, g, when), price(q, g))*.9, m = sell - buy; if (m < buy*(s.doc.margin || .12)) continue; const tons = Math.min(s.t.hold, Math.floor((t.funds - t.cap*.06)/(buy*(s.doc.insure === 'on' ? 1.05 : 1)))); if (tons < 1) continue; /* she keeps a little back for port dues */ const gain = m*tons/(60 + etaTo(s, from, q));
+    const buy = price(from, g), sell = Math.min(price(q, g, when), price(q, g))*.9, m = sell - buy;
+      if (m < buy*(s.doc.margin || .12)) continue; const tons = Math.min(s.t.hold, Math.floor((t.funds - t.cap*.06)/(buy*(s.doc.insure === 'on' ? 1.05 : 1))));
+      if (tons < 1) continue; /* she keeps a little back for port dues */ const gain = m*tons/(60 + etaTo(s, from, q));
     if (!best || gain > best.gain) best = { g, q, tons, buy, gain }; } } return best; }
 function tradeCall(s, port){ const t = s.task; t.need = false; note(port); /* sell if it pays, or carry it on; then buy the best cargo going, or go where one is */
   if (t.cargo){ const c = t.cargo, here = Math.round(price(port, c.g)*.9*c.tons*(trait(s, 'trader') ? 1.06 : 1)*eco.trade); let alt = null;
-    if (here < c.cost && (t.div || 0) < 2) for (const q of t.set){ if (q === port || !admits(q)) continue; const r = Math.min(price(q, c.g, clock + etaTo(s, port, q)), price(q, c.g))*.9*c.tons; if (r > c.cost*1.04 && (!alt || r > alt.r)) alt = { q, r }; }
+    if (here < c.cost && (t.div || 0) < 2) for (const q of t.set){ if (q === port || !admits(q)) continue;
+      const r = Math.min(price(q, c.g, clock + etaTo(s, port, q)), price(q, c.g))*.9*c.tons;
+      if (r > c.cost*1.04 && (!alt || r > alt.r)) alt = { q, r }; }
     if (alt){ t.div = (t.div || 0) + 1; t.dest = alt.q; s.dwell = 5; dispatch(s, GOODS[c.g][0] + ' is cheap at ' + port.name + ' today. I am carrying my cargo on to ' + alt.q.name + ' sooner than sell at a loss.'); return; }
-    const profit = here - c.cost; press(port, c.g, -c.tons); logSale(s, c.g, c.tons, port, profit); t.funds += here; t.cargo = null; t.div = 0; t.runs = (t.runs || 0) + 1; t.made = (t.made || 0) + profit; let tail = '';
-    if (t.funds > t.cap){ const over = t.funds - t.cap, share = Math.round(over*.1); t.funds = t.cap; gold += over - share; plunder += over - share; tail = ' I remit ' + (over - share) + ' gold to you, and ' + share + ' goes to my people.'; }
+    const dues = 8 + Math.round(c.tons*.25); t.funds -= dues; /* pilotage, wharfage and the customs house */
+    const profit = here - c.cost - dues; press(port, c.g, -c.tons); logSale(s, c.g, c.tons, port, profit);
+      t.funds += here; t.cargo = null; t.div = 0; t.runs = (t.runs || 0) + 1; t.made = (t.made || 0) + profit; let tail = '';
+    if (t.funds > t.cap){ const over = t.funds - t.cap, share = Math.round(over*.2);
+      t.funds = t.cap; gold += over - share; plunder += over - share; tail = ' I remit ' + (over - share) + ' gold to you, and ' + share + ' goes to my people.'; }
     dispatch(s, 'Sold ' + c.tons + ' tons of ' + GOODS[c.g][0].toLowerCase() + ' at ' + port.name + ': ' + (profit >= 0 ? profit + ' gold clear.' : 'a loss of ' + -profit + ' gold, the market having turned.') + tail); }
   if (t.funds < Math.max(40, t.cap*.25)){ t.need = true; s.dwell = 1e9; dispatch(s, 'My trading money is down to ' + Math.round(t.funds) + ' gold, too little to load a cargo worth carrying. I ask ' + (t.cap - Math.round(t.funds)) + ' gold to make it up to ' + t.cap + ', and lie at ' + port.name + ' until I hear.', 'funds'); return; }
   const plan = tradePlan(s, port, t);
-  if (s.doc.ware === 'on' && port.name === homeName && !t.cargo){ let bg = null, bv = 0, bq = null; for (const g of GK){ if (!(store2[g] > 0)) continue; for (const q of t.set){ if (q === port || !admits(q)) continue; const v = price(q, g); if (v > bv){ bv = v; bg = g; bq = q; } } } /* she takes your stored goods to their best market */
-    if (bg){ const tons = Math.min(s.t.hold, store2[bg]); store2[bg] -= tons; t.cargo = { g: bg, tons, cost: 0, ware: true }; t.dest = bq; t.idle = 0; s.dwell = 6; dispatch(s, 'I have loaded ' + tons + ' tons of ' + GOODS[bg][0].toLowerCase() + ' from your warehouse for ' + bq.name + '.'); return; } }
-  if (plan){ t.cargo = { g: plan.g, tons: plan.tons, cost: plan.tons*plan.buy, ins: s.doc.insure === 'on' }; t.funds -= t.cargo.cost + (t.cargo.ins ? Math.round(t.cargo.cost*.05) : 0); t.dest = plan.q; t.idle = 0; press(port, plan.g, plan.tons); s.dwell = port.spec.land ? 12 : [8, 8, 6, 4][port.spec.sz] || 6; return; } /* a city's wharves turn a ship round faster than a landing's beach */
+  if (s.doc.ware === 'on' && port.name === homeName && !t.cargo){ let bg = null, bv = 0, bq = null;
+    for (const g of GK){ if (!(store2[g] > 0)) continue; for (const q of t.set){ if (q === port || !admits(q)) continue;
+    const v = price(q, g); if (v > bv){ bv = v; bg = g; bq = q; } } } /* she takes your stored goods to their best market */
+    if (bg){ const tons = Math.min(s.t.hold, store2[bg]); store2[bg] -= tons; t.cargo = { g: bg, tons, cost: 0, ware: true };
+      t.dest = bq; t.idle = 0; s.dwell = 6; dispatch(s, 'I have loaded ' + tons + ' tons of ' + GOODS[bg][0].toLowerCase() + ' from your warehouse for ' + bq.name + '.'); return; } }
+  if (plan){ t.cargo = { g: plan.g, tons: plan.tons, cost: plan.tons*plan.buy, ins: s.doc.insure === 'on' };
+    t.funds -= t.cargo.cost + (t.cargo.ins ? Math.round(t.cargo.cost*.05) : 0); t.dest = plan.q;
+    t.idle = 0; press(port, plan.g, plan.tons); s.dwell = port.spec.land ? 12 : [8, 8, 6, 4][port.spec.sz] || 6;
+    return; } /* a city's wharves turn a ship round faster than a landing's beach */
   /* nothing worth loading here: try the port in her waters with the best prospect, in ballast */
   let go = null; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = tradePlan(s, q, t); if (pl && (!go || pl.gain > go.gain)) go = { q, gain: pl.gain }; }
-  t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 3; } else { s.dwell = 20; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
+  t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 3; } else { s.dwell = 20;
+    if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
 function tradeSail(s){ /* your order: leave now with whatever is aboard, for the next port of call */
   const t = s.task, port = s.docked; if (!t || t.type !== 'trade' || !port) return false;
-  if (t.dest === port || !admits(t.dest)){ let go = null, gs = -1e9; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = t.cargo ? null : tradePlan(s, q, t), sc = t.cargo ? price(q, t.cargo.g) : pl ? pl.gain : -Math.hypot(q.ox - port.ox, q.oy - port.oy)/1e5; if (sc > gs){ gs = sc; go = q; } } if (go) t.dest = go; }
+  if (t.dest === port || !admits(t.dest)){ let go = null, gs = -1e9; for (const q of t.set){ if (q === port || !admits(q)) continue;
+    const pl = t.cargo ? null : tradePlan(s, q, t), sc = t.cargo ? price(q, t.cargo.g) : pl ? pl.gain : -Math.hypot(q.ox - port.ox, q.oy - port.oy)/1e5;
+    if (sc > gs){ gs = sc; go = q; } } if (go) t.dest = go; }
   if (!t.dest || t.dest === port){ say('The ' + s.name + ' has no other open port to make for.'); return false; }
   t.need = false; t.idle = 0; s.h = port.out; s.docked = null; s.sail = 1; s.dwell = 0;
   say('The ' + s.name + ' weighs at once for ' + t.dest.name + (t.cargo ? ' with ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + '.' : ' in ballast.')); return true; }
 function startTrade(s, set, area){ set = set.filter((q, i) => q && set.indexOf(q) === i); if (set.length < 2){ say('A trader needs at least two open ports to work between.'); return false; }
   const cap = s.doc.cap || 250, put = Math.min(gold, cap); if (put < 40){ say('You have not the gold to give her a trading stock.'); return false; } gold -= put;
   let near = set[0]; for (const q of set) if (Math.hypot(q.ox - s.x, q.oy - s.y) < Math.hypot(near.ox - s.x, near.oy - s.y)) near = q;
-  setTask(s, { type: 'trade', set, dest: near, cargo: null, funds: put, cap, area: area || null, runs: 0, made: 0 }); say('The ' + s.name + ' takes ' + put + ' gold as her trading stock and makes for ' + near.name + '.'); return true; }
+  setTask(s, { type: 'trade', set, dest: near, cargo: null, funds: put, cap, area: area || null, runs: 0, made: 0 });
+    say('The ' + s.name + ' takes ' + put + ' gold as her trading stock and makes for ' + near.name + '.'); return true; }
 /* choosing on the chart: a port, two ports, or a stretch of water */
 let chartPick = null, chartPtr = [0, 0]; const DIVS = ['No division', 'Red division', 'White division', 'Blue division'];
 function pickOnChart(s, kind, group){ closeMenu(); setChart(true, s); chartV.z = kind === 'area' ? 1.8 : 2.4; chartPick = { s, kind, step: 0, a: null, group: group || null }; }
@@ -922,10 +946,15 @@ function pickHint(){ const k = chartPick.kind, n = chartPick.s.name; return k ==
   : k === 'two' ? (chartPick.step ? 'Now click the second port, to trade with ' + chartPick.a.name + '.' : 'Click the first of the two ports the ' + n + ' is to trade between.') : chartPick.step ? 'Now click again to set how wide her trading waters are.' : 'Click the middle of the waters the ' + n + ' is to trade in.'; }
 function pickClick(hit, wx, wy){ const c = chartPick, s = c.s; let done = false;
   if (c.kind === 'area'){ if (!c.step){ c.a = [wx, wy]; c.step = 1; return; } const r = clamp(Math.hypot(wx - c.a[0], wy - c.a[1]), 500, 8000), set = ports.filter(q => admits(q) && Math.hypot(q.ox - c.a[0], q.oy - c.a[1]) < r);
-    if (set.length < 2){ say('Fewer than two open ports lie in those waters. Click farther out for a wider stretch.'); return; } done = startTrade(s, set, { x: Math.round(c.a[0]), y: Math.round(c.a[1]), r: Math.round(r) }); }
+    if (set.length < 2){ say('Fewer than two open ports lie in those waters. Click farther out for a wider stretch.');
+      return; } done = startTrade(s, set, { x: Math.round(c.a[0]), y: Math.round(c.a[1]), r: Math.round(r) }); }
   else if (!hit){ say('Click on a port.'); return; }
-  else if (c.kind === 'two'){ if (!c.step){ c.a = hit; c.step = 1; return; } if (hit === c.a){ say('Choose a different port for the other end.'); return; } if (!admits(hit) || !admits(c.a)){ say('Both ports must be open to you.'); return; } done = startTrade(s, [c.a, hit], null); }
-  else if (c.group){ c.group.forEach(o => { if (squad().indexOf(o) < 0) return; if (c.kind === 'port') setTask(o, { type: 'port', port: hit }); else assign(o, c.kind, hit); }); say(c.group.length + ' ships ordered: ' + c.kind + ', ' + hit.name + '.'); chartPick = null; setChart(false); openPaper('overview'); return; }
+  else if (c.kind === 'two'){ if (!c.step){ c.a = hit; c.step = 1; return; } if (hit === c.a){ say('Choose a different port for the other end.');
+    return; } if (!admits(hit) || !admits(c.a)){ say('Both ports must be open to you.');
+    return; } done = startTrade(s, [c.a, hit], null); }
+  else if (c.group){ c.group.forEach(o => { if (squad().indexOf(o) < 0) return; if (c.kind === 'port') setTask(o, { type: 'port', port: hit }); else assign(o, c.kind, hit); });
+    say(c.group.length + ' ships ordered: ' + c.kind + ', ' + hit.name + '.'); chartPick = null;
+    setChart(false); openPaper('overview'); return; }
   else if (c.kind === 'port'){ setTask(s, { type: 'port', port: hit }); say('The ' + s.name + ' is ordered to ' + hit.name + '.'); done = true; }
   else { assign(s, c.kind, hit); done = true; }
   if (done){ chartPick = null; setChart(false); openFleet('S' + Math.max(0, squad().indexOf(s))); } }
@@ -937,12 +966,15 @@ function think(s){ /* once a second each captain looks at the sky, at his ship a
   if (hurr && blow && D2.wx === 'port' && !flee){ const q = openPortNear(s, 1300 + sea*500); if (q){ runFor(s, q, 'weather'); return; } }
   if (D2.dmg > 0 && (frac < D2.dmg || s.sails < 22) && !flee){ const q = openPortNear(s, 1e9); if (q){ runFor(s, q, 'damage'); return; } }
   s.evade = null; if (D2.foe !== 'any' && s.task && s.task.type !== 'fleet' && Math.hypot(p.x - s.x, p.y - s.y) > 1000){ const mine = s.hull*(s.guns + 1)*(D2.foe === 'equal' ? 1.6 : 1)*(trait(s, 'bold') ? 1.5 : trait(s, 'cautious') ? .8 : 1); let bd = 800;
-    for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd && o.hull*(o.guns + 1) > mine){ bd = d; s.evade = o; } } } }
-function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null; return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, set: t.set ? t.set.map(q => q.name) : null, dest: t.dest ? t.dest.name : null, funds: t.funds, cap: t.cap, area: t.area || null, runs: t.runs, made: t.made, ward: t.ward ? t.ward.name || t.ward : null, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
+    for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue;
+      const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd && o.hull*(o.guns + 1) > mine){ bd = d; s.evade = o; } } } }
+function taskOut(s){ const t = s.task; if (!t || t.type === 'fleet') return null;
+  return { type: t.type === 'chase' ? 'raid' : t.type, port: t.port ? t.port.name : null, label: t.label, until: t.until, idx: t.idx, ends: t.ends ? t.ends.map(q => q.name) : null, set: t.set ? t.set.map(q => q.name) : null, dest: t.dest ? t.dest.name : null, funds: t.funds, cap: t.cap, area: t.area || null, runs: t.runs, made: t.made, ward: t.ward ? t.ward.name || t.ward : null, at: t.at ? [Math.round(t.at[0]), Math.round(t.at[1])] : null, cargo: t.cargo || null }; }
 function taskFrom(d, s){ const P = n => ports.find(q => q.name === n), ends = Array.isArray(d.ends) ? d.ends.map(P) : null, okEnds = ends && ends.length === 2 && ends[0] && ends[1];
   if (d.type === 'escort' && d.ward) return { type: 'escort', ward: String(d.ward).slice(0, 30) };
   if (d.type === 'port' && P(d.port)) return { type: 'port', port: P(d.port) }; if (d.type === 'hold') return { type: 'hold' };
-  if (d.type === 'trade'){ const set = (Array.isArray(d.set) ? d.set.map(P) : ends || []).filter(Boolean); if (set.length >= 2) return { type: 'trade', set, dest: P(d.dest) || set[0], funds: clamp(+d.funds || 0, 0, 1e5), cap: CAPS.indexOf(d.cap) >= 0 ? d.cap : 250, area: d.area && d.area.r ? { x: +d.area.x, y: +d.area.y, r: +d.area.r } : null, runs: d.runs|0, made: d.made|0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null }; }
+  if (d.type === 'trade'){ const set = (Array.isArray(d.set) ? d.set.map(P) : ends || []).filter(Boolean);
+    if (set.length >= 2) return { type: 'trade', set, dest: P(d.dest) || set[0], funds: clamp(+d.funds || 0, 0, 1e5), cap: CAPS.indexOf(d.cap) >= 0 ? d.cap : 250, area: d.area && d.area.r ? { x: +d.area.x, y: +d.area.y, r: +d.area.r } : null, runs: d.runs|0, made: d.made|0, cargo: d.cargo && GOODS[d.cargo.g] ? { g: d.cargo.g, tons: clamp(d.cargo.tons|0, 0, 400), cost: Math.max(0, d.cargo.cost|0) } : null }; }
   const at = Array.isArray(d.at) && d.at[0] > 50 && d.at[1] > 50 && d.at[0] < W - 50 && d.at[1] < H - 50 ? [+d.at[0], +d.at[1]] : [s.x, s.y];
   return { type: 'raid', at, prey: null, label: ['cruise', 'patrol', 'blockade'].indexOf(d.label) >= 0 ? d.label : undefined, until: d.until ? d.until|0 : undefined, ends: okEnds ? ends : undefined, idx: d.idx ? 1 : 0, port: d.label === 'blockade' ? P(d.port) : undefined }; }
 function assign(s, kind, q){ const here = openPortNear(s, 1e9) || q, home = ports.find(x => x.name === homeName) || q;
@@ -951,13 +983,16 @@ function assign(s, kind, q){ const here = openPortNear(s, 1e9) || q, home = port
   else if (kind === 'patrol') setTask(s, { type: 'raid', label: 'patrol', at: [q.ox, q.oy], prey: null, ends: [here, q], idx: 1 });
   else if (kind === 'trade') startTrade(s, [q, home], null); }
 function fleetSignal(kind){ const sq = squad(); if (kind === 'recall'){ sq.forEach(s => setTask(s, { type: 'fleet' })); say('Signal to all ships: rejoin the flag.'); }
-  else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); }); say('Signal to all ships: make for the nearest open port.'); }
+  else if (kind === 'port'){ sq.forEach(s => { const q = openPortNear(s, 1e9); if (q && !s.docked) setTask(s, { type: 'port', port: q }); });
+    say('Signal to all ships: make for the nearest open port.'); }
   else { const q = ports.find(x => x.name === homeName); sq.forEach(s => setTask(s, { type: 'port', port: q })); say('Signal to all ships: rendezvous at ' + homeName + '.'); } }
 const inCompany = s => !s.docked && Math.hypot(s.x - p.x, s.y - p.y) < 900;
 const taskWord = s => { const t = s.task; return s.docked ? (t && t.type === 'trade' ? (t.need ? 'Waiting for funds at ' : t.idle ? 'Waiting for a market at ' : 'Loading at ') : 'In port at ') + s.docked.name : !t || t.type === 'fleet' ? 'With the fleet' : t.type === 'escort' ? 'Escorting the ' + (t.ward && t.ward.name || t.ward || 'trader') : t.type === 'trade' ? 'Trading: bound for ' + t.dest.name + (t.cargo ? ' with ' + GOODS[t.cargo.g][0].toLowerCase() : ' in ballast') : t.type === 'raid' ? (t.prey ? 'Chasing a prize' : t.label === 'cruise' ? 'Cruising for prizes' : t.label === 'blockade' ? 'Blockading ' + t.port.name : t.label === 'patrol' ? 'On patrol to ' + t.ends[t.idx].name : 'Hunting prizes') : t.type === 'chase' ? 'Engaging the ' + (t.prey ? nm(t.prey) : 'enemy') : t.type === 'hold' ? 'Holding station'
   : t.flee && !t.arrived ? 'Running for ' + t.port.name
   : t.arrived ? 'Waiting at ' + t.port.name : 'Bound for ' + t.port.name; };
-function setTask(s, t){ if (s.task && s.task.type === 'trade' && (!t || t.type !== 'trade')){ const o = s.task, back = Math.round(o.funds + (o.cargo ? o.cargo.cost*.8 : 0)); if (back > 0){ gold += back; say('The ' + s.name + ' hands back her trading stock: ' + back + ' gold.'); } } /* her trading money comes home with her */
+function setTask(s, t){ if (s.task && s.task.type === 'trade' && (!t || t.type !== 'trade')){ const o = s.task, back = Math.round(o.funds + (o.cargo ? o.cargo.cost*.8 : 0));
+  if (back > 0){ gold += back; say('The ' + s.name + ' hands back her trading stock: ' + back + ' gold.');
+  } } /* her trading money comes home with her */
   if (s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } s.task = t; s.path = null; s.foe = null; s.boardT = 0; s.speedMul = s.baseMul; }
 const fairGame = o => o.owner !== 'player' && o.sinking == null && !o.released && !o.gone && (o === fleetTarget || o.owner === 'pirate' || prize(o) && (hostile(o.nation) || o.hitByPlayer));
   // what a consort may take on her own
@@ -1038,19 +1073,28 @@ function detached(s, dt){ // a consort acting on her own orders
   const t = s.task; let want = s.h; s.speedMul = s.baseMul;
   if (s.evade && s.evade.sinking == null){ s.sail = 1; return Math.atan2(s.y - s.evade.y, s.x - s.evade.x); } /* too strong for her: she shows her heels */
   if (t.type === 'hold'){ s.sail = 0; }
-  else if (t.type === 'trade'){ const q = t.dest, d = Math.hypot(q.ox - s.x, q.oy - s.y); if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true; dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.'); } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
+  else if (t.type === 'trade'){ const q = t.dest, d = Math.hypot(q.ox - s.x, q.oy - s.y);
+    if (d < 190){ if (admits(q)) dock(s, q); else { s.sail = 0; if (!t.told){ t.told = true;
+    dispatch(s, q.name + ' is closed to us. I am standing off and on until you send new orders.');
+    } } } else { s.sail = 1; want = navTo(s, q.ox, q.oy, dt); } }
   else if (t.type === 'port'){ const d = Math.hypot(t.port.ox - s.x, t.port.oy - s.y);
     if (d < 180 && admits(t.port)){ dock(s, t.port); return s.h; }
     if (d < 180){ s.sail = 0; if (!t.arrived){ t.arrived = true; say('The ' + s.name + ' has reached ' + t.port.name + ', which is closed to her, and waits outside for you.');
       } if (inCompany(s) && Math.hypot(p.x - s.x, p.y - s.y) < 420){ setTask(s, { type: 'fleet' });
       say('The ' + s.name + ' rejoins the fleet.'); } }
     else { s.sail = 1; want = navTo(s, t.port.ox, t.port.oy, dt); } }
-  else if (t.type === 'escort'){ if (typeof t.ward === 'string') t.ward = squad().find(o => o.name === t.ward) || null; const w = t.ward; /* keep station on her charge, and stand between her and trouble */
-    if (!w || w.sinking != null || ships.indexOf(w) < 0 || !w.task || w.task.type !== 'trade'){ dispatch(s, 'My charge is no longer trading. I am rejoining the flag.'); setTask(s, { type: 'fleet' }); return want; }
-    if (w.docked){ const d = Math.hypot(w.docked.ox - s.x, w.docked.oy - s.y); if (d < 200){ if (admits(w.docked)){ s.docked = w.docked; s.x = w.docked.ox; s.y = w.docked.oy; s.speed = 0; s.sail = 0; } else s.sail = 0; return s.h; } s.sail = 1; return navTo(s, w.docked.ox, w.docked.oy, dt); }
-    let foe = null, bd = 700; if (state === 'play' || !inCompany(s)) for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue; const d = Math.hypot(o.x - w.x, o.y - w.y); if (d < bd){ bd = d; foe = o; } }
+  else if (t.type === 'escort'){ if (typeof t.ward === 'string') t.ward = squad().find(o => o.name === t.ward) || null;
+    const w = t.ward; /* keep station on her charge, and stand between her and trouble */
+    if (!w || w.sinking != null || ships.indexOf(w) < 0 || !w.task || w.task.type !== 'trade'){ dispatch(s, 'My charge is no longer trading. I am rejoining the flag.');
+      setTask(s, { type: 'fleet' }); return want; }
+    if (w.docked){ const d = Math.hypot(w.docked.ox - s.x, w.docked.oy - s.y); if (d < 200){ if (admits(w.docked)){ s.docked = w.docked;
+      s.x = w.docked.ox; s.y = w.docked.oy; s.speed = 0; s.sail = 0; } else s.sail = 0;
+      return s.h; } s.sail = 1; return navTo(s, w.docked.ox, w.docked.oy, dt); }
+    let foe = null, bd = 700; if (state === 'play' || !inCompany(s)) for (const o of ships){ if (o.owner === 'player' || o.sinking != null || o.surrendered || o.released || !warship(o) || !(o.owner === 'pirate' || hostile(o.nation) || o.provoked)) continue;
+      const d = Math.hypot(o.x - w.x, o.y - w.y); if (d < bd){ bd = d; foe = o; } }
     if (foe) return attack(s, foe.x, foe.y, dt, false, foe);
-    const tx = w.x - Math.cos(w.h)*130 + Math.sin(w.h)*70, ty = w.y - Math.sin(w.h)*130 - Math.cos(w.h)*70, d = Math.hypot(tx - s.x, ty - s.y); s.sail = d > 60 ? 1 : .5; s.speedMul = s.baseMul*(d > 300 ? 1.4 : 1); want = d > 400 ? navTo(s, tx, ty, dt) : d > 40 ? Math.atan2(ty - s.y, tx - s.x) : w.h; }
+    const tx = w.x - Math.cos(w.h)*130 + Math.sin(w.h)*70, ty = w.y - Math.sin(w.h)*130 - Math.cos(w.h)*70, d = Math.hypot(tx - s.x, ty - s.y);
+      s.sail = d > 60 ? 1 : .5; s.speedMul = s.baseMul*(d > 300 ? 1.4 : 1); want = d > 400 ? navTo(s, tx, ty, dt) : d > 40 ? Math.atan2(ty - s.y, tx - s.x) : w.h; }
   else { // raid or chase
     if (t.type === 'chase' && (!t.prey || t.prey.sinking != null || t.prey.released || t.prey.gone || ships.indexOf(t.prey) < 0)){ say('The ' + s.name + ' has lost her chase and returns to the fleet.');
       setTask(s, { type: 'fleet' }); return want; }
@@ -1069,12 +1113,17 @@ function detached(s, dt){ // a consort acting on her own orders
   return want;
 }
 function fleetAI(s, dt){
-  if (s.docked && s.task && s.task.type === 'escort'){ const w = typeof s.task.ward === 'string' ? null : s.task.ward; if (!w || !w.docked || w.docked !== s.docked){ s.h = s.docked.out; s.docked = null; s.sail = 1; } else { s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; return; } }
-  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && (s.dwell -= dt) <= 0){ const t = s.task; if (t.dest === s.docked) tradeCall(s, s.docked); else { s.h = s.docked.out; s.docked = null; s.sail = 1; } }
-    else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' }); say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
+  if (s.docked && s.task && s.task.type === 'escort'){ const w = typeof s.task.ward === 'string' ? null : s.task.ward;
+    if (!w || !w.docked || w.docked !== s.docked){ s.h = s.docked.out; s.docked = null;
+    s.sail = 1; } else { s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; return; } }
+  if (s.docked){ s.x = s.docked.ox; s.y = s.docked.oy; s.speed = 0; if (s.task && s.task.type === 'trade' && (s.dwell -= dt) <= 0){ const t = s.task;
+    if (t.dest === s.docked) tradeCall(s, s.docked); else { s.h = s.docked.out; s.docked = null; s.sail = 1; } }
+    else if (state === 'play' && s.task && s.task.type === 'port' && Math.hypot(p.x - s.x, p.y - s.y) < 420 && repairCost(s) <= 8){ setTask(s, { type: 'fleet' });
+      say('The ' + s.name + ' weighs and rejoins the fleet.'); } /* she comes out to meet the flag */
     else if (s.task && s.task.why === 'weather' && !hurr && weather.kind !== 'storm' && repairCost(s) <= 8){ afterRepairs(s, s.prev ? 'station' : 'join'); } return; }
   s.thinkT = (s.thinkT || 0) - dt; if (s.thinkT <= 0){ s.thinkT = 1; think(s); }
-  if (s.task && s.task.type !== 'fleet'){ const tt = s.task.type, want = state === 'play' || !inCompany(s) || tt === 'trade' || tt === 'port' || tt === 'escort' ? detached(s, dt) : (s.sail = 0, s.h); /* a ship on an errand of her own does not lie idle because the flagship is in port beside her */ moveShip(s, clamp(angd(avoid(s, want), s.h)*3, -1, 1), dt); return; }
+  if (s.task && s.task.type !== 'fleet'){ const tt = s.task.type, want = state === 'play' || !inCompany(s) || tt === 'trade' || tt === 'port' || tt === 'escort' ? detached(s, dt) : (s.sail = 0, s.h);
+    /* a ship on an errand of her own does not lie idle because the flagship is in port beside her */ moveShip(s, clamp(angd(avoid(s, want), s.h)*3, -1, 1), dt); return; }
   const i = s.slot || 1, k = Math.ceil(i/2), sd = i % 2 ? 1 : -1;
   s.off = formation === 'column' ? [-105*i, 0] : formation === 'abreast' ? [0, sd*100*k] : [-80*k, sd*90*k];
   if (orders === 'hold') s.off = [s.off[0] - 170, s.off[1]];
@@ -1108,15 +1157,19 @@ function laneBears(s, side){ for (const o of ships){ if (!threat(o)) continue; c
 /* what your buying and selling does to a market, what events do to it, what you know of prices elsewhere, and what your traders have made */
 let book = {}, ledger = [], store2 = {}, priceShow = null, contract = null, ghosts2 = [];
 const ECO = { trade:'Trade income', prize:'Prize money', wage:'Wages' }, ECOV = [[.7, 'Lean'], [1, 'Normal'], [1.4, 'Rich']]; let eco = { trade:1, prize:1, wage:1 };
-function setEco(k, v){ if (ECO[k] && ECOV.some(o => o[0] === v)) eco[k] = v; store('eco', JSON.stringify(eco)); document.querySelectorAll('[data-eco]').forEach(b => { const kk = b.dataset.eco; b.textContent = ECO[kk] + ': ' + (ECOV.find(o => o[0] === eco[kk]) || ECOV[1])[1].toLowerCase(); }); }
+function setEco(k, v){ if (ECO[k] && ECOV.some(o => o[0] === v)) eco[k] = v; store('eco', JSON.stringify(eco));
+  document.querySelectorAll('[data-eco]').forEach(b => { const kk = b.dataset.eco; b.textContent = ECO[kk] + ': ' + (ECOV.find(o => o[0] === eco[kk]) || ECOV[1])[1].toLowerCase(); }); }
 const mkt = (q, g) => { let m = 1 + (q.pr && q.pr[g] || 0); if (q.ev) for (const e of q.ev) if (e.g === g && e.until >= calIdx()) m *= e.mul; return m; };
-function press(q, g, tons){ q.pr = q.pr || {}; q.pr[g] = clamp((q.pr[g] || 0) + tons/(260*((q.spec.land ? 0 : q.spec.sz) + 1)), -.4, .4); } /* tons bought raise the price, tons sold lower it; a great port shrugs off what would swamp a landing */
+function press(q, g, tons){ q.pr = q.pr || {}; q.pr[g] = clamp((q.pr[g] || 0) + tons/(70*((q.spec.land ? 0 : q.spec.sz) + 1)), -.45, .45);
+  } /* tons bought raise the price, tons sold lower it; a great port shrugs off what would swamp a landing */
 function marketEvent(q, g, mul, months, text){ q.ev = (q.ev || []).filter(e => e.until >= calIdx() && e.g !== g); q.ev.push({ g, mul, until: calIdx() + months }); if (text) news(text); }
-function marketTick(){ for (const q of ports){ if (q.pr) for (const g in q.pr){ q.pr[g] *= .6; if (Math.abs(q.pr[g]) < .01) delete q.pr[g]; } if (q.ev) q.ev = q.ev.filter(e => e.until >= calIdx()); }
+function marketTick(){ for (const q of ports){ if (q.pr) for (const g in q.pr){ q.pr[g] *= .84; if (Math.abs(q.pr[g]) < .01) delete q.pr[g]; } if (q.ev) q.ev = q.ev.filter(e => e.until >= calIdx()); }
   if (rnd() < .22){ const c = ports.filter(q => !q.spec.land), q = c[rnd()*c.length|0], dear = rnd() < .5, pool = dear ? q.spec.dm : q.spec.mk; if (pool.length){ const g = pool[rnd()*pool.length|0];
     marketEvent(q, g, dear ? 1.3 : .75, 3, dear ? GOODS[g][0] + ' is short at ' + q.name + ', and fetching a high price.' : 'A glut of ' + GOODS[g][0].toLowerCase() + ' at ' + q.name + ': the warehouses are full and it is going cheap.'); } } }
-function note(q){ const b = book[q.name] = book[q.name] || {}; for (const g of GK){ if (q.spec.land && q.spec.mk.indexOf(g) < 0 && q.spec.dm.indexOf(g) < 0) continue; b[g] = [price(q, g), calIdx()]; } } /* prices seen go in the book, with the month */
-function bestKnown(g, here){ let hi = null, lo = null; for (const n in book){ if (n === here || !book[n][g]) continue; const v = book[n][g]; if (!hi || v[0] > hi[1]) hi = [n, v[0], v[1]]; if (!lo || v[0] < lo[1]) lo = [n, v[0], v[1]]; } return { hi, lo }; }
+function note(q){ const b = book[q.name] = book[q.name] || {}; for (const g of GK){ if (q.spec.land && q.spec.mk.indexOf(g) < 0 && q.spec.dm.indexOf(g) < 0) continue;
+  b[g] = [price(q, g), calIdx()]; } } /* prices seen go in the book, with the month */
+function bestKnown(g, here){ let hi = null, lo = null; for (const n in book){ if (n === here || !book[n][g]) continue;
+  const v = book[n][g]; if (!hi || v[0] > hi[1]) hi = [n, v[0], v[1]]; if (!lo || v[0] < lo[1]) lo = [n, v[0], v[1]]; } return { hi, lo }; }
 const ago = m => { const d = calIdx() - m; return d <= 0 ? 'this month' : d === 1 ? 'last month' : d + ' months ago'; };
 function logSale(s, g, tons, port, profit){ ledger.unshift({ m: calIdx(), ship: s.name, g, tons, port: port.name, profit }); if (ledger.length > 60) ledger.length = 60; }
 const price = (q, g, t) => Math.max(2, Math.round(GOODS[g][1]*(q.spec.mk.indexOf(g) >= 0 ? .7 : q.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && q.home === 'es' || q.name === 'Monte Cristi' && (g === 'flour' || g === 'fish') ? 1.7 : g === 'flour' || g === 'fish' ? 1.6 : 1.35) : 1)*mkt(q, g)*(1 + .1*Math.sin((t == null ? clock : t)*.011 + q.x*.01 + g.length*2.1))));
@@ -1148,30 +1201,51 @@ function openPaper(mode, data){ if (state !== 'play' && state !== 'port') return
   if (mode === 'court'){ el('div', 'mast', 'Court of Vice-Admiralty'); el('div', 'dateline', 'Sitting at ' + data.port + ' · ' + dateStr());
     el('p', 'lead', 'Be it known that the following vessels, taken at sea under a lawful commission, are this day condemned as good and lawful prize, and the proceeds ordered paid to their captor.');
     data.list.forEach(v => row(v.n, v.v + ' gold')); row('Paid over this day', data.total + ' gold', 'total'); el('p', 'sig', 'By order of the Judge, and God save the King.'); }
-  else if (mode === 'overview'){ el('div', 'mast', 'The Fleet'); const sq = squad(); el('div', 'dateline', dateStr() + ' · ' + sq.length + ' of ' + MAXSQ + ' consorts · wages ' + wageBill() + ' gold a month');
-    const act = (r, id, label, on, fn) => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = id; b2.textContent = label; b2.disabled = !on; b2.addEventListener('click', () => { fn(); if (!chartOpen && $('fleetSheet').hidden) openPaper('overview'); }); r.appendChild(b2); };
+  else if (mode === 'overview'){ el('div', 'mast', 'The Fleet'); const sq = squad();
+    el('div', 'dateline', dateStr() + ' · ' + sq.length + ' of ' + MAXSQ + ' consorts · wages ' + wageBill() + ' gold a month');
+    const act = (r, id, label, on, fn) => { const b2 = document.createElement('button');
+      b2.type = 'button'; b2.id = id; b2.textContent = label; b2.disabled = !on; b2.addEventListener('click', () => { fn(); if (!chartOpen && $('fleetSheet').hidden) openPaper('overview'); }); r.appendChild(b2); };
     [p].concat(sq).forEach((s, i) => { const e = el('p', s === p ? 'you' : ''), bb = document.createElement('b'); bb.textContent = s.name + (s === p ? ', flagship' : s.div ? ' · ' + DIVS[s.div].replace(' division', '') : '') + ': '; e.appendChild(bb);
-      e.appendChild(document.createTextNode(nowLine(s) + ' Hull ' + Math.round(s.hull/s.maxHull*100) + ' per cent. ' + (s === p ? holdUsed() + ' tons in the fleet\'s holds.' : s.task && s.task.type === 'trade' ? holdLine(s).split(' · ')[0] + '.' : ''))); const last = s !== p && dispatches.find(v => v.id === s.id); if (last){ const sm = document.createElement('i'); sm.textContent = ' Last word, ' + last.d + ': ' + last.t.slice(0, 90) + (last.t.length > 90 ? '…' : ''); e.appendChild(sm); }
-      const r = el('div', 'dbtns'); act(r, 'ov_card' + i, 'Her card', true, () => { closeMenu(); openFleet(s === p ? 'F' : 'S' + (i - 1)); }); act(r, 'ov_chart' + i, 'On the chart', true, () => { closeMenu(); setChart(true, s); });
-      if (s !== p){ act(r, 'ov_recall' + i, 'Recall', !!(s.task && s.task.type !== 'fleet'), () => setTask(s, { type: 'fleet' })); if (s.task && s.task.type === 'trade') act(r, 'ov_sail' + i, 'Sail now', !!s.docked, () => tradeSail(s)); if (s.docked && repairCost(s) > 8) act(r, 'ov_fix' + i, 'Repair: ' + repairCost(s) + ' gold', gold > 0, () => payRepairs(s, 'stay')); } });
+      e.appendChild(document.createTextNode(nowLine(s) + ' Hull ' + Math.round(s.hull/s.maxHull*100) + ' per cent. ' + (s === p ? holdUsed() + ' tons in the fleet\'s holds.' : s.task && s.task.type === 'trade' ? holdLine(s).split(' · ')[0] + '.' : '')));
+        const last = s !== p && dispatches.find(v => v.id === s.id); if (last){ const sm = document.createElement('i');
+        sm.textContent = ' Last word, ' + last.d + ': ' + last.t.slice(0, 90) + (last.t.length > 90 ? '…' : ''); e.appendChild(sm); }
+      const r = el('div', 'dbtns'); act(r, 'ov_card' + i, 'Her card', true, () => { closeMenu(); openFleet(s === p ? 'F' : 'S' + (i - 1)); });
+        act(r, 'ov_chart' + i, 'On the chart', true, () => { closeMenu(); setChart(true, s); });
+      if (s !== p){ act(r, 'ov_recall' + i, 'Recall', !!(s.task && s.task.type !== 'fleet'), () => setTask(s, { type: 'fleet' }));
+        if (s.task && s.task.type === 'trade') act(r, 'ov_sail' + i, 'Sail now', !!s.docked, () => tradeSail(s));
+        if (s.docked && repairCost(s) > 8) act(r, 'ov_fix' + i, 'Repair: ' + repairCost(s) + ' gold', gold > 0, () => payRepairs(s, 'stay')); } });
     [1, 2, 3].forEach(d => { const g2 = sq.filter(o => o.div === d); if (!g2.length) return; el('p', 'lead', DIVS[d] + ': ' + g2.map(o => o.name).join(', ')); const r = el('div', 'dbtns');
-      act(r, 'dv_recall' + d, 'All rejoin', true, () => g2.forEach(o => setTask(o, { type: 'fleet' }))); act(r, 'dv_port' + d, 'To a port…', true, () => pickOnChart(g2[0], 'port', g2)); act(r, 'dv_cruise' + d, 'Cruise…', true, () => pickOnChart(g2[0], 'cruise', g2)); act(r, 'dv_block' + d, 'Blockade…', true, () => pickOnChart(g2[0], 'blockade', g2)); });
+      act(r, 'dv_recall' + d, 'All rejoin', true, () => g2.forEach(o => setTask(o, { type: 'fleet' })));
+        act(r, 'dv_port' + d, 'To a port…', true, () => pickOnChart(g2[0], 'port', g2));
+        act(r, 'dv_cruise' + d, 'Cruise…', true, () => pickOnChart(g2[0], 'cruise', g2));
+        act(r, 'dv_block' + d, 'Blockade…', true, () => pickOnChart(g2[0], 'blockade', g2)); });
     if (!sq.some(o => o.div)) el('p', '', 'Put ships into the Red, White or Blue division from their cards to order several at once from here.'); }
   else if (mode === 'ledger'){ el('div', 'mast', 'Trade Ledger'); el('div', 'dateline', dateStr() + ' · what your traders have made, and what is known of prices');
     const tr = squad().filter(o => o.task && o.task.type === 'trade'); if (!tr.length && !ledger.length) el('p', 'lead', 'No ship of yours is trading. Put one to it from her card in the fleet screen.');
     tr.forEach(o => row(o.name + ' · ' + taskWord(o), (o.task.runs || 0) + ' cargoes · ' + (o.task.made || 0) + ' gold'));
-    if (ledger.length){ const by = {}; ledger.forEach(v => { by[v.m] = (by[v.m] || 0) + v.profit; }); el('p', 'lead', 'By the month'); Object.keys(by).sort((a, b) => b - a).slice(0, 6).forEach(m => row(MONTHS[m % 12] + ' ' + (1750 + Math.floor(m/12)), by[m] + ' gold')); row('All sales on the book', ledger.reduce((n, v) => n + v.profit, 0) + ' gold', 'total');
+    if (ledger.length){ const by = {}; ledger.forEach(v => { by[v.m] = (by[v.m] || 0) + v.profit; });
+      el('p', 'lead', 'By the month'); { const ks = Object.keys(by).sort((a, b) => b - a).slice(0, 6), top = Math.max(1, ...ks.map(m => Math.abs(by[m])));
+      ks.forEach(m => { row(MONTHS[m % 12] + ' ' + (1750 + Math.floor(m/12)), by[m] + ' gold'); const bar = el('div', 'bar' + (by[m] < 0 ? ' neg' : '')); bar.style.width = Math.max(2, Math.round(Math.abs(by[m])/top*100)) + '%'; });
+        const bs = {}; ledger.forEach(v => { bs[v.ship] = (bs[v.ship] || 0) + v.profit; });
+          el('p', 'lead', 'By the ship'); const top2 = Math.max(1, ...Object.keys(bs).map(n => Math.abs(bs[n])));
+          Object.keys(bs).sort((a, b) => bs[b] - bs[a]).forEach(n => { row(n, bs[n] + ' gold'); const bar = el('div', 'bar' + (bs[n] < 0 ? ' neg' : '')); bar.style.width = Math.max(2, Math.round(Math.abs(bs[n])/top2*100)) + '%'; });
+          } row('All sales on the book', ledger.reduce((n, v) => n + v.profit, 0) + ' gold', 'total');
       el('p', 'lead', 'Late sales'); ledger.slice(0, 8).forEach(v => row(v.ship + ': ' + v.tons + ' t ' + GOODS[v.g][0].toLowerCase() + ' at ' + v.port, (v.profit >= 0 ? '+' : '') + v.profit)); }
-    el('p', 'lead', 'The price book: cheapest and dearest known'); let any = false; GK.forEach(g => { const b = bestKnown(g, null); if (!b.hi) return; any = true; row(GOODS[g][0], b.lo[1] + ' at ' + b.lo[0] + ' · ' + b.hi[1] + ' at ' + b.hi[0]); }); if (!any) el('p', '', 'Nothing yet. Prices are written down whenever you or one of your traders calls at a port.'); }
+    el('p', 'lead', 'The price book: cheapest and dearest known'); let any = false;
+      GK.forEach(g => { const b = bestKnown(g, null); if (!b.hi) return; any = true; row(GOODS[g][0], b.lo[1] + ' at ' + b.lo[0] + ' · ' + b.hi[1] + ' at ' + b.hi[0]); });
+      if (!any) el('p', '', 'Nothing yet. Prices are written down whenever you or one of your traders calls at a port.'); }
   else if (mode === 'dispatches'){ dispNew = 0; dispBadge(); el('div', 'mast', 'Dispatches'); el('div', 'dateline', dateStr() + ' · from the captains of your fleet');
     if (!dispatches.length) el('p', 'lead', 'Nothing has come in. Your captains write when they make port, break off, or have something to report.');
-    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
-      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask === 'repair' && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null; if (v.ask === 'funds' && (!s || !s.task || s.task.type !== 'trade' || !s.task.need)) v.ask = null;
-      if (v.ask === 'funds'){ const t2 = s.task, want = Math.max(0, t2.cap - Math.round(t2.funds)), r = el('div', 'dbtns'); [['send', 'Send her ' + Math.min(want, gold) + ' gold'], ['recall', 'Recall her to the flag'], ['', 'Let her wait']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'df_' + (o[0] || 'wait') + i; b2.textContent = o[1]; b2.disabled = o[0] === 'send' && gold < 1;
+    dispatches.forEach((v, i) => { const e = el('p', v.ask ? 'you' : ''), bb = document.createElement('b'), seal = document.createElement('span'); seal.className = 'seal'; { let hh = 0; for (const ch of v.who) hh = (hh*31 + ch.charCodeAt(0)) % 360; seal.style.background = 'hsl(' + hh + ',55%,36%)'; } e.appendChild(seal); bb.textContent = v.d + '. ' + v.who + ': '; e.appendChild(bb); e.appendChild(document.createTextNode(v.t));
+      const s = v.ask && squad().find(o => o.id === v.id); if (v.ask === 'repair' && (!s || !s.docked || repairCost(s) <= 8)) v.ask = null;
+        if (v.ask === 'funds' && (!s || !s.task || s.task.type !== 'trade' || !s.task.need)) v.ask = null;
+      if (v.ask === 'funds'){ const t2 = s.task, want = Math.max(0, t2.cap - Math.round(t2.funds)), r = el('div', 'dbtns');
+        [['send', 'Send her ' + Math.min(want, gold) + ' gold'], ['recall', 'Recall her to the flag'], ['', 'Let her wait']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'df_' + (o[0] || 'wait') + i; b2.textContent = o[1]; b2.disabled = o[0] === 'send' && gold < 1;
         b2.addEventListener('click', () => { v.ask = null; if (o[0] === 'send'){ const n = Math.min(want, gold); gold -= n; t2.funds += n; t2.need = false; s.dwell = 2; v.t += ' [Sent ' + n + ' gold.]'; } else if (o[0] === 'recall'){ setTask(s, { type: 'fleet' }); v.t += ' [Recalled.]'; } else v.t += ' [Left waiting.]'; openPaper('dispatches'); }); r.appendChild(b2); }); }
       else
       if (v.ask){ const c = repairCost(s), r = el('div', 'dbtns'); [['back', 'Pay ' + c + ' and send her back'], ['join', 'Pay and have her rejoin'], ['stay', 'Pay and keep her in port'], ['', 'Leave her as she is']].forEach(o => { const b2 = document.createElement('button'); b2.type = 'button'; b2.id = 'dp_' + (o[0] || 'leave') + i; b2.textContent = o[1]; b2.disabled = !!o[0] && gold < 1;
-        b2.addEventListener('click', () => { v.ask = null; if (o[0]){ const paid = payRepairs(s, o[0] === 'back' ? 'station' : o[0]); v.t += ' [Paid ' + paid + ' gold. ' + (o[0] === 'back' ? 'Sent back to her station.' : o[0] === 'join' ? 'Ordered to rejoin.' : 'Kept in port.') + ']'; } else v.t += ' [Left unrepaired.]'; openPaper('dispatches'); }); r.appendChild(b2); }); } }); }
+        b2.addEventListener('click', () => { v.ask = null; if (o[0]){ const paid = payRepairs(s, o[0] === 'back' ? 'station' : o[0]); v.t += ' [Paid ' + paid + ' gold. ' + (o[0] === 'back' ? 'Sent back to her station.' : o[0] === 'join' ? 'Ordered to rejoin.' : 'Kept in port.') + ']'; } else v.t += ' [Left unrepaired.]'; openPaper('dispatches'); });
+          r.appendChild(b2); }); } }); }
   else { el('div', 'mast', 'The ' + homeName + ' Gazette'); const ws = [...wars].map(w => NAT[w.slice(0, 2)].land + ' and ' + NAT[w.slice(3)].land).join('; ');
     el('div', 'dateline', dateStr() + ' · ' + (ws ? 'At war: ' + ws : 'The nations are at peace'));
     if (!gazette.length) el('p', 'lead', 'No news has come in yet. The packet is expected.');
@@ -1193,7 +1267,8 @@ const darkness = () => clamp((.12 - sunAt())/.5, 0, 1)*.6;
 const windMul = () => 1 + (weather.hur ? .95 : WX[weather.kind][1])*weather.k;
 const vis = () => clamp(1 - darkness()*.45 - WX[weather.kind][2]*weather.k, .35, 1);
 function startHurricane(){ if (hurr) return; hurr = { stage: 0, t: 40, x: p.x + 2500, y: p.y + 900, vx: -2500/40, vy: -900/40 }; hurrYear = calYear();
-  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.'); if (state === 'port' && !menuOpen && !chartOpen) renderPort(); }
+  say('The glass is falling fast and a long swell is running in. A hurricane is coming: make port, or strike your sails and ride it out.');
+    if (state === 'port' && !menuOpen && !chartOpen) renderPort(); }
 function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*dt*(hurr.stage ? .35 : 1); hurr.y += hurr.vy*dt*(hurr.stage ? .35 : 1);
   if (hurr.stage === 0){ if (hurr.t <= 0){ hurr.stage = 1; hurr.t = rand(60, 90);
     w.kind = 'storm'; w.next = null; w.k = Math.max(w.k, .35); w.hur = true; if (state === 'play') say('The hurricane is on you. Bare poles, and keep her head to the sea.'); } return; }
@@ -1206,7 +1281,10 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
       o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
-    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); { const near = ports.filter(q => !q.spec.land && Math.hypot(q.x - p.x, q.y - p.y) < 3000).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (near){ marketEvent(near, 'flour', 1.4, 3, null); marketEvent(near, 'naval', 1.4, 3, 'After the hurricane ' + near.name + ' is crying out for provisions and for spars, cordage and tar.'); } } if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
+    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news');
+      { const near = ports.filter(q => !q.spec.land && Math.hypot(q.x - p.x, q.y - p.y) < 3000).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+      if (near){ marketEvent(near, 'flour', 1.4, 3, null); marketEvent(near, 'naval', 1.4, 3, 'After the hurricane ' + near.name + ' is crying out for provisions and for spars, cordage and tar.');
+      } } if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
 function weatherTick(dt){
   const w = weather; w.left -= dt; if (hurr) hurricaneTick(dt);
   if (w.left <= 0 && !w.next){ const r = rnd(); const lat = p ? LAT1 - p.y/DEG : 20, mo = calMon(), fogB = lat > 39 ? .16 : 0, galeB = lat > 34 && (mo >= 10 || mo <= 2) ? .13 : 0;
@@ -1225,7 +1303,7 @@ function weatherTick(dt){
 let course = null, autoHelm = false, routeLine = null, routeT = 0, fleetTarget = null, paused = false, lastDay = 0, camNow = { x: 0, y: 0 };
 function setCourse(q){ course = q || null; autoHelm = !!q; routeLine = null; routeT = 0; p.path = null; p.losT = 0;
   if (q){ if (p.sail === 0 && state === 'play') p.sail = 1; say('Course set for ' + q.name + '. The helmsman has her; touch the helm to take over.'); } else say('Course cleared.'); }
-const wageBill = () => Math.ceil(eco.wage*(inService() && navy.rank >= 4 ? .15 : .3)*(Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6));
+const wageBill = () => Math.ceil(eco.wage*(inService() && navy.rank >= 4 ? .4 : .8)*(Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6));
 function payWages(day){ if (day < 1) return; const w = wageBill(); // the first days are sailed on the promise of shares
   if (gold >= w){ gold -= w; floaters.push({ x: p.x, y: p.y - 30, txt: '−' + w + ' wages', life: 2 }); cheer(1); }
   else { gold = 0; const lost = Math.max(1, Math.round(p.crew*.1)); p.crew = Math.max(5, p.crew - lost);
@@ -1266,7 +1344,8 @@ function engage(s){ if (s && s.owner !== 'player' && !s.released && s.sinking ==
 function refit(){ const t = p.t, f = p.hull/p.maxHull; p.guns = t.guns + up.guns; p.maxHull = t.hull + 30*up.hull; p.hull = p.maxHull*f;
   p.speedMul = 1 + .07*up.sail; p.reload = 3.6*Math.pow(.9, up.drill); }
 
-function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && recall('tut') !== '0' && location.hash !== '#test' ? 0 : -1; if ($('tutor')) $('tutor').hidden = true; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
+function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && recall('tut') !== '0' && location.hash !== '#test' ? 0 : -1;
+  if ($('tutor')) $('tutor').hidden = true; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
   ships = []; balls = []; pending = []; crates = []; parts = []; floaters = []; smokes.length = 0; orderSel = null; picking = false;
   if (saved && DIFFS[saved.diff]) diff = saved.diff;
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
@@ -1289,9 +1368,11 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && 
       if (Array.isArray(saved.gaz)) gazette = saved.gaz.slice(0, 40).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), t: String(v.t).slice(0, 300), k: v.k === 'you' ? 'you' : 'news' }));
       if (saved.navy && NAT[saved.navy.k]) navy = { k: saved.navy.k, pts: clamp(saved.navy.pts|0, 0, 999), rank: clamp(saved.navy.rank|0, 0, NAVY.length - 1) };
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
-      if (saved.book && typeof saved.book === 'object') for (const n in saved.book){ if (!ports.some(q => q.name === n)) continue; book[n] = {}; for (const g of GK){ const v = saved.book[n][g]; if (Array.isArray(v)) book[n][g] = [clamp(v[0]|0, 1, 999), v[1]|0]; } }
+      if (saved.book && typeof saved.book === 'object') for (const n in saved.book){ if (!ports.some(q => q.name === n)) continue;
+        book[n] = {}; for (const g of GK){ const v = saved.book[n][g]; if (Array.isArray(v)) book[n][g] = [clamp(v[0]|0, 1, 999), v[1]|0]; } }
       if (Array.isArray(saved.ledger)) ledger = saved.ledger.slice(0, 40).filter(v => v && GOODS[v.g]).map(v => ({ m: v.m|0, ship: String(v.ship).slice(0, 30), g: v.g, tons: v.tons|0, port: String(v.port).slice(0, 30), profit: v.profit|0 }));
-      if (saved.contract && GOODS[saved.contract.g]){ const cq = ports.find(q => q.name === saved.contract.port); if (cq) contract = { type: 'freight', g: saved.contract.g, tons: clamp(saved.contract.tons|0, 1, 400), port: cq, until: saved.contract.until|0, reward: clamp(saved.contract.reward|0, 0, 9999), nk: NAT[saved.contract.nk] ? saved.contract.nk : 'en', rep: 4 }; }
+      if (saved.contract && GOODS[saved.contract.g]){ const cq = ports.find(q => q.name === saved.contract.port);
+        if (cq) contract = { type: 'freight', g: saved.contract.g, tons: clamp(saved.contract.tons|0, 1, 400), port: cq, until: saved.contract.until|0, reward: clamp(saved.contract.reward|0, 0, 9999), nk: NAT[saved.contract.nk] ? saved.contract.nk : 'en', rep: 4 }; }
       if (saved.store2) GK.forEach(g => { store2[g] = clamp(saved.store2[g]|0, 0, 400); });
       if (Array.isArray(saved.press)) saved.press.forEach(v => { const q = ports.find(x => x.name === v[0]); if (!q) return; q.pr = {}; for (const g of GK) if (v[1] && +v[1][g]) q.pr[g] = clamp(+v[1][g], -.4, .4); q.ev = (Array.isArray(v[2]) ? v[2] : []).filter(e => e && GOODS[e.g]).map(e => ({ g: e.g, mul: clamp(+e.mul || 1, .5, 2), until: e.until|0 })); });
       if (Array.isArray(saved.dispatches)) dispatches = saved.dispatches.slice(0, 30).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), who: String(v.who).slice(0, 60), t: String(v.t).slice(0, 400), id: 0, ask: null }));
@@ -1344,7 +1425,8 @@ const cargoRoll = () => Math.round(rand(120, 300) + Math.min(400, plunder*.04));
 const latOf = q => LAT1 - q.y/DEG, winter = () => calMon() >= 11 || calMon() <= 2;
 const iced = q => winter() && latOf(q) > 44.2; /* Louisbourg, Canso, Halifax and Fundy are shut by ice and gales from December to March */
 const BUBBLE = 6500, FAR = 8600; /* the sea is peopled around you: ships are raised within the bubble and forgotten beyond it */
-const dP = q => Math.hypot(q.ox - p.x, q.oy - p.y);
+let focus = null, outposts = [], saveWarned = false; /* focus: the ship the sea is being peopled around, when it is not the flagship */
+const dP = q => Math.hypot(q.ox - (focus || p).x, q.oy - (focus || p).y);
 function pickDest(from, short){ const c = ports.filter(q => q !== from).sort((a, b) => Math.hypot(a.ox-from.ox, a.oy-from.oy) - Math.hypot(b.ox-from.ox, b.oy-from.oy)).slice(0, 6);
   if (!short && rnd() < .45){ const big = ports.filter(q => q !== from && q.spec.sz >= 2 && Math.hypot(q.ox-from.ox, q.oy-from.oy) < 15000);
     if (big.length) return big[rnd()*big.length|0]; } /* the long hauls between the great ports */
@@ -1365,8 +1447,8 @@ function spawnMerchant(first){
   else if (a.nk === 'es' && s.cls === 'merchant' && rnd() < .18){ s.rich = true;
     s.cargo = Math.round(rand(600, 1100)); s.t.name = 'Spanish register ship'; s.t.chests = true;
     s.t.tag = '#ffe07a'; } /* a lone register ship, licensed to carry silver */
-  const path = findPath(a.ox, a.oy, s.dest.ox, s.dest.oy); let w = null; for (let k = 0; k < 5 && !w; k++){ const v = path[rnd()*path.length*.85|0], dv = Math.hypot(v[0]-p.x, v[1]-p.y);
-    if (dv > 1500 && dv < 4800) w = v; }
+  const path = findPath(a.ox, a.oy, s.dest.ox, s.dest.oy); let w = null; for (let k = 0; k < 5 && !w; k++){ const v = path[rnd()*path.length*.85|0], dv = Math.hypot(v[0]-(focus || p).x, v[1]-(focus || p).y);
+    if (dv > (focus ? 700 : 1500) && dv < 4800 && Math.hypot(v[0]-p.x, v[1]-p.y) > 1500) w = v; }
   if (w){ s.x = w[0]; s.y = w[1]; } else if (dP(a) < 1500 || dP(a) > 5200) return; /* she must come into sight, not appear in it */
   ships.push(s); if (!s.rich && !coaster && !packet && foesOf(a.nk).length && rnd() < .34) convoy(s, a);
 }
@@ -1535,7 +1617,8 @@ function restoreMission(m){
   else if (m.type === 'pirate' && CLASSES[m.cls]){ mission = Object.assign(base, { cls: m.cls, from: ports[0] });
     spawnQuarry(m.sx > 100 && m.sy > 100 && m.sx < W-100 && m.sy < H-100 && !isNear(m.sx, m.sy) ? [+m.sx, +m.sy] : waterNear(p.x, p.y, 1500)); }
   else if (m.type === 'treasure') mission = base;
-  else if (m.type === 'freight' && GOODS[m.g]){ const q = ports.find(q => q.name === m.port); if (q) mission = Object.assign(base, { g: m.g, tons: clamp(m.tons|0, 1, 400), port: q, until: m.until|0 }); }
+  else if (m.type === 'freight' && GOODS[m.g]){ const q = ports.find(q => q.name === m.port);
+    if (q) mission = Object.assign(base, { g: m.g, tons: clamp(m.tons|0, 1, 400), port: q, until: m.until|0 }); }
   else if (m.type === 'siege' && NAT[m.foe]){ const q = ports.find(q => q.name === m.port);
     if (q) mission = Object.assign(base, { foe: m.foe, port: q, need: (m.need|0) || 2, have: m.have|0, until: m.until|0, svc: clamp(m.svc|0, 0, 10) }); }
   else if (m.type === 'escort' && Array.isArray(m.tr) && m.tr.length){ const dest = ports.find(q => q.name === 'Fort-Royal');
@@ -1666,7 +1749,8 @@ function sink(s){
   for (let k = 0; k < 7; k++) parts.push({ k:'splash', x: s.x + rand(-28,28), y: s.y + rand(-28,28), vx:0, vy:0, life: rand(.6,1.8), max:1.8, size: rand(4,9) });
   boom(clamp(1 - Math.hypot(s.x-p.x, s.y-p.y)/900, 0, 1)*.3, 200);
   if (s === p){ overT = 2.4; return; }
-  if (s.role === 'fleet' && s.task && s.task.type === 'trade' && s.task.cargo && s.task.cargo.ins){ const back = Math.round(s.task.cargo.cost + s.task.funds); gold += back; later(() => say('The underwriters pay ' + back + ' gold on the ' + s.name + ' and her cargo.'), 4000); }
+  if (s.role === 'fleet' && s.task && s.task.type === 'trade' && s.task.cargo && s.task.cargo.ins){ const back = Math.round(s.task.cargo.cost + s.task.funds);
+    gold += back; later(() => say('The underwriters pay ' + back + ' gold on the ' + s.name + ' and her cargo.'), 4000); }
   if (s.role === 'fleet'){ newsLog.unshift('Lost in action: the ' + s.name + ', your ' + s.t.cname + '.');
     newsLog.length = Math.min(newsLog.length, 4); say('The ' + s.name + ', your ' + s.t.cname + ', is lost' + (s.cap.mate ? '.' : ', and Capt. ' + s.cap.name + ' with her.'));
     s.sinking = 2.6; later(trimHold, 0); return; }
@@ -1822,13 +1906,19 @@ let chartMark = null, tutI = -1; /* the first voyage, a step at a time */
 const TUT = [['Press W twice to make full sail.', () => p.sail >= 1], ['Steer with A and D. Bring the wind over your quarter and watch your speed on the compass.', () => p.speed > 60], ['Fire a broadside with Q or E. Guns fire sideways.', () => p.rl[0] > 0 || p.rl[1] > 0], ['Open the chart with C and click a port to set a course.', () => !!course],
   ['The helmsman has her. Press 5 to make the passage faster, and F to drop anchor when you arrive.', () => state === 'port'], ['In port, open the Market and buy something made here cheaply.', () => holdUsed() > 0], ['See the Governor for a commission, then weigh anchor.', () => state === 'play' && clock > 30],
   ['Sell your cargo where it is wanted. A ship that strikes her colours can be boarded with B; add her to your fleet from the prize screen.', () => squad().length > 0 || plunder > 300], ['You have the way of it. The fleet screen (V), the dispatches (L) and the ledger (K) will matter as you grow.', () => true]];
-function tutTick(){ if (tutI < 0 || tutI >= TUT.length) return; const e = $('tutor'); if (TUT[tutI][1]()){ tutI++; if (tutI >= TUT.length){ e.hidden = true; store('tut', '0'); return; } } e.hidden = state !== 'play' && state !== 'port'; setT($('tutText'), 'First voyage, ' + (tutI + 1) + ' of ' + TUT.length + ': ' + TUT[tutI][0]); } /* a ship of yours picked out on the chart */
+function tutTick(){ if (tutI < 0 || tutI >= TUT.length) return; const e = $('tutor');
+  if (TUT[tutI][1]()){ tutI++; if (tutI >= TUT.length){ e.hidden = true; store('tut', '0');
+  return; } } e.hidden = state !== 'play' && state !== 'port'; setT($('tutText'), 'First voyage, ' + (tutI + 1) + ' of ' + TUT.length + ': ' + TUT[tutI][0]);
+  } /* a ship of yours picked out on the chart */
 function setChart(on, at){ const ok = state === 'play' || state === 'port'; if (on && ok && menuOpen) closeMenu();
   if (on && !chartOpen){ chartV.z = 3; chartV.cx = at ? at.x : p.x; chartV.cy = at ? at.y : p.y; } /* the chart opens on your own waters, or on the ship you asked for; zoom out for the whole of it */
-  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick && chartPick.group){ chartPick = null; later(() => { if (!chartOpen && !menuOpen) openPaper('overview'); }, 0); }
-  if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0); } /* a choice abandoned goes back to her card */
+  chartMark = on && ok ? at || null : null; chartOpen = !!on && ok; if (!chartOpen && chartPick && chartPick.group){ chartPick = null;
+    later(() => { if (!chartOpen && !menuOpen) openPaper('overview'); }, 0); }
+  if (!chartOpen && chartPick){ const ps = chartPick.s; chartPick = null; later(() => { if (!chartOpen && !menuOpen && squad().indexOf(ps) >= 0) openFleet('S' + squad().indexOf(ps)); }, 0);
+    } /* a choice abandoned goes back to her card */
   held.left = held.right = false; $('chartTools').hidden = !chartOpen;
-  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
+  $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : '';
+    if (state === 'port') $('port').hidden = chartOpen; /* in port the chart lies over the town until it is put away */ }
 const KEYS = { KeyA:'left', ArrowLeft:'left', KeyD:'right', ArrowRight:'right' };
 const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', ArrowDown:'sailDown', KeyQ:'port', KeyE:'star', Space:'both', KeyF:'dock' };
 addEventListener('keydown', e => {
@@ -1901,7 +1991,8 @@ $('paceBtn').addEventListener('click', e => { setPace((paceIdx + 1) % PACES.leng
 $('aimBtn').addEventListener('click', e => { setAssist(!assist); e.currentTarget.blur(); });
 $('chartBtn').addEventListener('click', e => { setChart(!chartOpen); e.currentTarget.blur(); });
 $('tutSkip').addEventListener('click', () => { tutI = -1; $('tutor').hidden = true; store('tut', '0'); });
-$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches')); $('portGaz').addEventListener('click', () => openPaper('gazette'));
+$('portChart').addEventListener('click', () => setChart(true)); $('portDisp').addEventListener('click', () => openPaper('dispatches'));
+  $('portGaz').addEventListener('click', () => openPaper('gazette'));
 cv.addEventListener('click', e => {
   if (chartOpen){ if (dragged){ dragged = false; return; } const g = chartGeo; let hit = null, bd = 20; // a click on a port sets a course for it
     if (g) for (const q of ports){ const d = Math.hypot(g.x - g.ox + q.x*g.k - e.clientX, g.y - g.oy + q.y*g.k - e.clientY); if (d < bd){ bd = d; hit = q; } }
@@ -1970,10 +2061,17 @@ const upOf = s => s === p ? up : s.up;
 const reloadOf = s => s === p ? p.reload*crewSlow() : (5.8 - .5*s.cap.gun)*Math.pow(.9, s.up.drill)*(trait(s, 'bold') ? .94 : 1);
 const tradeIn = () => Math.round(CLASSES[p.cls].value*.5);
 let portTab = 'yard', fleetSel = 'F';
-function freightOffer(port){ if (port.freight === undefined || port.freight && port.freight.made < calIdx() - 2){ port.freight = null; if (rnd() < .6){ const dests = ports.filter(q => q !== port && !q.spec.land && admits(q) && q.spec.dm.length && Math.hypot(q.ox - port.ox, q.oy - port.oy) < 9000); if (dests.length){ const q = dests[rnd()*dests.length|0], g = q.spec.dm[rnd()*q.spec.dm.length|0], tons = 20 + 10*(rnd()*4|0), d = Math.hypot(q.ox - port.ox, q.oy - port.oy);
+function freightOffer(port){ if (port.freight === undefined || port.freight && port.freight.made < calIdx() - 2){ port.freight = null;
+  if (rnd() < .6){ const dests = ports.filter(q => q !== port && !q.spec.land && admits(q) && q.spec.dm.length && Math.hypot(q.ox - port.ox, q.oy - port.oy) < 9000);
+  if (dests.length){ const q = dests[rnd()*dests.length|0], g = q.spec.dm[rnd()*q.spec.dm.length|0], tons = 20 + 10*(rnd()*4|0), d = Math.hypot(q.ox - port.ox, q.oy - port.oy);
       port.freight = { g, tons, port: q, months: 3 + Math.round(d/2500), reward: Math.round(tons*GOODS[g][1]*1.9 + d*.03), made: calIdx() }; } } } return port.freight; }
-function freightCheck(port){ const m = contract; if (m && m.port === port && hold[m.g] >= m.tons){ hold[m.g] -= m.tons; contract = null; earn(Math.round(m.reward*eco.trade), p.x, p.y); repute(m.nk, m.rep); chime(); gaz('The ' + p.name + ' landed ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' at ' + port.name + ' under contract.', 'you'); later(() => say('The consignee at ' + port.name + ' takes delivery of ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' and pays ' + Math.round(m.reward*eco.trade) + ' gold.'), 300); } }
-function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ paceOut = paceIdx; setPace(0, true); } /* in harbour the world goes by slowly; your sailing pace comes back when you weigh */ port.greased = false; { const m = Math.floor(clock/MONTH);
+function freightCheck(port){ const m = contract; if (m && m.port === port && hold[m.g] >= m.tons){ hold[m.g] -= m.tons;
+  contract = null; earn(Math.round(m.reward*eco.trade), p.x, p.y); repute(m.nk, m.rep);
+  chime(); gaz('The ' + p.name + ' landed ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' at ' + port.name + ' under contract.', 'you');
+  later(() => say('The consignee at ' + port.name + ' takes delivery of ' + m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' and pays ' + Math.round(m.reward*eco.trade) + ' gold.'), 300); } }
+function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ paceOut = paceIdx;
+  setPace(0, true); } /* in harbour the world goes by slowly; your sailing pace comes back when you weigh */ port.greased = false;
+  { const m = Math.floor(clock/MONTH);
   if (m > lastCall || lastCall === 0) cheer(3); lastCall = m; } payCourt(port); setChart(false);
   state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
@@ -1985,11 +2083,14 @@ function openPort(port){ note(port); freightCheck(port); if (paceOut == null){ p
   tavern = [newCaptain(1, 3), newCaptain(2, 4)]; if (port.spec.sz === 3) tavern.push(newCaptain(3, 5));
   makeOffers(port); autosave();
   $('port').hidden = false; renderPort(); $('leaveBtn').focus(); }
-function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true); paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true; state = 'play'; document.activeElement && document.activeElement.blur(); }
+function closePort(){ if (chartOpen) setChart(false); if (paceOut != null){ setPace(paceOut, true);
+  paceOut = null; } courtTok++; if (!$('paper').hidden) closeMenu(); autosave(); $('port').hidden = true;
+  state = 'play'; document.activeElement && document.activeElement.blur(); }
 let waiting = false;
 function waitOut(){ if (waiting || !hurr) return; waiting = true; const port = curPort; /* the hours go by as fast as they can be reckoned, a slice each frame, until the storm is past */
   const step = () => { const t0 = performance.now(); let n = 0; while (hurr && state === 'port' && n++ < 6000 && performance.now() - t0 < 13) update(.1);
-    if (hurr && state === 'port'){ requestAnimationFrame(step); return; } waiting = false; if (state === 'port' && !menuOpen && !chartOpen) renderPort(); if (!hurr) say('The hurricane has blown itself out. The sky is clearing over ' + port.name + '.'); };
+    if (hurr && state === 'port'){ requestAnimationFrame(step); return; } waiting = false;
+      if (state === 'port' && !menuOpen && !chartOpen) renderPort(); if (!hurr) say('The hurricane has blown itself out. The sky is clearing over ' + port.name + '.'); };
   step(); }
 function ashore(seconds){ for (let t = 0; t < seconds; t += .05) update(.05); } // work in port takes time; the world sails on
 /* one row of a ledger: a name, a line of detail, a value, and any number of buttons */
@@ -2004,7 +2105,7 @@ const hurt = s => Math.ceil(s.maxHull - s.hull) + Math.ceil(100 - s.sails);
 function mend(s, c){ const h = Math.min(c, Math.ceil(s.maxHull - s.hull)); s.hull = Math.min(s.maxHull, s.hull + h);
   c -= h; const v = Math.min(c, Math.ceil(100 - s.sails)); s.sails = Math.min(100, s.sails + v); return c - v; }
 function renderPort(focusId){
-  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + (curPort.spec.land ? ' landing' : curPort.spec.sz >= 3 ? ' city' : curPort.spec.sz === 2 ? ' town' : ' port') + (curPort.spec.free ? ' · free port' : '') + (curPort.name === homeName ? ' · your home port' : '');
+  $('portName').textContent = curPort.name; $('portNation').textContent = curPort.nation.adj + (curPort.spec.land ? ' landing' : curPort.spec.sz >= 3 ? ' city' : curPort.spec.sz === 2 ? ' town' : ' port') + (curPort.spec.free ? ' · free port' : '') + (wars.size && foesOf(curPort.nk).length ? ' · at war' : '') + (hurr ? ' · hurricane ' + (hurr.stage ? 'blowing' : 'coming') : '') + (dispNew ? ' · ' + dispNew + ' dispatch' + (dispNew > 1 ? 'es' : '') + ' unread' : '') + (squad().some(o => o.docked === curPort) ? ' · ' + squad().filter(o => o.docked === curPort).map(o => o.name).join(', ') + ' lying here' : '') + (curPort.name === homeName ? ' · your home port' : '');
     $('portGold').textContent = gold;
   document.querySelectorAll('#townTabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === portTab)));
   paintTown();
@@ -2032,16 +2133,18 @@ function renderPort(focusId){
     T('txt', 'Hold: ' + holdUsed() + ' of ' + holdCap() + ' tons across your fleet. Goods are cheap where they are made and dear where they are wanted.');
     if (curPort.spec.land) T('txt', 'A landing deals only in what it makes and what it lacks. No customs officer has ever been seen here.');
     const sellGoods = (g, n) => { const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9));
-      if (g === 'cloth' && curPort.home === 'es' && curPort.nk === 'es' && !curPort.spec.land && !curPort.greased && rnd() < .22){ const fine = Math.min(gold, n*4); hold[g] -= n; gold -= fine; repute('es', -2); later(() => say('The customs officers were waiting on the quay. Your ' + n + ' tons are seized and you are fined ' + fine + ' gold.'), 50); return; }
+      if (g === 'cloth' && curPort.home === 'es' && curPort.nk === 'es' && !curPort.spec.land && !curPort.greased && rnd() < .22){ const fine = Math.min(gold, n*4);
+        hold[g] -= n; gold -= fine; repute('es', -2); later(() => say('The customs officers were waiting on the quay. Your ' + n + ' tons are seized and you are fined ' + fine + ' gold.'), 50); return; }
       gold += Math.round(n*sell*eco.trade); hold[g] -= n; press(curPort, g, -n); repute(curPort.nk, .05*n); };
     GK.forEach(g => { if (curPort.spec.land && curPort.spec.mk.indexOf(g) < 0 && curPort.spec.dm.indexOf(g) < 0) return; const pr = price(curPort, g), sell = Math.max(1, Math.round(pr*.9)), room = Math.max(0, Math.min(holdCap() - holdUsed(), Math.floor(gold/pr))), n = Math.min(10, room), have = hold[g], bk = bestKnown(g, curPort.name), ev = (curPort.ev || []).find(e => e.g === g && e.until >= calIdx());
       const tip = bk.hi && bk.hi[1] > pr*1.12 ? ' · ' + bk.hi[1] + ' at ' + bk.hi[0] + ' ' + ago(bk.hi[2]) : bk.lo && bk.lo[1] < pr*.85 ? ' · only ' + bk.lo[1] + ' at ' + bk.lo[0] + ' ' + ago(bk.lo[2]) : '';
-      uiRow(ul, GOODS[g][0], (ev ? (ev.mul > 1 ? 'short here · ' : 'a glut here · ') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here, cheap · ' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain · ' : 'wanted here · ') : '') + 'hold ' + have + ' t' + tip, pr + ' a ton', [
+      uiRow(ul, GOODS[g][0], (ev ? (ev.mul > 1 ? 'short here · ' : 'a glut here · ') : curPort.spec.mk.indexOf(g) >= 0 ? 'made here, cheap · ' : curPort.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && curPort.home === 'es' ? 'forbidden by Spain · ' : 'wanted here · ') : '') + 'hold ' + have + ' t' + tip, pr + ' a ton' + (mkt(curPort, g) > 1.04 ? ' ▲' : mkt(curPort, g) < .96 ? ' ▼' : ''), [
         ['buy_' + g, 'Buy ' + (n || 10), n > 0, () => { gold -= n*pr; hold[g] += n; press(curPort, g, n); }], ['buymax_' + g, 'Fill', room > 10, () => { gold -= room*pr; hold[g] += room; press(curPort, g, room); }],
         ['sell10_' + g, 'Sell 10', have > 10, () => sellGoods(g, 10)], ['sell_' + g, have ? 'Sell ' + have + ' for ' + have*sell : 'Sell all', have > 0, () => sellGoods(g, have)]], renderPort, 'tight'); });
     if (contract) T('txt', 'Freight in hand: ' + contract.tons + ' tons of ' + GOODS[contract.g][0].toLowerCase() + ' for ' + contract.port.name + ' by ' + MONTHS[contract.until % 12] + ', ' + contract.reward + ' gold on delivery. You hold ' + hold[contract.g] + ' tons.');
     if (!curPort.spec.land && !contract){ const fr = freightOffer(curPort); if (fr) R('Freight wanted: ' + fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' for ' + fr.port.name, 'A merchant here will pay well above the market for it landed at ' + fr.port.name + ' within ' + fr.months + ' months. You find the goods; he pays on delivery.', fr.reward + ' gold', [['freight', 'Take the contract', true, () => { contract = { type: 'freight', nk: curPort.nk, g: fr.g, tons: fr.tons, port: fr.port, until: calIdx() + fr.months, reward: fr.reward, rep: 4, title: 'Land ' + fr.tons + ' tons of ' + GOODS[fr.g][0].toLowerCase() + ' at ' + fr.port.name }; curPort.freight = null; }]]); }
-    if (curPort.name === homeName){ T('sec', 'Your warehouse'); const used = GK.reduce((n, g) => n + (store2[g] || 0), 0); T('txt', used + ' of 400 tons stored. Goods kept here wait for a better price or a contract.');
+    if (curPort.name === homeName){ T('sec', 'Your warehouse'); const used = GK.reduce((n, g) => n + (store2[g] || 0), 0);
+      T('txt', used + ' of 400 tons stored. Goods kept here wait for a better price or a contract.');
       GK.forEach(g => { const have = hold[g], st = store2[g] || 0; if (!have && !st) return; const inn = Math.min(have, 400 - used), out = Math.min(st, Math.max(0, holdCap() - holdUsed()));
         uiRow(ul, GOODS[g][0], 'aboard ' + have + ' t · stored ' + st + ' t', '', [['store_' + g, 'Store ' + inn, inn > 0, () => { hold[g] -= inn; store2[g] = st + inn; }], ['take_' + g, 'Take ' + out, out > 0, () => { store2[g] = st - out; hold[g] += out; }], ['sellst_' + g, 'Sell stored', st > 0, () => { const sell = Math.max(1, Math.round(price(curPort, g)*.9)); gold += st*sell; press(curPort, g, -st); store2[g] = 0; }]], renderPort, 'tight'); }); }
     if (curPort.home === 'es' && curPort.nk === 'es' && hold.cloth > 0 && !curPort.greased){ const c = 20 + hold.cloth*3;
@@ -2347,7 +2450,7 @@ function paintTown(){
     g.lineWidth = 2.4; g.stroke();
   // ships, drawn exactly as they are under way: a trader at the jetty, and your own at anchor
   const main = cx, ghosts = A.ships.map(v => Object.assign(makeShip(v.cls, v.owner, v.role, v.x, v.y, v.h), { sail: 0, pol: .5, speed: 0, heel: 0 }));
-  [p].concat(squad().filter(inCompany)).forEach((o, i) => { const k = Math.ceil(i/2), sd = i % 2 ? 1 : -1; ghosts.push(Object.assign({}, o, { x: A.anchor[0] + (i ? sd*k*92 : 0), y: A.anchor[1] + (i ? 16 + (k - 1)*6 : 0) + Math.sin(time*1.3 + i)*1.2, h: -Math.PI/2 + .12*sd*(i ? 1 : 0), sail: 0, pol: .5, speed: 0, heel: Math.sin(time*.9 + i*2)*.08, sinking: null })); });
+  [p].concat(squad().filter(inCompany), squad().filter(o => o.docked === curPort)).forEach((o, i) => { const k = Math.ceil(i/2), sd = i % 2 ? 1 : -1; ghosts.push(Object.assign({}, o, { x: A.anchor[0] + (i ? sd*k*92 : 0), y: A.anchor[1] + (i ? 16 + (k - 1)*6 : 0) + Math.sin(time*1.3 + i)*1.2, h: -Math.PI/2 + .12*sd*(i ? 1 : 0), sail: 0, pol: .5, speed: 0, heel: Math.sin(time*.9 + i*2)*.08, sinking: null })); });
   cx = g; try { for (const o of ghosts){ g.save(); g.translate(o.x, o.y); g.scale(1.25, 1.25); g.translate(-o.x, -o.y); drawShip(o); g.restore(); } } finally { cx = main; }
   for (const f of A.flags){ const x = f[0], y = f[1], wd = wind.dir, fw = Math.sin(time*6 + x)*3.5, L = f[2]; g.lineCap = 'round';
     { const pts = []; for (let j = 0; j <= 4; j++){ const d = j/4, o = Math.sin(d*Math.PI)*fw;
@@ -2394,9 +2497,13 @@ function drawPic(s){
   if (miniC && s.x != null && s.owner === 'player'){ /* where she is: a corner of the chart about her */
     const iw = Math.round(w*.3), ih = Math.round(h*.52), ix = w - iw - 8, iy = h - ih - 8, span = 7000, k2 = iw/span, sc = miniC.width/W, ox = clamp(s.x - span/2, 0, W - span), oy = clamp(s.y - ih/k2/2, 0, H - ih/k2);
     g.drawImage(miniC, ox*sc, oy*sc, span*sc, ih/k2*sc, ix, iy, iw, ih); g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();
-    for (const q of ports){ if (q.spec.land || q.spec.sz < 2 && q.name !== homeName) continue; const qx = ix + (q.x - ox)*k2, qy = iy + (q.y - oy)*k2; if (qx < ix || qx > ix + iw || qy < iy || qy > iy + ih) continue; g.fillStyle = q.name === homeName ? HOMEC : '#ffd24a'; circle(g, qx, qy, 3); g.fill(); }
+    for (const q of ports){ if (q.spec.land || q.spec.sz < 2 && q.name !== homeName) continue;
+      const qx = ix + (q.x - ox)*k2, qy = iy + (q.y - oy)*k2; if (qx < ix || qx > ix + iw || qy < iy || qy > iy + ih) continue;
+      g.fillStyle = q.name === homeName ? HOMEC : '#ffd24a'; circle(g, qx, qy, 3); g.fill(); }
     if (s !== p){ g.fillStyle = '#c8321e'; circle(g, ix + (p.x - ox)*k2, iy + (p.y - oy)*k2, 4); g.fill(); }
-    const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff'; g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke(); g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
+    const mx2 = ix + (s.x - ox)*k2, my2 = iy + (s.y - oy)*k2; g.fillStyle = '#ffffff';
+      g.strokeStyle = '#08191e'; g.lineWidth = 2; circle(g, mx2, my2, 5.5); g.fill(); g.stroke();
+      g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; circle(g, mx2, my2, 11); g.stroke(); g.restore();
     g.strokeStyle = 'rgba(214,165,78,.9)'; g.lineWidth = 2; g.strokeRect(ix + 1, iy + 1, iw - 2, ih - 2); }
 }
 function stowage(){ /* the fleet's common cargo, stowed ship by ship: flagship first, then each consort that is not trading on her own account */
@@ -2443,7 +2550,8 @@ function renderFleet(focusId){
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
     $('shipNow').textContent = nowLine(s); $('shipNow').hidden = false;
     R('Where she is', 'Her place is marked on the picture above' + (s === p ? '.' : ', with the flagship in red.'), '', [['fc', 'Show on chart', true, () => { closeMenu(); setChart(true, s); }]]);
-    { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0; R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
+    { const m = s.task && s.task.type === 'trade' ? null : stowage().get(s) || {}, used = m ? GK.reduce((n, g) => n + (m[g] || 0), 0) : s.task.cargo ? s.task.cargo.tons : 0;
+      R('In her hold', holdLine(s), used + ' of ' + s.t.hold + ' tons', []); }
     if (flag) R('Fleet overview', 'Every ship on one sheet: what she is doing, where, her state and her last word, with orders for a whole division.', '', [['toOverview', 'Open the overview', true, () => openPaper('overview')]]);
     if (flag) R('Trade ledger', 'What your traders have made, month by month, and the price book.', '', [['toLedger', 'Open the ledger', true, () => openPaper('ledger')]]);
     if (flag && sq.length) R('Signals to the whole fleet', sq.filter(o => o.docked).length + ' in port, ' + sq.filter(o => !o.docked && o.task && o.task.type !== 'fleet').length + ' detached, ' + sq.filter(o => !o.task || o.task.type === 'fleet').length + ' with the flag.', '', [['sg_recall', 'All rejoin', true, () => fleetSignal('recall')], ['sg_port', 'All to the nearest port', true, () => fleetSignal('port')], ['sg_home', 'Rendezvous at ' + homeName, true, () => fleetSignal('home')]]);
@@ -2474,7 +2582,8 @@ function renderFleet(focusId){
           ['as_sail', 'Sail now', !!(t2 && s.docked), () => tradeSail(s)], ['as_two', 'Two ports', true, () => pickOnChart(s, 'two')], ['as_area', 'An area', true, () => pickOnChart(s, 'area')]]);
         if (t2 && s.docked) ledgerText(ul, 'txt', '"Sail now" sends her out of ' + s.docked.name + ' at once with whatever is in her hold, for her next port of call.');
         [['margin', 'Least profit she will load for', 'A higher mark means fewer cargoes and surer ones.'], ['contra', 'Contraband', 'Cloth into Spanish ports, and provisions to the French in wartime.'], ['risk', 'Ports she will use', 'Whether she calls where your standing is poor.'], ['ware', 'Your warehouse', 'At your home port she can load what you have stored and sell it where it fetches most.'], ['insure', 'Insurance', 'If she is lost, the underwriters pay back the cargo and her trading stock.']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k])); R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
-        { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4); if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
+        { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4);
+          if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
         R('Her trading stock', 'The gold she takes from your purse to trade with. It comes back when she is given other orders. If it runs too low to load a cargo, her captain writes to ask for more.', '', [['so_cap', DOCS.cap[ci][1], !t2, () => { s.doc.cap = DOCS.cap[(ci + 1) % DOCS.cap.length][0]; }]]); }
       R('Division', 'Ships of one division can be given a single order from the fleet overview.', '', [['so_div', DIVS[s.div|0], true, () => { s.div = ((s.div|0) + 1) % DIVS.length; }]]);
       ledgerText(ul, 'sec', 'Standing orders');
@@ -2522,7 +2631,8 @@ function snapshot(){
 }
 function readSlot(id){ try { const d = JSON.parse(recall('save.' + id)); return d && d.p ? d : null; } catch (_){ return null; } }
 function writeSlot(id){ const d = snapshot(); store('save.' + id, JSON.stringify(d)); const b = readSlot(id); return !!b && b.t === d.t; }
-function autosave(){ if (p && p.alive) writeSlot('auto'); }
+function autosave(){ if (p && p.alive && !writeSlot('auto') && !saveWarned){ saveWarned = true;
+  say('The log could not be written: this browser\'s storage is full or closed. Copy a save code from the log book to keep your voyage.'); } }
 function latest(){ return SLOTS.map(v => readSlot(v[0])).filter(Boolean).sort((a, b) => b.t - a.t)[0] || null; }
 function canSave(){ return (state === 'play' || state === 'port') && p.alive && !melee &&
   !(state === 'play' && (balls.length || ships.some(s => s.announced && !s.surrendered && !s.released && Math.hypot(s.x-p.x, s.y-p.y) < 900))); }
@@ -2567,7 +2677,8 @@ function setStart(v){ startName = STARTS[v] ? v : 'Kingston'; document.querySele
 document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => setStart(b.dataset.start))); setStart('Kingston');
 function setFoul(v){ fouling = !!v; store('foul', fouling ? '1' : '0'); const b = $('foulBtn'); b.setAttribute('aria-pressed', fouling); b.textContent = 'Hull fouling: ' + (fouling ? 'on' : 'off'); }
 $('foulBtn').addEventListener('click', () => setFoul(!fouling)); setFoul(recall('foul') === '1');
-document.querySelectorAll('[data-eco]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.eco, i = ECOV.findIndex(o => o[0] === eco[k]); setEco(k, ECOV[(i + 1) % ECOV.length][0]); })); try { const e0 = JSON.parse(recall('eco') || '{}'); for (const k in ECO) if (ECOV.some(o => o[0] === e0[k])) eco[k] = e0[k]; } catch (_){ } setEco();
+document.querySelectorAll('[data-eco]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.eco, i = ECOV.findIndex(o => o[0] === eco[k]); setEco(k, ECOV[(i + 1) % ECOV.length][0]); }));
+  try { const e0 = JSON.parse(recall('eco') || '{}'); for (const k in ECO) if (ECOV.some(o => o[0] === e0[k])) eco[k] = e0[k]; } catch (_){ } setEco();
 function setEra(v){ startCal = ERAS[v] ? +v : 72; document.querySelectorAll('[data-era]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.era === startCal));
   $('eraNote').textContent = ERAS[startCal]; }
 document.querySelectorAll('[data-era]').forEach(b => b.addEventListener('click', () => setEra(b.dataset.era))); setEra(72);
@@ -2593,9 +2704,12 @@ $('loadCode').addEventListener('click', () => { const d = decode($('saveCode').v
 /* ---------- Toast ---------- */
 let toastT = 0;
 const toastQ = []; let toastAge = 9;
-function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off'); toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
+function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('off');
+  toastT = clamp(5 + msg.length/16, 6.5, 14); toastAge = 0; } /* long enough to read, however fast the game is running */
 function say(msg){ if (toastT > 0 && toastAge < 1.6 && $('toast').textContent !== msg){ if (toastQ.length < 5) toastQ.push(msg); return; } showToast(msg); }
-function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift()); return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift()); else $('toast').classList.add('off'); } } }
+function toastTick(rdt){ toastAge += rdt; if (toastQ.length && toastAge >= 2.6){ showToast(toastQ.shift());
+  return; } if (toastT > 0){ toastT -= rdt; if (toastT <= 0){ if (toastQ.length) showToast(toastQ.shift());
+  else $('toast').classList.add('off'); } } }
 
 /* ---------- Update ---------- */
 function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2 : mo >= 8 ? 1 : 0; if (sn !== seasonNow){ seasonNow = sn; tiles.clear(); tilesLo.clear(); } }
@@ -2649,8 +2763,8 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
   for (let i = ships.length-1; i >= 0; i--){ const s = ships[i];
     if (s.sinking != null){ s.sinking -= dt; if (s.sinking <= 0) ships.splice(i, 1); continue; }
     if (s.gone){ ships.splice(i, 1); continue; }
-    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true;
-      ships.splice(i, 1); continue; } /* hull down and gone */
+    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s) && !outposts.some(o => Math.abs(s.x - o.x) < 4600 && Math.abs(s.y - o.y) < 4600)){ if ((s.rich || s.packet || s.conv) && s.dest && ghosts2.length < 12) ghosts2.push({ cls: s.cls, owner: s.owner, x: s.x, y: s.y, dest: s.dest, cargo: s.cargo, goods: s.goods, rich: !!s.rich, packet: !!s.packet, conv: !!s.conv, name: s.t.name, hull: s.hull, t: clock });
+      s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
     if (s.role === 'rover' && !s.surrendered){ s.ttl -= dt; if (s.ttl <= 0 && Math.hypot(s.x - p.x, s.y - p.y) > 1500) s.gone = true; }
     if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN;
       } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++;
@@ -2659,6 +2773,17 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
   }
   trafT -= dt; if (trafT <= 0){ trafT = .35; let np = 0, small = 0; for (const q of ports){ const d = dP(q);
     if (d < BUBBLE){ np += q.spec.land ? .6 : q.spec.sz >= 2 ? 1.6 : 1; if (q.spec.sz < 2 && d < 4200) small++; } }
+    outposts = squad().filter(o => !o.docked && o.task && o.task.type === 'raid' && Math.hypot(o.x - p.x, o.y - p.y) > BUBBLE).slice(0, 2);
+      /* a cruiser on a distant station has ships to meet as well */
+    for (const o of outposts){ let n = 0; for (const s of ships) if (s.role === 'merchant' && Math.abs(s.x - o.x) < 3200 && Math.abs(s.y - o.y) < 3200) n++;
+      if (n < 4 && merchants < 70){ focus = o; try { spawnMerchant(false); } finally { focus = null; } } }
+    for (let gi = ghosts2.length - 1; gi >= 0; gi--){ const gh = ghosts2[gi], dx = gh.dest.ox - gh.x, dy = gh.dest.oy - gh.y, dd = Math.hypot(dx, dy) || 1;
+      gh.x += dx/dd*55*.35; gh.y += dy/dd*55*.35; /* a ship lost sight of keeps her course, and can be found again */
+      if (dd < 300 || clock - gh.t > 900){ ghosts2.splice(gi, 1); continue; } const dp = Math.hypot(gh.x - p.x, gh.y - p.y);
+        if (dp > 1500 && dp < 4800 && !isNear(gh.x, gh.y)){ const s = makeShip(gh.cls, gh.owner, 'merchant', gh.x, gh.y, Math.atan2(dy, dx));
+        s.dest = gh.dest; s.cargo = gh.cargo; s.goods = gh.goods; s.t.name = gh.name; s.hull = Math.min(s.maxHull, gh.hull);
+        if (gh.rich){ s.rich = true; s.t.chests = true; s.t.tag = '#ffe07a'; } if (gh.packet) s.packet = true;
+        ships.push(s); if (gh.conv) convoy(s, { nk: gh.owner, spec: { mk: [] } }); ghosts2.splice(gi, 1); } }
     spawnRival(); trafWant = Math.round(clamp(4 + np*1.7, 4, 32)); if (merchants < trafWant) spawnMerchant(false); if (fishers < Math.min(7, small)) spawnFisher(); }
   patrolT -= dt; if (patrolT <= 0){ patrolT = 10; NKEYS.forEach(k => { let n = 0; for (const q of ports) if (q.nk === k && !q.spec.land && dP(q) < BUBBLE) n++; if ((pat[k] || 0) < Math.min(3, Math.ceil(n/3))) spawnPatrol(k, false); }); }
   driftT -= dt; if (driftT <= 0){ driftT = 40; NKEYS.forEach(k => { if (standing[k] < 0) repute(k, 1); }); }
@@ -3182,7 +3307,7 @@ function drawShip(s){
     cx.lineTo(L*.42, 0); cx.stroke(); cx.lineCap = 'butt'; } /* raked: the shot tears down the length of her */
   // deck furniture tells the classes apart
   cx.fillStyle = 'rgba(30,18,8,.75)'; cx.fillRect(-L*.05, -Wd*.1, L*.09, Wd*.2); cx.strokeStyle = 'rgba(150,110,60,.5)'; cx.lineWidth = .6; cx.strokeRect(-L*.05, -Wd*.1, L*.09, Wd*.2);
-  if (T.cargo){ for (const v of [[.07, -.16, 7], [.07, .1, 6], [-.02, -.04, 6.5], [-.3, 0, 6]]){ cx.fillStyle = '#8f6537';
+  if (T.cargo && !(s.task && s.task.type === 'trade' && !s.task.cargo)){ for (const v of [[.07, -.16, 7], [.07, .1, 6], [-.02, -.04, 6.5], [-.3, 0, 6]]){ cx.fillStyle = '#8f6537';
     cx.fillRect(v[0]*L, v[1]*Wd, v[2], v[2]); cx.strokeStyle = '#4e3418'; cx.lineWidth = .8;
     cx.strokeRect(v[0]*L, v[1]*Wd, v[2], v[2]); }
     for (const v of [[.34, -.1], [.34, .1], [-.1, .2]]){ cx.fillStyle = '#6f4b25'; circle(cx, v[0]*L, v[1]*Wd, 2.6); cx.fill(); cx.strokeStyle = '#c9a25e'; cx.lineWidth = .7; cx.stroke(); } }
@@ -3729,8 +3854,14 @@ function drawBigChart(){
     const d = Math.hypot(s.x-p.x, s.y-p.y); if (s.role !== 'fleet' && s !== tracked && !s.surrendered && (prize(s) ? d > 1800 : d > 2600)) continue;
     const sx = X0 + s.x*k, sy = Y0 + s.y*k;
     if (s.role === 'fleet'){ /* a consort: a white pennant on her heading, with her name */
-      cx.save(); cx.translate(sx, sy); cx.rotate(s.h); cx.fillStyle = '#ffffff'; cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5); cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
-      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
+      const tk = s.task && s.task.type, pc = s.docked ? '#b9b39f' : tk === 'trade' ? '#e8b92e' : tk === 'escort' ? '#7fb0ff' : tk === 'raid' || tk === 'chase' ? '#ff8a73' : '#ffffff';
+        /* gold for a trader, blue an escort, red a cruiser, grey in port */
+      cx.save(); cx.translate(sx, sy); cx.rotate(s.docked ? -Math.PI/2 : s.h); cx.fillStyle = pc;
+        cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5);
+        cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
+      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL;
+        cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)';
+        cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
       continue; }
     cx.fillStyle = s.nation ? NAT[s.nation].c1 : '#111111';
       cx.strokeStyle = INK; cx.lineWidth = 1; cx.fillRect(sx - 3, sy - 3, 6, 6); cx.strokeRect(sx - 3, sy - 3, 6, 6); }
@@ -3762,22 +3893,43 @@ function drawBigChart(){
     { const tw = cx.measureText(label).width, bx0 = cx.textAlign === 'left' ? tx : cx.textAlign === 'right' ? tx - tw : tx - tw/2, box = [bx0 - 3, ty - fs, bx0 + tw + 3, ty + 4];
       if (placed.some(o => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])) continue; placed.push(box); }
     cx.lineWidth = 4; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(label, tx, ty); cx.fillStyle = home ? '#0b6b4c' : INK; cx.fillText(label, tx, ty); }
+  for (const s of squad()){ const t = s.task; if (!t || t.type !== 'trade') continue;
+    cx.strokeStyle = (t.made || 0) < 0 ? 'rgba(140,42,28,.75)' : 'rgba(31,107,58,.75)';
+    cx.lineWidth = 2.4; cx.setLineDash([10, 6]); /* her run, green while it pays and red when it does not */
+    if (t.area){ circle(cx, X0 + t.area.x*k, Y0 + t.area.y*k, t.area.r*k); cx.stroke();
+      } else if (t.set.length === 2){ cx.beginPath(); cx.moveTo(X0 + t.set[0].x*k, Y0 + t.set[0].y*k);
+      cx.lineTo(X0 + t.set[1].x*k, Y0 + t.set[1].y*k); cx.stroke(); } cx.setLineDash([]); }
+  dispatches.slice(0, 6).forEach(v => { if (!v.x) return; const dx2 = X0 + v.x*k, dy2 = Y0 + v.y*k; cx.fillStyle = '#8c2a1c'; circle(cx, dx2, dy2, 4.5); cx.fill(); cx.strokeStyle = '#f4ecd2'; cx.lineWidth = 1; cx.stroke(); });
+    /* a seal where each late dispatch was written */
   if (priceShow){ const base = GOODS[priceShow][1]; cx.font = '700 ' + Math.max(12, fs - 3) + 'px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; /* the price book, written on the chart */
-    for (const q of ports){ const b = book[q.name] && book[q.name][priceShow]; if (!b) continue; const px2 = X0 + q.x*k, py2 = Y0 + q.y*k + 22, tw3 = cx.measureText(b[0]).width + 8; cx.fillStyle = b[0] <= base*.85 ? '#1f6b3a' : b[0] >= base*1.2 ? '#8c2a1c' : '#3a2614'; cx.fillRect(px2 - tw3/2, py2 - 12, tw3, 16); cx.fillStyle = '#f4ecd2'; cx.fillText(b[0], px2, py2); } }
-  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null; /* trading waters: being marked out, or already hers */
-    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]); circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
+    for (const q of ports){ const b = book[q.name] && book[q.name][priceShow]; if (!b) continue;
+      const px2 = X0 + q.x*k, py2 = Y0 + q.y*k + 22, tw3 = cx.measureText(b[0]).width + 8;
+      cx.fillStyle = b[0] <= base*.85 ? '#1f6b3a' : b[0] >= base*1.2 ? '#8c2a1c' : '#3a2614';
+      cx.fillRect(px2 - tw3/2, py2 - 12, tw3, 16); cx.fillStyle = '#f4ecd2'; cx.fillText(b[0], px2, py2); } }
+  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null;
+    /* trading waters: being marked out, or already hers */
+    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]);
+      circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
       for (const q of ports) if (admits(q) && Math.hypot(q.ox - ar.x, q.oy - ar.y) < ar.r){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); } }
-    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
+    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73';
+      cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
     if (chartPick && chartPick.kind === 'two' && chartPick.a){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 3; circle(cx, X0 + chartPick.a.x*k, Y0 + chartPick.a.y*k, 13); cx.stroke(); } }
-  if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k; cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4)); cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
-    cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)'; cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48); } /* her name stands clear of the port names, under the ring */
+  if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k;
+    cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4));
+    cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
+    cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)';
+      cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48);
+      } /* her name stands clear of the port names, under the ring */
   const ppx = X0 + p.x*k, ppy = Y0 + p.y*k; cx.strokeStyle = '#c8321e'; cx.lineWidth = 1.6; circle(cx, ppx, ppy, 12 + 2.5*Math.sin(time*4)); cx.stroke();
   cx.save(); cx.translate(ppx, ppy); cx.rotate(p.h); cx.fillStyle = '#c8321e'; cx.strokeStyle = INK;
     cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-6, 5.5); cx.lineTo(-3, 0);
     cx.lineTo(-6, -5.5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
   cx.restore(); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(x+.5, y+.5, w-1, h-1);
   cx.textAlign = 'center'; cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f';
-  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)'; cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
+  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif';
+    cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)';
+    cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5;
+    cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
   if (!chartPick) cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
   const items = NKEYS.map(k2 => [k2, NAT[k2].land.replace(/^the /, '') + ': ' + standWord(standing[k2])]).concat([[null, 'Home: ' + homeName]]); let tw = 0;
   cx.font = '700 13px "Alegreya Sans", sans-serif'; items.forEach(v => { tw += cx.measureText(v[1]).width + 34; });
@@ -3854,11 +4006,14 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr;
     }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES;
     }, get goodsKeys(){ return GK; },
-  press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book; }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
+  press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book;
+    }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
   waitOut, get waiting(){ return waiting; }, stowage, holdLine, nowLine,
+  get ghosts2(){ return ghosts2; }, get outposts(){ return outposts; },
   TRAITS, DIVS, get eco(){ return eco; }, setEco, get contract(){ return contract; }, set contract(v){ contract = v; }, get tutI(){ return tutI; }, set tutI(v){ tutI = v; }, tutTick, TUT,
   tradeSail, pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
-  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
+  say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches;
+    }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;
     }, get morale(){ return morale; }, set morale(v){ morale = v; }, get officers(){ return officers;

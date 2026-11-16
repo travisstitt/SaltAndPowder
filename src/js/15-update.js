@@ -49,8 +49,8 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
   for (let i = ships.length-1; i >= 0; i--){ const s = ships[i];
     if (s.sinking != null){ s.sinking -= dt; if (s.sinking <= 0) ships.splice(i, 1); continue; }
     if (s.gone){ ships.splice(i, 1); continue; }
-    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true;
-      ships.splice(i, 1); continue; } /* hull down and gone */
+    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s) && !outposts.some(o => Math.abs(s.x - o.x) < 4600 && Math.abs(s.y - o.y) < 4600)){ if ((s.rich || s.packet || s.conv) && s.dest && ghosts2.length < 12) ghosts2.push({ cls: s.cls, owner: s.owner, x: s.x, y: s.y, dest: s.dest, cargo: s.cargo, goods: s.goods, rich: !!s.rich, packet: !!s.packet, conv: !!s.conv, name: s.t.name, hull: s.hull, t: clock });
+      s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
     if (s.role === 'rover' && !s.surrendered){ s.ttl -= dt; if (s.ttl <= 0 && Math.hypot(s.x - p.x, s.y - p.y) > 1500) s.gone = true; }
     if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN;
       } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++;
@@ -59,6 +59,17 @@ function update(dt){ tick++; { const mo = calMon(), sn = mo >= 11 || mo <= 2 ? 2
   }
   trafT -= dt; if (trafT <= 0){ trafT = .35; let np = 0, small = 0; for (const q of ports){ const d = dP(q);
     if (d < BUBBLE){ np += q.spec.land ? .6 : q.spec.sz >= 2 ? 1.6 : 1; if (q.spec.sz < 2 && d < 4200) small++; } }
+    outposts = squad().filter(o => !o.docked && o.task && o.task.type === 'raid' && Math.hypot(o.x - p.x, o.y - p.y) > BUBBLE).slice(0, 2);
+      /* a cruiser on a distant station has ships to meet as well */
+    for (const o of outposts){ let n = 0; for (const s of ships) if (s.role === 'merchant' && Math.abs(s.x - o.x) < 3200 && Math.abs(s.y - o.y) < 3200) n++;
+      if (n < 4 && merchants < 70){ focus = o; try { spawnMerchant(false); } finally { focus = null; } } }
+    for (let gi = ghosts2.length - 1; gi >= 0; gi--){ const gh = ghosts2[gi], dx = gh.dest.ox - gh.x, dy = gh.dest.oy - gh.y, dd = Math.hypot(dx, dy) || 1;
+      gh.x += dx/dd*55*.35; gh.y += dy/dd*55*.35; /* a ship lost sight of keeps her course, and can be found again */
+      if (dd < 300 || clock - gh.t > 900){ ghosts2.splice(gi, 1); continue; } const dp = Math.hypot(gh.x - p.x, gh.y - p.y);
+        if (dp > 1500 && dp < 4800 && !isNear(gh.x, gh.y)){ const s = makeShip(gh.cls, gh.owner, 'merchant', gh.x, gh.y, Math.atan2(dy, dx));
+        s.dest = gh.dest; s.cargo = gh.cargo; s.goods = gh.goods; s.t.name = gh.name; s.hull = Math.min(s.maxHull, gh.hull);
+        if (gh.rich){ s.rich = true; s.t.chests = true; s.t.tag = '#ffe07a'; } if (gh.packet) s.packet = true;
+        ships.push(s); if (gh.conv) convoy(s, { nk: gh.owner, spec: { mk: [] } }); ghosts2.splice(gi, 1); } }
     spawnRival(); trafWant = Math.round(clamp(4 + np*1.7, 4, 32)); if (merchants < trafWant) spawnMerchant(false); if (fishers < Math.min(7, small)) spawnFisher(); }
   patrolT -= dt; if (patrolT <= 0){ patrolT = 10; NKEYS.forEach(k => { let n = 0; for (const q of ports) if (q.nk === k && !q.spec.land && dP(q) < BUBBLE) n++; if ((pat[k] || 0) < Math.min(3, Math.ceil(n/3))) spawnPatrol(k, false); }); }
   driftT -= dt; if (driftT <= 0){ driftT = 40; NKEYS.forEach(k => { if (standing[k] < 0) repute(k, 1); }); }

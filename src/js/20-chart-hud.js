@@ -103,8 +103,14 @@ function drawBigChart(){
     const d = Math.hypot(s.x-p.x, s.y-p.y); if (s.role !== 'fleet' && s !== tracked && !s.surrendered && (prize(s) ? d > 1800 : d > 2600)) continue;
     const sx = X0 + s.x*k, sy = Y0 + s.y*k;
     if (s.role === 'fleet'){ /* a consort: a white pennant on her heading, with her name */
-      cx.save(); cx.translate(sx, sy); cx.rotate(s.h); cx.fillStyle = '#ffffff'; cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5); cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
-      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL; cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
+      const tk = s.task && s.task.type, pc = s.docked ? '#b9b39f' : tk === 'trade' ? '#e8b92e' : tk === 'escort' ? '#7fb0ff' : tk === 'raid' || tk === 'chase' ? '#ff8a73' : '#ffffff';
+        /* gold for a trader, blue an escort, red a cruiser, grey in port */
+      cx.save(); cx.translate(sx, sy); cx.rotate(s.docked ? -Math.PI/2 : s.h); cx.fillStyle = pc;
+        cx.strokeStyle = INK; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(9, 0); cx.lineTo(-6, 5);
+        cx.lineTo(-3, 0); cx.lineTo(-6, -5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
+      if (s === chartMark || s.docked || chartV.z >= 1.6 || Math.hypot(s.x - p.x, s.y - p.y) > 900){ cx.font = 'italic ' + Math.max(12, fs - 3) + 'px ' + FELL;
+        cx.textAlign = 'left'; cx.lineWidth = 3.5; cx.strokeStyle = 'rgba(233,217,176,.92)';
+        cx.strokeText(s.name, sx + 11, sy - 7); cx.fillStyle = '#1d4f6b'; cx.fillText(s.name, sx + 11, sy - 7); }
       continue; }
     cx.fillStyle = s.nation ? NAT[s.nation].c1 : '#111111';
       cx.strokeStyle = INK; cx.lineWidth = 1; cx.fillRect(sx - 3, sy - 3, 6, 6); cx.strokeRect(sx - 3, sy - 3, 6, 6); }
@@ -136,22 +142,43 @@ function drawBigChart(){
     { const tw = cx.measureText(label).width, bx0 = cx.textAlign === 'left' ? tx : cx.textAlign === 'right' ? tx - tw : tx - tw/2, box = [bx0 - 3, ty - fs, bx0 + tw + 3, ty + 4];
       if (placed.some(o => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])) continue; placed.push(box); }
     cx.lineWidth = 4; cx.strokeStyle = 'rgba(233,217,176,.92)'; cx.strokeText(label, tx, ty); cx.fillStyle = home ? '#0b6b4c' : INK; cx.fillText(label, tx, ty); }
+  for (const s of squad()){ const t = s.task; if (!t || t.type !== 'trade') continue;
+    cx.strokeStyle = (t.made || 0) < 0 ? 'rgba(140,42,28,.75)' : 'rgba(31,107,58,.75)';
+    cx.lineWidth = 2.4; cx.setLineDash([10, 6]); /* her run, green while it pays and red when it does not */
+    if (t.area){ circle(cx, X0 + t.area.x*k, Y0 + t.area.y*k, t.area.r*k); cx.stroke();
+      } else if (t.set.length === 2){ cx.beginPath(); cx.moveTo(X0 + t.set[0].x*k, Y0 + t.set[0].y*k);
+      cx.lineTo(X0 + t.set[1].x*k, Y0 + t.set[1].y*k); cx.stroke(); } cx.setLineDash([]); }
+  dispatches.slice(0, 6).forEach(v => { if (!v.x) return; const dx2 = X0 + v.x*k, dy2 = Y0 + v.y*k; cx.fillStyle = '#8c2a1c'; circle(cx, dx2, dy2, 4.5); cx.fill(); cx.strokeStyle = '#f4ecd2'; cx.lineWidth = 1; cx.stroke(); });
+    /* a seal where each late dispatch was written */
   if (priceShow){ const base = GOODS[priceShow][1]; cx.font = '700 ' + Math.max(12, fs - 3) + 'px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; /* the price book, written on the chart */
-    for (const q of ports){ const b = book[q.name] && book[q.name][priceShow]; if (!b) continue; const px2 = X0 + q.x*k, py2 = Y0 + q.y*k + 22, tw3 = cx.measureText(b[0]).width + 8; cx.fillStyle = b[0] <= base*.85 ? '#1f6b3a' : b[0] >= base*1.2 ? '#8c2a1c' : '#3a2614'; cx.fillRect(px2 - tw3/2, py2 - 12, tw3, 16); cx.fillStyle = '#f4ecd2'; cx.fillText(b[0], px2, py2); } }
-  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null; /* trading waters: being marked out, or already hers */
-    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]); circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
+    for (const q of ports){ const b = book[q.name] && book[q.name][priceShow]; if (!b) continue;
+      const px2 = X0 + q.x*k, py2 = Y0 + q.y*k + 22, tw3 = cx.measureText(b[0]).width + 8;
+      cx.fillStyle = b[0] <= base*.85 ? '#1f6b3a' : b[0] >= base*1.2 ? '#8c2a1c' : '#3a2614';
+      cx.fillRect(px2 - tw3/2, py2 - 12, tw3, 16); cx.fillStyle = '#f4ecd2'; cx.fillText(b[0], px2, py2); } }
+  { const ar = chartPick && chartPick.kind === 'area' && chartPick.step ? { x: chartPick.a[0], y: chartPick.a[1], r: clamp(Math.hypot((chartPtr[0] - x + ox)/k - chartPick.a[0], (chartPtr[1] - y + oy)/k - chartPick.a[1]), 500, 8000) } : chartMark && chartMark.task && chartMark.task.type === 'trade' ? chartMark.task.area : null;
+    /* trading waters: being marked out, or already hers */
+    if (ar){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.2; cx.setLineDash([9, 7]);
+      circle(cx, X0 + ar.x*k, Y0 + ar.y*k, ar.r*k); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(13,111,115,.08)'; cx.fill();
       for (const q of ports) if (admits(q) && Math.hypot(q.ox - ar.x, q.oy - ar.y) < ar.r){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); } }
-    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
+    if (chartMark && chartMark.task && chartMark.task.type === 'trade' && !chartMark.task.area) for (const q of chartMark.task.set){ cx.strokeStyle = '#0d6f73';
+      cx.lineWidth = 2; circle(cx, X0 + q.x*k, Y0 + q.y*k, 11); cx.stroke(); }
     if (chartPick && chartPick.kind === 'two' && chartPick.a){ cx.strokeStyle = '#0d6f73'; cx.lineWidth = 3; circle(cx, X0 + chartPick.a.x*k, Y0 + chartPick.a.y*k, 13); cx.stroke(); } }
-  if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k; cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4)); cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
-    cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)'; cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48); } /* her name stands clear of the port names, under the ring */
+  if (chartMark && chartMark.sinking == null){ const mx2 = X0 + chartMark.x*k, my2 = Y0 + chartMark.y*k;
+    cx.strokeStyle = '#0d6f73'; cx.lineWidth = 2.6; circle(cx, mx2, my2, 17 + 3*Math.sin(time*4));
+    cx.stroke(); cx.lineWidth = 1.2; circle(cx, mx2, my2, 26 + 3*Math.sin(time*4)); cx.stroke();
+    cx.font = fs + 'px ' + FELLSC; cx.textAlign = 'center'; cx.lineWidth = 4.5; cx.strokeStyle = 'rgba(233,217,176,.96)';
+      cx.strokeText(chartMark.name, mx2, my2 + 48); cx.fillStyle = '#0d5a5e'; cx.fillText(chartMark.name, mx2, my2 + 48);
+      } /* her name stands clear of the port names, under the ring */
   const ppx = X0 + p.x*k, ppy = Y0 + p.y*k; cx.strokeStyle = '#c8321e'; cx.lineWidth = 1.6; circle(cx, ppx, ppy, 12 + 2.5*Math.sin(time*4)); cx.stroke();
   cx.save(); cx.translate(ppx, ppy); cx.rotate(p.h); cx.fillStyle = '#c8321e'; cx.strokeStyle = INK;
     cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-6, 5.5); cx.lineTo(-3, 0);
     cx.lineTo(-6, -5.5); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
   cx.restore(); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(x+.5, y+.5, w-1, h-1);
   cx.textAlign = 'center'; cx.font = '500 14px "Alegreya Sans", sans-serif'; cx.fillStyle = '#b9b39f';
-  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif'; cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)'; cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5; cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
+  if (chartPick){ const hint = pickHint() + (coarse ? '' : ' Esc cancels.'); cx.font = '700 15px "Alegreya Sans", sans-serif';
+    cx.textAlign = 'center'; const tw2 = cx.measureText(hint).width + 28; cx.fillStyle = 'rgba(8,25,30,.92)';
+    cx.fillRect(vw/2 - tw2/2, y + 10, tw2, 30); cx.strokeStyle = C.brass; cx.lineWidth = 1.5;
+    cx.strokeRect(vw/2 - tw2/2 + .5, y + 10.5, tw2 - 1, 29); cx.fillStyle = C.bone; cx.fillText(hint, vw/2, y + 30); }
   if (!chartPick) cx.fillText((coarse ? 'Tap a port to set a course for it. Pinch to zoom, drag to move. Tap the sea to close.' : 'Click a port to set a course for it. Zoom with the wheel or + and −, move by dragging or the arrow keys. Esc or a click on the sea closes.'), vw/2, y + h + 22);
   const items = NKEYS.map(k2 => [k2, NAT[k2].land.replace(/^the /, '') + ': ' + standWord(standing[k2])]).concat([[null, 'Home: ' + homeName]]); let tw = 0;
   cx.font = '700 13px "Alegreya Sans", sans-serif'; items.forEach(v => { tw += cx.measureText(v[1]).width + 34; });
