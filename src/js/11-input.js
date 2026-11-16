@@ -21,7 +21,7 @@ const TAPS = { KeyB:'board', KeyW:'sailUp', ArrowUp:'sailUp', KeyS:'sailDown', A
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && e.code !== 'Escape') return; // typing a name or a save code
-  if (menuOpen){ if (e.code === 'Escape' || (e.code === 'KeyJ' || e.code === 'KeyL') && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
+  if (menuOpen){ if (e.code === 'Escape' || (e.code === 'KeyJ' || e.code === 'KeyL' || e.code === 'KeyK') && !$('paper').hidden || e.code === 'KeyI' && !$('manifest').hidden || e.code === 'KeyV' && !$('fleetSheet').hidden) closeMenu(); return; }
   if (state === 'fate') return;
   if (state === 'port' && !chartOpen && !e.repeat && (e.code === 'KeyI' || e.code === 'KeyV' || e.code === 'KeyC' || e.code === 'KeyJ' || e.code === 'KeyL')){ e.code === 'KeyI' ? openManifest() : e.code === 'KeyV' ? openFleet('F') : e.code === 'KeyJ' ? openPaper('gazette') : e.code === 'KeyL' ? openPaper('dispatches') : setChart(true); return; }
   if (state === 'port' && !chartOpen){ if (e.code === 'Escape') closePort(); return; }
@@ -42,6 +42,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyI' && !e.repeat) openManifest();
   else if (e.code === 'KeyJ' && !e.repeat) openPaper('gazette');
   else if (e.code === 'KeyL' && !e.repeat) openPaper('dispatches');
+  else if (e.code === 'KeyK' && !e.repeat) openPaper('ledger');
   else if (e.code === 'KeyV' && !e.repeat) openFleet('F');
   else if (e.code === 'KeyP' && !e.repeat) setPaused(!paused);
   else if (e.code === 'KeyN' && !e.repeat && course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); }
@@ -108,6 +109,8 @@ $('ordClose').addEventListener('click', closeOrders);
 $('czIn').addEventListener('click', () => { chartV.z = clamp(chartV.z*1.4, 1, 5); });
 $('czOut').addEventListener('click', () => { chartV.z = clamp(chartV.z/1.4, 1, 5); });
 $('cClear').addEventListener('click', () => { if (course) setCourse(null); });
+$('cPrice').addEventListener('click', () => { const i = priceShow == null ? 0 : GK.indexOf(priceShow) + 1; priceShow = i >= GK.length ? null : GK[i]; $('cPrice').textContent = priceShow ? 'Prices: ' + GOODS[priceShow][0] : 'Prices'; });
+$('ledgerBtn').addEventListener('click', e => { openPaper('ledger'); e.currentTarget.blur(); });
 $('cClose').addEventListener('click', () => setChart(false));
 $('pauseBtn').addEventListener('click', e => { setPaused(!paused); e.currentTarget.blur(); });
 $('courseLine').addEventListener('click', () => { if (course){ autoHelm = !autoHelm; p.path = null; say(autoHelm ? 'The helmsman steers for ' + course.name + '.' : 'You have the helm.'); } });

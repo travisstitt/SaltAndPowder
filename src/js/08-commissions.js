@@ -46,6 +46,7 @@ function restoreMission(m){
   else if (m.type === 'pirate' && CLASSES[m.cls]){ mission = Object.assign(base, { cls: m.cls, from: ports[0] });
     spawnQuarry(m.sx > 100 && m.sy > 100 && m.sx < W-100 && m.sy < H-100 && !isNear(m.sx, m.sy) ? [+m.sx, +m.sy] : waterNear(p.x, p.y, 1500)); }
   else if (m.type === 'treasure') mission = base;
+  else if (m.type === 'freight' && GOODS[m.g]){ const q = ports.find(q => q.name === m.port); if (q) mission = Object.assign(base, { g: m.g, tons: clamp(m.tons|0, 1, 400), port: q, until: m.until|0 }); }
   else if (m.type === 'siege' && NAT[m.foe]){ const q = ports.find(q => q.name === m.port);
     if (q) mission = Object.assign(base, { foe: m.foe, port: q, need: (m.need|0) || 2, have: m.have|0, until: m.until|0, svc: clamp(m.svc|0, 0, 10) }); }
   else if (m.type === 'escort' && Array.isArray(m.tr) && m.tr.length){ const dest = ports.find(q => q.name === 'Fort-Royal');
@@ -54,10 +55,10 @@ function restoreMission(m){
   else if (m.type === 'away' && m.ax > 0 && m.ay > 0) mission = Object.assign(base, { name: String(m.name || 'the').slice(0, 30), x: clamp(+m.ax, 50, W-50), y: clamp(+m.ay, 50, H-50) });
 }
 function missionText(){ const m = mission;
-  return m.type === 'deliver' ? 'Dispatches for ' + m.port.name : m.type === 'away' ? 'Dispatches for the ' + m.name + ' packet, at the eastern edge of the chart' : m.type === 'raid' ? NAT[m.foe].adj + ' merchantmen taken: ' + m.have + ' of ' + m.need
+  return m.type === 'deliver' ? 'Dispatches for ' + m.port.name : m.type === 'away' ? 'Dispatches for the ' + m.name + ' packet, at the eastern edge of the chart' : m.type === 'freight' ? m.tons + ' tons of ' + GOODS[m.g][0].toLowerCase() + ' for ' + m.port.name + ' by ' + MONTHS[m.until % 12] + ' (you hold ' + hold[m.g] + ')' : m.type === 'raid' ? NAT[m.foe].adj + ' merchantmen taken: ' + m.have + ' of ' + m.need
     : m.type === 'pirate' ? 'Hunt the wanted pirate ' + m.cls : m.type === 'siege' ? NAT[m.foe].adj + ' ships taken or sunk off ' + m.port.name + ': ' + m.have + ' of ' + m.need : m.type === 'escort' ? 'Transports safe at Fort-Royal: ' + m.arrived + ' of ' + m.need : 'Board a plate ship'; }
 function missionTarget(){ const m = mission; if (!m) return null;
-  if (m.type === 'deliver') return { x: m.port.x, y: m.port.y, name: m.port.name, port: m.port };
+  if (m.type === 'deliver' || m.type === 'freight') return { x: m.port.x, y: m.port.y, name: m.port.name, port: m.port };
   if (m.type === 'away') return { x: m.x, y: m.y, name: m.name + ' packet' };
   if (m.type === 'siege') return { x: m.port.x, y: m.port.y, name: m.port.name, port: m.port };
   if (m.type === 'escort'){ const t = m.ships.find(s => !s.gone && s.sinking == null); return t ? { x: t.x, y: t.y, name: 'Troop transports', s: t } : null; }

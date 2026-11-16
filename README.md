@@ -27,6 +27,7 @@ Open `index.html` in a browser. There is no build step and no dependencies; the 
 | Fleet formation: line astern / abreast / wedge | `G` |
 | Gazette | `J` |
 | Dispatches from your captains | `L` |
+| Trade ledger and price book | `K` |
 | Make a passage (8× on a set course) | `6` |
 | Fleet orders: line of battle / engage at will / general chase / hold fire | `H` |
 | Fleet management: every ship, at sea or in port | `V` (or click a ship card) |
@@ -49,8 +50,8 @@ On a touch screen, on-screen buttons replace the keys.
 
 Three suites, all in headless Chromium (they need Playwright):
 
-- `node tests/rules.js` runs 30 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
-- `node tests/run-tests.js` runs 163 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
+- `node tests/rules.js` runs 35 fast checks in a few seconds: prices, gunnery arithmetic, the law of prize and reputation, the calendar, promotion, wages, the port list, a performance budget (a tick with fifty ships must cost under 3 ms), and saved games from three formats in `tests/fixtures/` loading into the present game. `--make-fixture` rewrites the current-format fixture.
+- `node tests/run-tests.js` runs 168 end-to-end checks in under two minutes: the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, the chart, saving, the 1750s systems, the wider map and traffic, a seven-year unattended voyage, and a phone.
 - `node tests/visual.js` compares nine fixed scenes with the pictures in `tests/baseline/` and checks at four screen sizes that no part of the HUD overlaps another or leaves the screen. `--update` rewrites the baselines after an intended change of looks.
 
 Every roll of the dice in the game comes from one source that the tests seed, so a failure repeats. The page exposes its test hook only when opened with `#test`.
@@ -98,6 +99,13 @@ The typefaces (Pirata One, Alegreya Sans, IM Fell English and IM Fell English SC
 - **Dispatches** (L). Captains write when they break off, make port, finish a cruise or sell a cargo. Dispatches arrive at once and wait in their own box. A damaged ship in port asks leave to repair: pay and send her back to her station, pay and have her rejoin, pay and keep her in port, or leave her.
 - **Standing orders** for each consort, on her fleet card: run for port or ride out a hurricane; retire at half hull, at a third, or never; avoid stronger warships, fight equals, or fight anything; how much she may spend on repairs without asking; and what she does once repaired.
 - **Independent service.** Besides hunting prizes, a consort can cruise off a port for three months, blockade it, or patrol to it from where she lies. Each is chosen by clicking on the chart, as is the port for "Send her to a port". Her company keeps a tenth. Signals to the whole fleet recall everyone, send everyone to the nearest open port, or call a rendezvous at your home port.
+- **A market that reacts.** Buying raises a port's price and selling lowers it, far more at a landing than at a city, and the effect fades over a few months. Shortages and gluts come and go, announced in the gazette; war makes naval stores dear, and a hurricane leaves the nearest town short of provisions and spars.
+- **Buying and selling.** Buy ten tons or fill the hold; sell ten or sell all. Each market row says what the good last fetched elsewhere when your price book knows of a better or cheaper port.
+- **The price book and trade ledger** (K). Prices are written down whenever you or one of your traders calls at a port. The ledger shows each trader's cargoes and profit, takings by the month, late sales, and the cheapest and dearest known port for every good. On the chart, the Prices button writes the book beside each port, one good at a time.
+- **Warehouse.** At your home port up to 400 tons can be stored, taken out again, or sold from the warehouse when the price is right.
+- **Freight contracts.** Merchants in the market offer a contract to land so many tons of a good at a named port within a few months, for well over the market price. You find the goods.
+- **Merchantmen and escorts.** Any yard will fit out a snow or a West Indiaman for your fleet. A consort can be told to escort a trader: she keeps station on her, goes into port when she does, and fights what threatens her.
+- **Trader's orders.** Besides her trading stock, each trader has a least profit she will load for (8, 12 or 20 per cent), whether she may carry contraband, and whether she may call where your standing is poor. A city turns her round faster than a landing.
 - **Trading on her own account.** Mark two ports on the chart, or click the middle and then the edge of a stretch of water and let her captain choose among the open ports inside it. She takes a trading stock from your purse (100, 250, 500 or 1000 gold, set on her card). Her captain buys only a cargo that should clear at least twelve per cent where he is bound, judging the price at the hour he expects to land it; goes in ballast to a better market when nothing pays; and carries a cargo on to another port sooner than sell it at a loss. Profit above the stock is remitted to you, less a tenth for her company. If the stock falls too low to load a cargo he lies in port and writes for more through the dispatches. The stock comes back when she is given other orders.
 - **Eight consorts.** The fleet holds eight ships besides the flagship.
 - **Notices** stay on screen long enough to read (six to fourteen seconds by length, by the clock rather than the game pace), and a notice that arrives on the heels of another waits its turn.

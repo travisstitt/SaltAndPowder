@@ -211,6 +211,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
 .paper .dbtns{display:flex;flex-wrap:wrap;gap:6px;margin:-.2rem 0 .8rem}.paper .dbtns button{background:#3a2614;color:#f2e7c6;border-color:#3a2614;font-family:"Alegreya Sans",sans-serif;font-size:.9rem;padding:4px 10px}.paper .dbtns button:hover:not(:disabled){background:#5a4024}
 #fleetCol.many .shipcard{padding:4px 8px;gap:2px}#fleetCol.many .shipcard>*:nth-child(n+3){display:none}
 #shipNow{margin:.5rem 0 .2rem;padding:.35rem .7rem;border-left:3px solid var(--brass);background:rgba(214,165,78,.09);color:var(--bone);font-size:.98rem;line-height:1.35}
+@media (max-width:620px){.ledger li.tight{grid-template-columns:1fr;gap:3px}.ledger li.tight .btns{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.ledger li.tight .btns button{flex:1;white-space:nowrap}.ledger li.tight .amt{flex-basis:100%}}
 </style>
 
 </head>
@@ -244,6 +245,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
       <button id="muteBtn" type="button">Sound on</button>
       <button id="zoomOutBtn" type="button" aria-label="Zoom out" title="Zoom out (-)">−</button>
       <button id="zoomInBtn" type="button" aria-label="Zoom in" title="Zoom in (=)">+</button>
+      <button id="ledgerBtn" type="button" title="Trade ledger and price book (K)">Ledger</button>
       <button id="fsBtn" type="button" title="Full screen">Full screen</button>
       </details>
     </div>
@@ -271,7 +273,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     </div>
     <button id="boardBtn" type="button" hidden>Board</button>
     <button id="dock" class="primary" type="button" hidden>Drop anchor</button>
-    <div class="keys" id="keys"><span class="kl"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>J</kbd> gazette · <kbd>L</kbd> dispatches · <kbd>V</kbd> fleet · <kbd>P</kbd> pause for orders · <kbd>N</kbd> helmsman on a set course · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>5</kbd> pace · click one of your ships for her orders · <kbd>Esc</kbd> save and load</span> <button id="keysBtn" type="button" aria-expanded="true">Hide keys</button></div>
+    <div class="keys" id="keys"><span class="kl"><kbd>A</kbd> <kbd>D</kbd> helm · <kbd>W</kbd> <kbd>S</kbd> sails · <kbd>Q</kbd> port guns · <kbd>E</kbd> starboard guns · <kbd>Space</kbd> both · <kbd>R</kbd> shot · <kbd>B</kbd> board · <kbd>F</kbd> dock · <kbd>I</kbd> manifest · <kbd>J</kbd> gazette · <kbd>L</kbd> dispatches · <kbd>K</kbd> trade ledger · <kbd>V</kbd> fleet · <kbd>P</kbd> pause for orders · <kbd>N</kbd> helmsman on a set course · <kbd>G</kbd> formation · <kbd>H</kbd> fleet orders · <kbd>T</kbd> aim assist · <kbd>C</kbd> chart · <kbd>-</kbd> <kbd>=</kbd> or wheel zoom · <kbd>1</kbd>–<kbd>5</kbd> pace · click one of your ships for her orders · <kbd>Esc</kbd> save and load</span> <button id="keysBtn" type="button" aria-expanded="true">Hide keys</button></div>
     <div class="touch">
       <div><button type="button" data-hold="left" aria-label="Turn to port">◀</button><button type="button" data-hold="right" aria-label="Turn to starboard">▶</button></div>
       <div class="col"><button type="button" data-tap="sailUp">More sail</button><button type="button" data-tap="sailDown">Less sail</button></div>
@@ -280,7 +282,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
   </div>
 </div>
 <div id="toast" class="off" role="status" aria-live="polite"></div>
-<div id="chartTools" hidden><button type="button" id="czOut" aria-label="Zoom the chart out">−</button><button type="button" id="czIn" aria-label="Zoom the chart in">+</button><button type="button" id="cClear">Clear course</button><button type="button" class="primary" id="cClose">Close chart</button></div>
+<div id="chartTools" hidden><button type="button" id="czOut" aria-label="Zoom the chart out">−</button><button type="button" id="czIn" aria-label="Zoom the chart in">+</button><button type="button" id="cPrice" title="Show the price book on the chart, one good at a time">Prices</button><button type="button" id="cClear">Clear course</button><button type="button" class="primary" id="cClose">Close chart</button></div>
 <div id="pauseBanner" role="status" hidden><strong>Paused.</strong> Set the formation (G) and orders (H), change shot (R), and click an enemy ship to name her the fleet's target. Press P to resume.</div>
 
 <div class="sheet" id="title">

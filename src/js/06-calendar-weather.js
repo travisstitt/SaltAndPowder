@@ -26,7 +26,7 @@ function hurricaneTick(dt){ const w = weather; hurr.t -= dt; hurr.x += hurr.vx*d
       o.sails = Math.max(30, o.sails - dt*1.2*w.k); if (o.role === 'fleet' && o.hull > o.maxHull*.15) o.hull -= dt*.4*w.k*(o.sail === 0 ? .25 : o.sail < 1 ? .6 : 1); }
     if (rnd() < dt*.5){ flash = 1; boom(.25, 140); } }
   if (hurr.t <= 0){ hurr = null; w.hur = false; w.left = 0; if (state === 'play') say('The hurricane has passed. Count your spars.');
-    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
+    gaz('A hurricane has passed' + offWhere(p.x, p.y) + '. Ships are reported dismasted and driven ashore.', 'news'); { const near = ports.filter(q => !q.spec.land && Math.hypot(q.x - p.x, q.y - p.y) < 3000).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]; if (near){ marketEvent(near, 'flour', 1.4, 3, null); marketEvent(near, 'naval', 1.4, 3, 'After the hurricane ' + near.name + ' is crying out for provisions and for spars, cordage and tar.'); } } if (state === 'port' && !menuOpen && !chartOpen) renderPort(); } }
 function weatherTick(dt){
   const w = weather; w.left -= dt; if (hurr) hurricaneTick(dt);
   if (w.left <= 0 && !w.next){ const r = rnd(); const lat = p ? LAT1 - p.y/DEG : 20, mo = calMon(), fogB = lat > 39 ? .16 : 0, galeB = lat > 34 && (mo >= 10 || mo <= 2) ? .13 : 0;

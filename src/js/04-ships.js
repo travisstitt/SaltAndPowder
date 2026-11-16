@@ -3,7 +3,7 @@ const CLASSES = {
   schooner: { crew:50, hold:30, value:900, cname:'schooner', rate:8, len:56, wid:16, hull:85, guns:3, speed:150, turn:1.35, rig:'gaff', masts:[.24,-.08], bow:.26, st:.22, sr:.02, price:900 },
   cutter:   { crew:40, hold:20, value:600, cname:'cutter', rate:10, len:46, wid:14, hull:70, guns:3, speed:132, turn:1.3, rig:'gaff', masts:[.12], bow:.24, st:.2, sr:.02 },
   brig:     { crew:100, hold:80, value:2400, cname:'brig', rate:16, len:66, wid:21, hull:140, guns:6, speed:122, turn:1.1, rig:'square', masts:[.22,-.2], bow:.34, st:.3, sr:.03, price:2400 },
-  merchant: { crew:36, hold:160, value:900, cname:'West Indiaman', rate:12, len:66, wid:29, hull:80, guns:2, speed:98, turn:1, rig:'square', masts:[.22,-.16], bow:.47, st:.44, sr:.09, cargo:true },
+  merchant: { crew:36, hold:160, value:900, cname:'West Indiaman', rate:12, len:66, wid:29, hull:80, guns:2, speed:98, turn:1, rig:'square', masts:[.22,-.16], bow:.47, st:.44, sr:.09, cargo:true, price:1800 },
   frigate:  { crew:220, hold:100, value:6000, cname:'frigate', rate:28, len:90, wid:27, hull:230, guns:9, speed:116, turn:.95, rig:'square', masts:[.3,.03,-.26], bow:.36, st:.37, sr:0, boats:true, price:6000 },
   bermuda:  { crew:45, hold:35, value:1100, cname:'Bermuda sloop', rate:10, len:52, wid:15, hull:80, guns:3, speed:158, turn:1.4, rig:'gaff', masts:[.14], bow:.25, st:.2, sr:.02, price:1100 },
   snow:     { crew:30, hold:110, value:1300, cname:'snow', rate:8, len:60, wid:23, hull:90, guns:2, speed:110, turn:1.1, rig:'square', masts:[.22,-.18], bow:.42, st:.38, sr:.07, cargo:true, price:1300 },
@@ -11,7 +11,7 @@ const CLASSES = {
   seventyfour: { crew:480, hold:160, value:15000, cname:'seventy-four', rate:74, len:116, wid:36, hull:460, guns:15, speed:98, turn:.72, rig:'square', masts:[.31,.04,-.25], bow:.4, st:.41, sr:.01, boats:true, decks:2, price:15000, dock:true }
 };
 CLASSES.boat = { crew:8, hold:4, value:40, cname:'longboat', rate:0, len:30, wid:10, hull:30, guns:0, speed:104, turn:1.5, rig:'gaff', masts:[.1], bow:.3, st:.24, sr:.03 };
-const YARD = ['sloop', 'bermuda', 'schooner', 'snow', 'brig', 'frigate', 'fifty', 'seventyfour'];
+const YARD = ['sloop', 'bermuda', 'schooner', 'snow', 'merchant', 'brig', 'frigate', 'fifty', 'seventyfour'];
 const BOUNTY = { cutter:90, schooner:110, sloop:130, brig:220, frigate:480, fifty:700, seventyfour:1100, bermuda:120, snow:0, merchant:0 };
 function livery(cls, owner, role){
   if (owner === 'player') return { hullC:'#8a5530', hullD:'#4f2c14', trim:'#e0b458', band:null, deck:'#c39a66', sailC:'#f2e9d2', seam:'rgba(196,71,47,.9)', flag:['#c4472f','#c4472f'], tag:C.bone };
@@ -91,7 +91,7 @@ const setOwner = (name, k) => { const q = ports.find(q => q.name === name); if (
 const EVENTS = [
   [53, 'Word from the Ohio country: Virginia militia and the French have traded shots. London and Versailles both say there is no war.', null],
   [65, 'Admiral Boscawen has seized two French ships of the line off Newfoundland. Still no war is declared.', null],
-  [76, 'War! Great Britain has declared war on France. Governors are issuing letters of marque.', () => { wars.add('en-fr'); }],
+  [76, 'War! Great Britain has declared war on France. Governors are issuing letters of marque.', () => { wars.add('en-fr'); ['Kingston', 'Boston', 'New York', 'Cap-Français', 'Fort-Royal'].forEach(n => { const q = ports.find(x => x.name === n); if (q) marketEvent(q, 'naval', 1.3, 8, null); }); }],
   [102, 'Louisbourg has fallen to Amherst and Boscawen. French convoys to the islands grow scarce and well guarded.', () => { setOwner('Louisbourg', 'en'); }],
   [112, 'Guadeloupe has surrendered to a British expedition. Basse-Terre flies British colours.', () => { setOwner('Basse-Terre', 'en'); }],
   [118, 'Hawke has broken the French fleet in Quiberon Bay. The sea is Britain\'s.', null],
@@ -108,7 +108,7 @@ function monthTick(m){ payWages(m); calendarTick();
   if (m - lastCall >= 2) cheer(-3); /* long at sea */ if (fouling && state === 'play') foul = Math.min(1, foul + .04);
   if (officers.surgeon && p.crew < p.t.crew) p.crew = Math.min(p.t.crew, p.crew + 2);
   if (morale < 25 && p.crew > 12){ const n = Math.max(1, Math.round(p.crew*.08)); p.crew -= n; say('The hands are ' + moraleWord() + '. ' + n + ' have run.'); }
-  rivalTick();
+  rivalTick(); marketTick();
   if (mission && mission.until && calIdx() > mission.until){ say('Too late: the commission "' + mission.title + '" has lapsed.');
     if (mission.ships) mission.ships.forEach(t => { t.transport = false; }); mission = null; }
   if (!fleet && calIdx() >= 48) spawnFleet(false);
