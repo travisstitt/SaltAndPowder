@@ -110,6 +110,21 @@ const HELPERS = () => {
   check('combat orders: engage a sighted enemy, flee, change shot, and strike colours with a confirm', r.open && r.chase && r.flee && r.shot === 'chain' && r.armed && r.gone && r.closed, r);
   { const e1 = errCount(); await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('sloop', 0); g.setTask(s, { type: 'hold' }); T.consort('brig', 1); }); await page.waitForTimeout(900); check('orders: drawing a fleet with one ship detached raises no errors', errCount() === e1, errors.slice(e1)); }
 
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); const s = T.consort('brig', 0), m = T.foe('merchant', 'es', 'merchant', -220, 260); m.cargo = 200; m.goods = { cocoa: 9 }; g.struck(m); g.damage(m, m.maxHull*.65, 0); g.crates.push({ x: g.p.x - 260, y: g.p.y - 220, amt: 77, life: 60, ph: 0 });
+    const g0 = g.gold; let t = 0; while ((!m.released || g.crates.length) && t < 90){ T.run(3); t += 3; } return { t, released: m.released, crates: g.crates.length, gained: g.gold - g0, cocoa: g.hold.cocoa, state: g.state }; });
+  check('fleet: a consort in the line plunders a struck ship and picks up flotsam for you', r.released && r.crates === 0 && r.gained === 180 + 77 && r.cocoa === 9 && r.state === 'play', r);
+  r = await ev(() => { const g = __sp, out = {}; for (const k of ['send', 'keep', 'leave']){ T.reset(); T.sea(); g.setPolicy(k); T.consort('brig', 0); const m = T.foe('merchant', 'es', 'merchant', -220, 260); m.cargo = 100; g.struck(m); g.damage(m, m.maxHull*.65, 0); const g0 = g.gold; T.run(40);
+      out[k] = { gone: !!m.gone || g.ships.indexOf(m) < 0, struck: m.surrendered, squad: g.squad().length, gained: g.gold - g0 }; } g.setPolicy('plunder'); return out; });
+  check('fleet: the standing order for prizes is obeyed (send in, take into the fleet, leave to the flagship)', r.send.gone && r.send.gained > 150 && r.keep.squad === 2 && r.leave.struck && r.leave.squad === 1 && r.leave.gained === 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); let pirates = 0, seen = 0; for (let i = 0; i < 240; i++){ for (let t = 0; t < 5; t += .05) g.update(.05); const n = g.ships.filter(s => s.owner === 'pirate' && Math.hypot(s.x - g.p.x, s.y - g.p.y) < 2500).length; pirates = Math.max(pirates, n); if (n) seen++; if (g.state !== 'play') break; }
+    return { pirates, share: +(seen/240).toFixed(2), state: g.state, hunters: g.ships.filter(s => s.role === 'hunter').length }; });
+  check('pirates: in twenty minutes at sea they appear, but never more than two and no hunters chase a captain at peace', r.pirates >= 1 && r.pirates <= 2 && r.hunters === 0, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.spawnRover(); const s = g.ships.find(o => o.role === 'rover'); s._t = true; return { cargo: s.cargo, goods: Object.keys(s.goods).length, far: Math.hypot(s.x - g.p.x, s.y - g.p.y) > 1100 }; });
+  check('pirates: a rover carries plunder worth taking', r.cargo >= 350 && r.goods >= 1 && r.far, r);
+  r = await ev(() => { const g = __sp; T.reset(); T.sea(); g.repute('es', -100); const m = T.foe('merchant', 'es', 'merchant', 0, 300); m.dest = g.ports.find(q => q.name === 'Cartagena'); const d0 = Math.hypot(m.x - g.p.x, m.y - g.p.y), h0 = g.p.hull; g.p.sail = 0; T.run(25);
+    return { d0: Math.round(d0), d1: Math.round(Math.hypot(m.x - g.p.x, m.y - g.p.y)), hurt: h0 - g.p.hull, fired: m.rl[0] > 0 || m.rl[1] > 0 }; });
+  check('merchants: an enemy merchantman runs and never fires', r.d1 > r.d0 + 400 && r.hurt === 0 && !r.fired, r);
+
   // ---------- port, through the real buttons ----------
   await ev(() => { const g = __sp; T.reset(); g.gold = 9000; g.p.hull = 60; g.p.sails = 70; g.hold.rum = 12; T.consort('brig', 0); T.consort('sloop', 1); g.spares.push({ name: 'Mary Pike', gun: 5, sea: 4 }); g.openPort(g.ports[0]); });
   const click = async sel => { await page.click(sel, { timeout: 4000 }); };

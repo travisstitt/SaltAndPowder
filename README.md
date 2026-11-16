@@ -44,7 +44,7 @@ On a touch screen, on-screen buttons replace the keys.
 
 ## Tests
 
-`node tests/run-tests.js` runs 93 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
+`node tests/run-tests.js` runs 98 end-to-end checks in headless Chromium (it needs Playwright). They cover the world and ports, sailing and wind, gunnery and surrender, boarding and prizes, the fleet, every port building and the fleet screen through their real buttons, commissions, nations, saving, the helmsman on four voyages, twelve unattended minutes of the world, politics, weather, wages, the keyboard and screens, drawing at night in storm and fog, and a phone-sized screen. Opening the page with `#test` exposes the game's internals to the suite as `window.__sp`.
 
 ## How it plays
 
@@ -67,6 +67,7 @@ On a touch screen, on-screen buttons replace the keys.
 - **Safe harbour.** While you are in port the world sails on, but neither you nor any ship of yours can take damage, and your ships do not fire.
 - **Home port.** You start with Port Royal as home and can move it to any open port for a fee. Consorts can be laid up there (eight at most) and recalled.
 - **Orders for one ship.** In fleet management any consort can be sent off alone: to hunt prizes (hostile merchantmen, pirates and ships you have marked), to chase your marked ship, to hold where she is, or to sail to a named port and wait. She boards what strikes to her and sends you the gold and goods, less a tenth for her company, and rejoins when you meet her or call her back.
+- **Prizes and flotsam.** Consorts sailing in your line slip away to board ships that have struck and to pick up crates, then return. A standing order, set from the flagship's orders panel or the fleet screen, says what they do with a prize: plunder and release, take her into the fleet, send her in to be sold, or leave her to the flagship.
 - **Command.** Choose a formation and standing orders. In line of battle consorts keep station and fire as the enemy bears; engage at will sends each after the nearest enemy; hold fire keeps them back. With aim assist on, each consort's lines of fire are drawn and turn green when a target is in them. Hunters come in squadrons against a fleet.
 - **Pause and targets.** Pause freezes the sea while you change formation, orders and shot. Click an enemy ship, paused or not, to make her the fleet's target.
 - **Captains improve.** A captain gains gunnery by landing shot and seamanship by time under way in company.
@@ -80,7 +81,9 @@ On a touch screen, on-screen buttons replace the keys.
 - **Losing the flagship** is no longer the end. You may shift your flag to a consort, take to the longboat with eight hands and a third of your gold, petition a governor for your release (friendlier nations are likelier to help), or end the voyage.
 - **Motion.** Ships heel to the wind and out of their turns, roll from the recoil of a broadside, pitch harder in a storm, throw spray at speed, and shiver their canvas in irons. Wrecks leave planks afloat.
 - **Towns** are each laid out differently: cathedral cities behind walls at Havana, Cartagena, Santo Domingo and Veracruz, gabled Dutch houses at Willemstad, thatched huts at Tortuga and Nassau.
-- **Hunters** come after you as your plunder grows: pirates at first, and the navy of any nation you have made an enemy.
+- **Hunters** are the navy of a nation you have made an enemy; a captain at peace is not chased.
+- **Pirates are rare.** Every several minutes a rover or two appears, never more than two at once. They carry what they have taken, so a pirate prize pays far more than her bounty. A rover fights a weaker ship and runs from a stronger one.
+- **Merchantmen do not fight.** They run from anything that means them harm, for their destination if that way lies open and otherwise straight away, and they never fire.
 
 ## Saving and difficulty
 
