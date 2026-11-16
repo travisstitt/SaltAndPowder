@@ -21,7 +21,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, get goodsKeys(){ return GK; },
   press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book; }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
   waitOut, get waiting(){ return waiting; }, stowage, holdLine, nowLine,
-  pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
+  tradeSail, pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
   say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;

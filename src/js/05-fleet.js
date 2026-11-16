@@ -69,6 +69,12 @@ function tradeCall(s, port){ const t = s.task; t.need = false; note(port); /* se
   /* nothing worth loading here: try the port in her waters with the best prospect, in ballast */
   let go = null; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = tradePlan(s, q, t); if (pl && (!go || pl.gain > go.gain)) go = { q, gain: pl.gain }; }
   t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 3; } else { s.dwell = 20; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
+function tradeSail(s){ /* your order: leave now with whatever is aboard, for the next port of call */
+  const t = s.task, port = s.docked; if (!t || t.type !== 'trade' || !port) return false;
+  if (t.dest === port || !admits(t.dest)){ let go = null, gs = -1e9; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = t.cargo ? null : tradePlan(s, q, t), sc = t.cargo ? price(q, t.cargo.g) : pl ? pl.gain : -Math.hypot(q.ox - port.ox, q.oy - port.oy)/1e5; if (sc > gs){ gs = sc; go = q; } } if (go) t.dest = go; }
+  if (!t.dest || t.dest === port){ say('The ' + s.name + ' has no other open port to make for.'); return false; }
+  t.need = false; t.idle = 0; s.h = port.out; s.docked = null; s.sail = 1; s.dwell = 0;
+  say('The ' + s.name + ' weighs at once for ' + t.dest.name + (t.cargo ? ' with ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + '.' : ' in ballast.')); return true; }
 function startTrade(s, set, area){ set = set.filter((q, i) => q && set.indexOf(q) === i); if (set.length < 2){ say('A trader needs at least two open ports to work between.'); return false; }
   const cap = s.doc.cap || 250, put = Math.min(gold, cap); if (put < 40){ say('You have not the gold to give her a trading stock.'); return false; } gold -= put;
   let near = set[0]; for (const q of set) if (Math.hypot(q.ox - s.x, q.oy - s.y) < Math.hypot(near.ox - s.x, near.oy - s.y)) near = q;

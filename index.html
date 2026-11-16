@@ -893,6 +893,12 @@ function tradeCall(s, port){ const t = s.task; t.need = false; note(port); /* se
   /* nothing worth loading here: try the port in her waters with the best prospect, in ballast */
   let go = null; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = tradePlan(s, q, t); if (pl && (!go || pl.gain > go.gain)) go = { q, gain: pl.gain }; }
   t.idle = (t.idle || 0) + 1; if (go){ t.dest = go.q; s.dwell = 3; } else { s.dwell = 20; if (t.idle === 3) dispatch(s, 'There is no cargo in these waters that would pay its freight. I am lying at ' + port.name + ' until prices move.'); } }
+function tradeSail(s){ /* your order: leave now with whatever is aboard, for the next port of call */
+  const t = s.task, port = s.docked; if (!t || t.type !== 'trade' || !port) return false;
+  if (t.dest === port || !admits(t.dest)){ let go = null, gs = -1e9; for (const q of t.set){ if (q === port || !admits(q)) continue; const pl = t.cargo ? null : tradePlan(s, q, t), sc = t.cargo ? price(q, t.cargo.g) : pl ? pl.gain : -Math.hypot(q.ox - port.ox, q.oy - port.oy)/1e5; if (sc > gs){ gs = sc; go = q; } } if (go) t.dest = go; }
+  if (!t.dest || t.dest === port){ say('The ' + s.name + ' has no other open port to make for.'); return false; }
+  t.need = false; t.idle = 0; s.h = port.out; s.docked = null; s.sail = 1; s.dwell = 0;
+  say('The ' + s.name + ' weighs at once for ' + t.dest.name + (t.cargo ? ' with ' + t.cargo.tons + ' tons of ' + GOODS[t.cargo.g][0].toLowerCase() + '.' : ' in ballast.')); return true; }
 function startTrade(s, set, area){ set = set.filter((q, i) => q && set.indexOf(q) === i); if (set.length < 2){ say('A trader needs at least two open ports to work between.'); return false; }
   const cap = s.doc.cap || 250, put = Math.min(gold, cap); if (put < 40){ say('You have not the gold to give her a trading stock.'); return false; } gold -= put;
   let near = set[0]; for (const q of set) if (Math.hypot(q.ox - s.x, q.oy - s.y) < Math.hypot(near.ox - s.x, near.oy - s.y)) near = q;
@@ -2429,7 +2435,8 @@ function renderFleet(focusId){
         ['as_cruise', 'Cruise', true, () => pickOnChart(s, 'cruise')], ['as_blockade', 'Blockade', true, () => pickOnChart(s, 'blockade')], ['as_patrol', 'Patrol', true, () => pickOnChart(s, 'patrol')]]);
       { const t2 = s.task && s.task.type === 'trade' ? s.task : null, ci = Math.max(0, DOCS.cap.findIndex(o => o[0] === s.doc.cap));
         R('Trade on her own account', t2 ? 'She works ' + (t2.area ? t2.set.length + ' ports in the waters you marked' : t2.set.map(q => q.name).join(' and ')) + ' with ' + Math.round(t2.funds) + ' gold in hand' + (t2.cargo ? ' and ' + t2.cargo.tons + ' tons of ' + GOODS[t2.cargo.g][0].toLowerCase() + ' aboard' : '') + '. ' + (t2.runs || 0) + ' cargoes sold, ' + (t2.made || 0) + ' gold made.' : 'Mark two ports on the chart, or a stretch of water whose ports her captain may choose between. He buys what should sell at a profit where he is bound, carries a cargo on sooner than sell at a loss, and remits what he makes above his stock.', '', [
-          ['as_two', 'Two ports', true, () => pickOnChart(s, 'two')], ['as_area', 'An area', true, () => pickOnChart(s, 'area')]]);
+          ['as_sail', 'Sail now', !!(t2 && s.docked), () => tradeSail(s)], ['as_two', 'Two ports', true, () => pickOnChart(s, 'two')], ['as_area', 'An area', true, () => pickOnChart(s, 'area')]]);
+        if (t2 && s.docked) ledgerText(ul, 'txt', '"Sail now" sends her out of ' + s.docked.name + ' at once with whatever is in her hold, for her next port of call.');
         [['margin', 'Least profit she will load for', 'A higher mark means fewer cargoes and surer ones.'], ['contra', 'Contraband', 'Cloth into Spanish ports, and provisions to the French in wartime.'], ['risk', 'Ports she will use', 'Whether she calls where your standing is poor.']].forEach(v => { const k = v[0], opts = DOCS[k], i = Math.max(0, opts.findIndex(o => o[0] === s.doc[k])); R(v[1], v[2], '', [['so_' + k, opts[i][1], true, () => { s.doc[k] = opts[(i + 1) % opts.length][0]; }]]); });
         { const tr = squad().filter(o => o !== s && o.task && o.task.type === 'trade').slice(0, 4); if (tr.length) R('Escort a trader', 'She keeps station on the trader, goes into port when the trader does, and fights what threatens her.', '', tr.map((o, i) => ['es_' + i, o.name, !(s.task && s.task.type === 'escort' && s.task.ward === o), () => setTask(s, { type: 'escort', ward: o })])); }
         R('Her trading stock', 'The gold she takes from your purse to trade with. It comes back when she is given other orders. If it runs too low to load a cargo, her captain writes to ask for more.', '', [['so_cap', DOCS.cap[ci][1], !t2, () => { s.doc.cap = DOCS.cap[(ci + 1) % DOCS.cap.length][0]; }]]); }
@@ -3811,7 +3818,7 @@ if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePo
     }, get goodsKeys(){ return GK; },
   press, marketEvent, marketTick, note, bestKnown, freightOffer, freightCheck, get book(){ return book; }, get ledger(){ return ledger; }, get store(){ return store2; }, set mission(v){ mission = v; },
   waitOut, get waiting(){ return waiting; }, stowage, holdLine, nowLine,
-  pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
+  tradeSail, pickOnChart, pickClick, startTrade, tradePlan, tradeCall, get chartPick(){ return chartPick; }, get chartGeo(){ return chartGeo; },
   say, dock, think, assign, fleetSignal, dispatch, admits, repairCost, payRepairs, taskOut, get dispatches(){ return dispatches; }, get dispNew(){ return dispNew; }, MAXSQ, toastTick, get toastQ(){ return toastQ; },
   whereIs, get chartMark(){ return chartMark; }, setPace, get pace(){ return paceIdx; }, PACES, earn, makeShip,
   navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals;

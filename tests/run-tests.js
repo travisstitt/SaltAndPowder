@@ -435,6 +435,11 @@ const HELPERS = () => {
     const away = Math.round(Math.hypot(s.x - k.ox, s.y - k.oy)), part = s.task.cargo && s.task.cargo.tons < s.t.hold, line = g.holdLine(s), still = g.state === 'port'; g.closePort(); return { loaded, away, secs: m*.05, part, tons: s.task.cargo && s.task.cargo.tons, hold: s.t.hold, line, still }; });
   check('trader: she loads and puts to sea from the port the flagship is lying in, part-laden if that is what her stock buys', r.loaded && r.away >= 700 && r.secs < 40 && r.tons > 0 && r.still && /^\d+ tons of/.test(r.line) && /Bound for Santiago/.test(r.line), r);
 
+  await ev(() => { const g = __sp; T.reset(); const s = T.consort('brig', 0), k = g.ports[0], pa = g.ports.find(q => q.name === 'Port Antonio'); g.gold = 1000; s.x = pa.ox + 120; s.y = pa.oy + 40; g.startTrade(s, [k, pa], null); let n = 0; while (!s.docked && n++ < 600) g.update(.05); g.openFleet('S0'); });
+  r = await ev(() => { const g = __sp, s = g.squad()[0], b = document.getElementById('as_sail'); return { docked: s.docked && s.docked.name, word: g.taskWord(s), btn: !!b && !b.disabled, cargo: s.task.cargo }; }); await page.click('#as_sail'); await page.waitForTimeout(150);
+  const sl = await ev(() => { const g = __sp, s = g.squad()[0], a = { out: !s.docked, dest: s.task.dest.name, off: document.getElementById('as_sail').disabled }; g.closeMenu(); const pa = g.ports.find(q => q.name === 'Port Antonio'); for (let i = 0; i < 200; i++) g.update(.05); a.away = Math.round(Math.hypot(s.x - pa.ox, s.y - pa.oy)); return a; });
+  check('trader: "Sail now" sends her out at once with whatever she has, for her next port of call', r.docked === 'Port Antonio' && r.btn && sl.out && sl.dest === 'Kingston' && sl.off && sl.away > 250, [r, sl]);
+
   // ---------- a phone ----------
   const phone = await browser.newPage({ viewport: { width: 400, height: 780 }, hasTouch: true, isMobile: true });
   const perr = []; phone.on('pageerror', e => perr.push(e.message));
