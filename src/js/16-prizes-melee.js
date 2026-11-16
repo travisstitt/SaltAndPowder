@@ -1,5 +1,5 @@
 function endMelee(){ if (melee){ melee.s.grappled = false; } p.grappled = false; melee = null; }
-function prizeLoot(s){ return Math.round((prize(s) ? s.cargo : (BOUNTY[s.cls] || 0)*1.5 + (s.cargo || 0))*D().loot); }
+function prizeLoot(s){ return Math.round((prize(s) ? s.cargo : (BOUNTY[s.cls] || 0)*1.5 + (s.cargo || 0))*D().loot*eco.prize); }
 function capture(s){ if (s.officer === undefined) s.officer = rnd() < .45 ? newCaptain(s.t.hull >= 230 ? 3 : 1, s.role === 'merchant' ? 3 : 4) : null;
   prizeShip = s; s.surrendered = true; s.sail = 0; state = 'prize'; held.left = held.right = false; chime(); renderPrize(); $('prize').hidden = false; $('pz_loot').focus(); }
 function manifestOf(s, all){ // what she carries, dearest first, and how much of each you have room for

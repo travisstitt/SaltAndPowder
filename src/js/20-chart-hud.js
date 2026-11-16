@@ -163,7 +163,7 @@ function drawBigChart(){
 const setT = (el, v) => { if (el._v !== v){ el._v = v; el.textContent = v; } };
 const setW = (el, f) => { const v = Math.round(clamp(f, 0, 1)*100) + '%'; if (el._w !== v){ el._w = v; el.style.width = v; } };
 let cardKey = null, cards = [];
-function hud(){
+function hud(){ tutTick();
   setT($('gold'), String(gold)); setT($('rank'), inService() && navy.rank ? NAVY[navy.rank][1] : RANKS[rankIdx][1]);
     setT($('marq'), marque ? NAT[marque].adj + ' letter' : 'None'); $('marq').classList.toggle('on', !!marque);
   setT($('holdLine'), holdUsed() + '/' + holdCap() + ' t'); setT($('crewStat'), p.crew + '/' + p.t.crew);
@@ -198,7 +198,7 @@ function hud(){
   if (tracked){ const td = Math.hypot(tracked.x-p.x, tracked.y-p.y), g = Math.cos(Math.atan2(tracked.y-p.y, tracked.x-p.x) - wind.dir);
     setT(ce, 'Chase: ' + tracked.t.name + ' · ' + Math.max(1, Math.round(td/DEG*20)) + ' lg' + (td < 1100 && Math.abs(g) > .3 ? g > 0 ? ' · weather gauge yours' : ' · she has the weather gauge' : '')); }
   if (me.hidden === !!mission) me.hidden = !mission;
-  if (mission) setT(me, 'Commission: ' + missionText());
+  if (mission || contract) setT(me, (mission ? 'Commission: ' + missionText() : '') + (mission && contract ? ' · ' : '') + (contract ? 'Freight: ' + contract.tons + ' t ' + GOODS[contract.g][0].toLowerCase() + ' for ' + contract.port.name : ''));
   const d = $('dock'), show = state === 'play' && !!nearPort && !chartOpen;
   if (d.hidden === show) d.hidden = !show;
   if (show) setT(d, 'Drop anchor at ' + nearPort.name + (coarse ? '' : ' · F'));

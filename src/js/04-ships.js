@@ -109,6 +109,7 @@ function monthTick(m){ payWages(m); calendarTick();
   if (officers.surgeon && p.crew < p.t.crew) p.crew = Math.min(p.t.crew, p.crew + 2);
   if (morale < 25 && p.crew > 12){ const n = Math.max(1, Math.round(p.crew*.08)); p.crew -= n; say('The hands are ' + moraleWord() + '. ' + n + ' have run.'); }
   rivalTick(); marketTick();
+  if (contract && calIdx() > contract.until){ say('Too late: the freight for ' + contract.port.name + ' was wanted last month. The contract is void.'); repute(contract.nk, -2); contract = null; }
   if (mission && mission.until && calIdx() > mission.until){ say('Too late: the commission "' + mission.title + '" has lapsed.');
     if (mission.ships) mission.ships.forEach(t => { t.transport = false; }); mission = null; }
   if (!fleet && calIdx() >= 48) spawnFleet(false);

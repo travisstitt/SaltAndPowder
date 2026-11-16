@@ -1,4 +1,4 @@
-function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
+function newGame(saved){ voyage++; dirty(); wrecks.length = 0; tutI = !saved && recall('tut') !== '0' && location.hash !== '#test' ? 0 : -1; if ($('tutor')) $('tutor').hidden = true; if (paceOut != null){ setPace(paceOut, true); paceOut = null; }
   ships = []; balls = []; pending = []; crates = []; parts = []; floaters = []; smokes.length = 0; orderSel = null; picking = false;
   if (saved && DIFFS[saved.diff]) diff = saved.diff;
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
@@ -12,7 +12,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
     navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 };
     stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
-  ports.forEach(q => { q.nk = q.home; q.nation = NAT[q.home]; q.raided = null; q.pr = null; q.ev = null; q.freight = undefined; }); book = {}; ledger = []; store2 = {};
+  ports.forEach(q => { q.nk = q.home; q.nation = NAT[q.home]; q.raided = null; q.pr = null; q.ev = null; q.freight = undefined; }); book = {}; ledger = []; store2 = {}; contract = null; ghosts2 = [];
   if (saved && saved.p){
     const REN = { 'Port Royal':'Kingston', 'Tortuga':'Cap-Français', 'Petit-Goâve':'Port-au-Prince' }, fix = d => { if (d && d.cls === 'galleon') d.cls = 'fifty';
       }; fix(saved); (saved.squad || []).forEach(fix); (saved.laidUp || []).forEach(fix);
@@ -23,6 +23,7 @@ function newGame(saved){ voyage++; dirty(); wrecks.length = 0; if (paceOut != nu
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
       if (saved.book && typeof saved.book === 'object') for (const n in saved.book){ if (!ports.some(q => q.name === n)) continue; book[n] = {}; for (const g of GK){ const v = saved.book[n][g]; if (Array.isArray(v)) book[n][g] = [clamp(v[0]|0, 1, 999), v[1]|0]; } }
       if (Array.isArray(saved.ledger)) ledger = saved.ledger.slice(0, 40).filter(v => v && GOODS[v.g]).map(v => ({ m: v.m|0, ship: String(v.ship).slice(0, 30), g: v.g, tons: v.tons|0, port: String(v.port).slice(0, 30), profit: v.profit|0 }));
+      if (saved.contract && GOODS[saved.contract.g]){ const cq = ports.find(q => q.name === saved.contract.port); if (cq) contract = { type: 'freight', g: saved.contract.g, tons: clamp(saved.contract.tons|0, 1, 400), port: cq, until: saved.contract.until|0, reward: clamp(saved.contract.reward|0, 0, 9999), nk: NAT[saved.contract.nk] ? saved.contract.nk : 'en', rep: 4 }; }
       if (saved.store2) GK.forEach(g => { store2[g] = clamp(saved.store2[g]|0, 0, 400); });
       if (Array.isArray(saved.press)) saved.press.forEach(v => { const q = ports.find(x => x.name === v[0]); if (!q) return; q.pr = {}; for (const g of GK) if (v[1] && +v[1][g]) q.pr[g] = clamp(+v[1][g], -.4, .4); q.ev = (Array.isArray(v[2]) ? v[2] : []).filter(e => e && GOODS[e.g]).map(e => ({ g: e.g, mul: clamp(+e.mul || 1, .5, 2), until: e.until|0 })); });
       if (Array.isArray(saved.dispatches)) dispatches = saved.dispatches.slice(0, 30).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), who: String(v.who).slice(0, 60), t: String(v.t).slice(0, 400), id: 0, ask: null }));
