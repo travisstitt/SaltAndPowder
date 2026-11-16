@@ -63,6 +63,7 @@ function renderFleet(focusId){
   } else { const flag = kind === 'F', s = flag ? p : sq[idx], u = upOf(s), here = flag || inCompany(s), inPortAll = inPort; inPort = inPortAll && here; atHome = atHome && here; drawPic(s);
     $('shipHead').textContent = s.name + (flag ? ', your flagship, a ' : ', a ') + s.t.cname; $('nameRow').hidden = false; if (document.activeElement !== $('shipNameIn')) $('shipNameIn').value = s.name;
     $('shipSub').textContent = 'Rated ' + s.t.rate + ' guns · ' + s.guns + ' a side in play · speed ' + s.t.speed + ' · hold ' + s.t.hold + ' tons' + (flag ? '' : ' · ' + (s.cap.mate ? 'under your first mate ★☆☆☆☆' : stars(s.cap) + ' gunnery ' + s.cap.gun + ', seamanship ' + s.cap.sea));
+    if (flag) ledgerText(ul, 'txt', 'The hands are ' + moraleWord() + '. Officers: ' + (Object.keys(OFFICERS).filter(k => officers[k]).map(k => OFFICERS[k][0].toLowerCase()).join(', ') || 'none beyond your mates') + '.' + (fouling ? ' Her bottom is ' + (foul < .15 ? 'clean.' : foul < .5 ? 'growing weed.' : 'foul.') : ''));
     if (!inPort) ledgerText(ul, 'txt', 'At sea you can move hands between ships and appoint captains. Repairs, refits, hiring and selling need a port.');
     const fix = hurt(s), fc = Math.min(fix, gold);
     R('Hull and sails', fix ? fix + ' points of damage.' : 'Sound.', Math.round(s.hull) + '/' + Math.round(s.maxHull) + ' · ' + Math.round(s.sails) + '%', [['fx', !fix ? 'No need' : !inPort ? 'In port only' : 'Repair: ' + fc + ' gold', inPort && fix > 0 && gold > 0, () => { gold -= fc; mend(s, fc); ashore(3 + fc*.1); }]]);

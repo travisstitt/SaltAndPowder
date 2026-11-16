@@ -43,8 +43,8 @@ function setCourse(q){ course = q || null; autoHelm = !!q; routeLine = null; rou
   if (q){ if (p.sail === 0) p.sail = 1; say('Course set for ' + q.name + '. The helmsman has her; touch the helm to take over.'); } else say('Course cleared.'); }
 const wageBill = () => Math.ceil((inService() && navy.rank >= 4 ? .15 : .3)*(Math.ceil((p.crew + squad().reduce((n, o) => n + o.crew, 0))/8) + squad().reduce((n, o) => n + (o.cap.mate ? 0 : 6*Math.round((o.cap.gun + o.cap.sea)/2)), 0) + spares.length*6));
 function payWages(day){ if (day < 1) return; const w = wageBill(); // the first days are sailed on the promise of shares
-  if (gold >= w){ gold -= w; floaters.push({ x: p.x, y: p.y - 30, txt: '−' + w + ' wages', life: 2 }); }
-  else { gold = 0; const lost = Math.max(1, Math.round(p.crew*.1)); p.crew = Math.max(5, p.crew - lost); say('You cannot meet the month\'s wages of ' + w + ' gold. ' + lost + ' hands desert.'); } }
+  if (gold >= w){ gold -= w; floaters.push({ x: p.x, y: p.y - 30, txt: '−' + w + ' wages', life: 2 }); cheer(1); }
+  else { gold = 0; const lost = Math.max(1, Math.round(p.crew*.1)); p.crew = Math.max(5, p.crew - lost); say('You cannot meet the month\'s wages of ' + w + ' gold. ' + lost + ' hands desert.'); cheer(-15); } }
 function setPaused(on){ paused = !!on && state === 'play'; $('pauseBanner').hidden = !paused; $('pauseBtn').textContent = paused ? 'Resume' : 'Pause'; held.left = held.right = false; }
 const smokes = []; // gunsmoke that hangs and drifts; enough of it and you fight half blind
 const smokeAt = (x, y) => { let n = 0; for (const q of smokes) if (Math.abs(q.x - x) < 130 && Math.abs(q.y - y) < 130) n++; return n; };

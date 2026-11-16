@@ -39,7 +39,7 @@ const HELPERS = () => {
   // ---------- boot and world ----------
   let r = await ev(() => { const g = __sp; return { ports: g.ports.length, landAnchors: g.ports.filter(q => g.isLand(q.ox, q.oy)).map(q => q.name), ships: g.ships.length, fleet: !!(g.fleet && g.fleet.lead),
     roles: g.ships.reduce((o, s) => { o[s.role] = (o[s.role] || 0) + 1; return o; }, {}), onLand: g.ships.filter(s => g.isLand(s.x, s.y)).length }; });
-  check('boot: 106 ports', r.ports === 106, r.ports);
+  check('boot: 108 ports', r.ports === 108, r.ports);
   check('boot: every port anchorage is in water', r.landAnchors.length === 0, r.landAnchors);
   check('boot: merchants, patrols and treasure fleet present', r.roles.merchant >= 12 && r.roles.patrol >= 3 && r.fleet && r.roles.treasure === 2, r.roles);
   check('boot: no ship starts on land', r.onLand === 0, r.onLand);
@@ -157,7 +157,7 @@ const HELPERS = () => {
   check('commission: dispatches are paid on arrival', r.done && r.paid === r.reward, r);
   r = await ev(() => { const g = __sp; T.reset(); g.repute('es', -100); const hav = g.ports.find(q => q.name === 'Havana'); g.p.x = hav.ox; g.p.y = hav.oy; T.run(.2); return g.hostile('es'); });
   await page.keyboard.press('KeyF'); await page.waitForTimeout(150);
-  check('nations: a hostile port refuses you', r && (await ev(() => __sp.state)) === 'play');
+  check('nations: a hostile port refuses you and offers a boat attack or a raid instead', r && (await ev(() => { const g = __sp, ok = g.state === 'play' && !document.getElementById('ask').hidden && !!document.getElementById('sa_cut') && !!document.getElementById('sa_raid'); document.getElementById('sa_off').click(); return ok && document.getElementById('ask').hidden; })));
   await ev(() => { const g = __sp; g.gold = 5000; g.openPort(g.ports[0]); }); await page.click('[data-tab=governor]'); await page.click('#pardon');
   check('nations: a pardon ends the hostility', !(await ev(() => __sp.hostile('es')))); await ev(() => __sp.closePort());
 
@@ -262,7 +262,7 @@ const HELPERS = () => {
   r = await ev(() => { const g = __sp; g.setDiff('normal'); g.newGame(); const n = g.ports.map(q => q.name), tr = g.ships.filter(s => s.role === 'treasure'), ve = g.ports.find(q => q.name === 'Veracruz'), ha = g.ports.find(q => q.name === 'Havana');
     const near = tr.every(s => Math.min(Math.hypot(s.x - ve.ox, s.y - ve.oy), Math.hypot(s.x - ha.ox, s.y - ha.oy)) < 600), esc = g.ships.filter(s => s.role === 'escort').map(s => s.cls);
     return { n: n.length, has: ['Kingston', 'Cap-Français', 'Port-au-Prince', 'English Harbour', 'St Eustatius'].every(x => n.indexOf(x) >= 0), old: n.indexOf('Tortuga') >= 0 || n.indexOf('Port Royal') >= 0, tr: tr.length, near, esc, goods: g.goodsKeys.length }; });
-  check('ports: the 1750s towns are on the chart and the buccaneer havens are gone', r.n === 106 && r.has && !r.old, r);
+  check('ports: the 1750s towns are on the chart and the buccaneer havens are gone', r.n === 108 && r.has && !r.old, r);
   check('plate fleet: two plate ships sail between Veracruz and Havana under a frigate escort', r.tr === 2 && r.near && r.esc.indexOf('frigate') >= 0, r);
   check('goods: coffee, indigo and molasses are traded', r.goods === 12, r);
   r = await ev(() => { const g = __sp; T.reset(); const st = g.ports.find(q => q.name === 'St Eustatius'), ha = g.ports.find(q => q.name === 'Havana'), ki = g.ports[0]; g.standing.nl = -60; g.p.x = st.ox; g.p.y = st.oy; g.update(.01); g.tap('dock'); const free = g.state === 'port'; if (free) g.closePort();
@@ -330,7 +330,7 @@ const HELPERS = () => {
   check('start: a voyage can begin from Kingston, Charleston, New York or Boston', r.Kingston && r.Charleston && r['New York'] && r.Boston, r);
   r = await ev(() => { const g = __sp; T.reset(); g.repute('en', -100); const q = g.ports.find(q => q.name === 'Port Antonio'), k = g.ports[0]; g.p.x = q.ox; g.p.y = q.oy; g.update(.01); g.tap('dock'); const open = g.state === 'port', offers = g.offers.length; let ships = false, marq = false;
     if (open){ ships = !!document.getElementById('y_brig'); document.querySelector('[data-tab=governor]').click(); marq = !!document.getElementById('marque'); document.querySelector('[data-tab=market]').click(); } const rows = document.querySelectorAll('#ledger [id^=buy_]').length; if (open) g.closePort();
-    g.p.x = k.ox; g.p.y = k.oy; g.update(.01); g.tap('dock'); const shut = g.state === 'play'; return { open, offers, ships, marq, rows, shut }; });
+    g.p.x = k.ox; g.p.y = k.oy; g.update(.01); g.tap('dock'); const shut = g.state === 'play' && !document.getElementById('ask').hidden; g.closeMenu(); return { open, offers, ships, marq, rows, shut }; });
   check('landings: open to anyone, with a short market and no governor, yard or letters of marque', r.open && r.offers === 0 && !r.ships && !r.marq && r.rows >= 1 && r.rows <= 4 && r.shut, r);
   r = await ev(() => { const g = __sp; T.reset(); const x = g.X(-79.65), y = g.Y(27.4); g.p.x = x; g.p.y = y; g.p.sail = 0; g.p.speed = 0; T.clear(3000); T.run(20); const drift = y - g.p.y; return { drift, in: !!g.streamAt(x, y), out: g.streamAt(g.X(-70), g.Y(27)) === null }; });
   check('Gulf Stream: a ship lying to off Florida is set to the north', r.in && r.out && r.drift > 250, r);

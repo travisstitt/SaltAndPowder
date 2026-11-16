@@ -118,10 +118,10 @@ function render(dt){
     const glow = (x, y, r, a) => { const g = cx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,205,120,' + (a*la).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,170,70,0)'); cx.fillStyle = g; circle(cx, x, y, r); cx.fill(); };
     for (const s of ships.concat([p])){ if (s.sinking != null || s.x < x0-80 || s.x > x1+80 || s.y < y0-80 || s.y > y1+80) continue;
       glow(s.x - Math.cos(s.h)*s.t.len*.48, s.y - Math.sin(s.h)*s.t.len*.48, 30, .5); glow(s.x + Math.cos(s.h)*s.t.len*.2, s.y + Math.sin(s.h)*s.t.len*.2, 16, .25); }
-    for (const q of ports){ if (!q.b || q.x < x0-260 || q.x > x1+260 || q.y < y0-260 || q.y > y1+260) continue;
+    for (const q of ports){ if (!q.b || q.x < x0-260 || q.x > x1+260 || q.y < y0-260 || q.y > y1+260) continue; const lk = q.spec.land ? .72 : 1; cx.save(); cx.translate(q.x, q.y); cx.scale(lk, lk); cx.translate(-q.x, -q.y);
       const u = q.P(-q.depth*.5, 0); glow(u[0], u[1], q.span + 70, .22); cx.fillStyle = 'rgba(255,215,130,' + (.75*la).toFixed(3) + ')';
       q.b.forEach((b, i) => { if (i % 3 === 1) return; const w = q.P(b.a + 2, b.b); cx.fillRect(w[0] - 1.5, w[1] - 1.5, 3, 3); });
-      for (const jb of q.jet){ const w = q.P(58, jb); glow(w[0], w[1], 22, .5); } }
+      for (const jb of q.jet){ const w = q.P(58, jb); glow(w[0], w[1], 22, .5); } cx.restore(); }
     cx.restore(); }
   if (weather.kind === 'fog' && wk > 0){ cx.fillStyle = 'rgba(196,206,206,' + (.42*wk).toFixed(3) + ')'; cx.fillRect(0, 0, vw, vh);
     for (let i = 0; i < 7; i++){ const fx = ((h1(i*7.1)*vw*1.4 + time*(8 + i*3)) % (vw*1.4)) - vw*.2, fy = h1(i*3.3 + 1)*vh, r = 180 + h1(i)*220;

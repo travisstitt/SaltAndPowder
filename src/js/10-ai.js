@@ -49,6 +49,7 @@ function ai(s, dt){
     if (s.role === 'hunter') fights = d < 1500*v || s.announced && d < 900;
     else if (s.role === 'patrol') fights = d < 900 && (s.provoked || hostile(s.nation) && d < 700*v);
     if (s.role === 'patrol' && s.nation === 'es' && d < 430 && !fights && !hostile('es') && hold.cloth > 0 && clock > customsT && !menuOpen && !melee && !curPort_busy() && ports.some(q => q.home === 'es' && Math.hypot(q.x - p.x, q.y - p.y) < 2400)) customs(s);
+    if (s.role === 'patrol' && s.nation === 'en' && s.rival == null && d < 430 && !fights && !hostile('en') && hold.flour + hold.fish > 0 && atWar('en', 'fr') && clock > customsT && !menuOpen && !melee && !curPort_busy() && (marque === 'en' || (ports.find(q => q.name === homeName) || {}).home === 'en') && ports.some(q => (q.nk === 'fr' || q.spec.free) && Math.hypot(q.x - p.x, q.y - p.y) < 2400)) navyStop(s);
     else if (s.role === 'escort') fights = d < 650 && (s.provoked || s.fleet && fleet && fleet.alarm || hostile(s.nation));
     else if (s.role === 'quarry') fights = d < 650*v || s.hitByPlayer;
     else if (s.role === 'rover' && d < 700*v){ // a rover fights what she can beat and runs from what she cannot
@@ -92,7 +93,7 @@ function ai(s, dt){
     else { s.fear = null; want = L && s !== L ? station(s, L, dt) : home; s.speedMul = s.conv ? .86 : 1; if (L && L.dest) s.dest = L.dest; }
     if (!L && Math.hypot(q.ox-s.x, q.oy-s.y) < 190){ if (s.transport){ s.gone = true; if (mission && mission.type === 'escort') mission.arrived++; } else { s.dest = pickDest(q); s.cargo = cargoRoll(); s.path = null; } }
   } else if (s.role === 'patrol'){
-    s.sail = 1; want = loiterTo(s, dt, () => { const own = ports.filter(q => q.nk === s.nation), q = own[rnd()*own.length|0]; return waterNear(q.ox, q.oy, 650); });
+    s.sail = 1; want = loiterTo(s, dt, () => { if (s.rival != null) return waterNear(s.home[0], s.home[1], 900); const own = ports.filter(q => q.nk === s.nation), q = own[rnd()*own.length|0]; return waterNear(q.ox, q.oy, 650); });
   } else if (s.role === 'fisher'){ s.sail = .5; want = loiterTo(s, dt, () => waterNear(s.home[0], s.home[1], 560));
   } else if (s.role === 'quarry'){
     s.sail = .5; want = loiterTo(s, dt, () => waterNear(s.home[0], s.home[1], 420));

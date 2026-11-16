@@ -11,8 +11,9 @@ function start(data){
 /* test hook: open the page with #test to expose the game's internals to the test suite in tests/ */
 if (location.hash === '#test') window.__sp = { update, ashore, openPort, closePort, accept, complete, grapple, capture, settlePrize, politics, snapshot, loadGame, newGame, openFleet, openManifest, setCourse, setPaused, setChart,
   get cal(){ return calIdx(); }, setCal(i){ cal0 = i - Math.floor(clock/MONTH); }, calendarTick, monthTick, get date(){ return dateStr(); }, get marque(){ return marque; }, setMarque(k){ marque = k; }, get courtDue(){ return courtDue; }, setWars(a){ wars = new Set(a); }, setCalm(v){ calm = !!v; }, toggleShot, price, tap: act, setOrders, startHurricane, get hurr(){ return hurr; }, get weather(){ return weather; }, strike, sendIn, lawful, get classes(){ return CLASSES; }, get goodsKeys(){ return GK; },
+  navyStop, shoreAction, spawnRival, rivalTick, RIVALS, get rivals(){ return rivals; }, get morale(){ return morale; }, set morale(v){ morale = v; }, get officers(){ return officers; }, get foul(){ return foul; }, set foul(v){ foul = v; }, setFouling(v){ fouling = !!v; store('foul', fouling ? '1' : '0'); const b = $('foulBtn'); if (b){ b.setAttribute('aria-pressed', fouling); b.textContent = 'Hull fouling: ' + (fouling ? 'on' : 'off'); } }, pMul, cheer, darkness,
   ask, svc, customs, search, searchable, retire, convoy, spawnMerchant, attack, get navy(){ return navy; }, get captives(){ return captives; }, get stats(){ return stats; }, get menuOpen(){ return menuOpen; }, closeMenu, setCustomsT(v){ customsT = v; },
-  spawnFisher, get trafWant(){ return trafWant; },
+  iced, winter, onChannel, spawnFisher, get trafWant(){ return trafWant; },
   get chartZ(){ return chartV.z; }, get flagsEnd(){ return flagsEnd; }, chartRect,
   freeze(v){ frozen = !!v; }, roll(){ return rnd(); }, seed: seedRnd, setRnd(f){ rnd = f || Math.random; }, setTime(v){ time = v; }, get tick(){ return tick; }, polar, restoreMission, repute, offend, NAVY, EVENTS, GOODS, rankFor, wageBill, MINI,
   X, Y, streamAt, setStart, get startName(){ return startName; },

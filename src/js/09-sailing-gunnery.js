@@ -1,7 +1,7 @@
 function moveShip(s, turn, dt){
   const a = Math.abs(angd(s.h, wind.dir)); s.pol = polar(a);
   const pol = s === p ? s.pol : Math.max(s.pol, .3);
-  const target = s.t.speed*s.speedMul*s.sail*pol*wind.str*windMul()*(.35 + .65*s.sails/100);
+  const target = s.t.speed*s.speedMul*s.sail*pol*wind.str*windMul()*(.35 + .65*s.sails/100)*(s === p ? pMul() : 1);
   s.speed += (target - s.speed)*dt*(target > s.speed ? .55 : .9);
   const tr = s.t.turn*(.45 + .55*Math.min(1, s.speed/80))*(s.sail === 1 ? .8 : 1);
   s.h += turn*tr*dt;
@@ -26,7 +26,7 @@ function moveShip(s, turn, dt){
 
 const SHOTK = { round:1, double:.55, chain:.78, grape:.6 };
 const SHOTN = { round:'Round shot', double:'Double shot', chain:'Chain shot', grape:'Grape shot' };
-const crewSlow = () => 1 + Math.max(0, 1 - p.crew/(p.t.crew*.5)); // an undermanned ship is slow to reload
+const crewSlow = () => (1 + Math.max(0, 1 - p.crew/(p.t.crew*.5)))*(officers.gunner ? .9 : 1)*(1 + clamp((50 - morale)/160, -.08, .3)); // an undermanned ship is slow to reload
 function fire(s, side, vp){
   const i = side > 0 ? 1 : 0;
   if (s.rl[i] > 0 || s.sinking != null || s.surrendered || s.grappled) return;
@@ -49,7 +49,7 @@ function launch(q){
 }
 function strike(b, s, hull, sails, k){ /* a ball strikes home; one that travels the length of her deck rakes her */
   if (b.dbl) hull *= 1.6;
-  if (!b.chain && Math.abs(Math.cos(b.a - s.h)) > .8){ hull *= b.grape ? 1 : 1.6; s.crew = Math.max(s === p ? Math.min(s.crew, 6) : 0, s.crew - 1 - (rnd()*2|0)); s.raked = (s.raked || 0) + 1;
+  if (!b.chain && Math.abs(Math.cos(b.a - s.h)) > .8){ hull *= b.grape ? 1 : 1.6; s.crew = Math.max(s === p ? Math.min(s.crew, 6) : 0, s.crew - 1 - (rnd()*2|0)); s.raked = (s.raked || 0) + 1; if (s === p && rnd() < .04){ const ks = Object.keys(officers).filter(k => officers[k]); if (ks.length){ const k = ks[rnd()*ks.length|0]; officers[k] = false; cheer(-6); later(() => say('Your ' + OFFICERS[k][0].toLowerCase() + ' is killed by the raking fire.'), 900); } }
     if (clock - (s.rakeAt == null ? -9 : s.rakeAt) > 1.5){ s.rakeAt = clock; floaters.push({ x: s.x, y: s.y - 44, txt: 'Raked!', life: 1.5 }); } }
   damage(s, hull*k, sails*k); }
 function damage(s, hull, sails){
@@ -81,7 +81,7 @@ function sink(s){
   if (mine && !s.released) onPrize(s, false);
 }
 function earn(amt, x, y){
-  gold += amt; plunder += amt; floaters.push({ x, y, txt: '+' + amt, life: 1.6 });
+  gold += amt; plunder += amt; cheer(Math.min(8, amt/120)); floaters.push({ x, y, txt: '+' + amt, life: 1.6 });
   const r = rankFor(plunder); if (r > rankIdx){ rankIdx = r; say('They now call you ' + RANKS[r][1] + '.'); gaz('The waterfront now speaks of the master of the ' + p.name + ' as ' + RANKS[r][1] + '.', 'you'); }
 }
 

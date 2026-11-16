@@ -45,7 +45,7 @@ const results = [], check = (name, ok, detail) => results.push({ name, ok: !!ok,
   // ---------- the world
   r = await ev(() => { const g = __sp, P = g.ports, names = new Set(P.map(q => q.name)); return { n: P.length, unique: names.size === P.length, wet: P.filter(q => g.isLand(q.ox, q.oy)).map(q => q.name), land: P.filter(q => q.spec.land).length, noGov: P.filter(q => q.spec.land && q.spec.sz !== 1).length, dock: P.filter(q => q.spec.dock).map(q => q.name).sort(), free: P.filter(q => q.spec.free).length,
     gs: [!!g.streamAt(g.X(-79.65), g.Y(27.4)), g.streamAt(g.X(-70), g.Y(20)) === null] }; });
-  check('world: 106 ports with unique names, every anchorage afloat', r.n === 106 && r.unique && r.wet.length === 0, r);
+  check('world: 108 ports with unique names, every anchorage afloat', r.n === 108 && r.unique && r.wet.length === 0, r);
   check('world: landings, dockyards and free ports are as designed', r.land >= 40 && r.noGov === 0 && r.dock.join() === 'English Harbour,Halifax,Havana' && r.free === 3 && r.gs[0] && r.gs[1], r);
   // ---------- saved games from every format
   for (const [file, want] of [['save-v3.json', { cls: 'fifty', home: 'Kingston', squad: 1, laid: 'fifty', cal: 82, wars: 1, near: 'Cap-Français', sugar: 5, mission: 'deliver' }], ['save-v4.json', { cls: 'frigate', home: 'Kingston', squad: 1, cal: 128, wars: 1, near: 'Havana', marque: 'en', court: 500, rank: 2, mission: 'siege', have: 1, fr: 2 }], ['save-v5.json', { cls: 'sloop', home: 'Kingston', squad: 1, cal: 72, wars: 1, near: 'Kingston', marque: 'en', fish: 8, pts: 7 }]]){

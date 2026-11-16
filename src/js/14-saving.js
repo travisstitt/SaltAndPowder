@@ -1,7 +1,7 @@
 function snapshot(){
   const m = mission; let np = ports[0], nd = 1e9; for (const q of ports){ const d = Math.hypot(q.x-p.x, q.y-p.y); if (d < nd){ nd = d; np = q; } }
   const owners = {}; ports.forEach(q => { if (q.nk !== q.home) owners[q.name] = q.nk; });
-  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats,
+  return { v:4, deg: DEG, policy: prizePolicy, pname: p.name, course: course ? course.name : null, squad: squad().map(fleetData), laidUp, spares, home: homeName, formation, orders, t: Date.now(), diff, gold, plunder, up, standing, cls: p.cls, shot, where: np.name, rank: RANKS[rankIdx][1], crew: p.crew, hold, wars: [...wars], owners, clock: Math.round(clock), wx: weather.kind, proj: 2, cal0, marque, courtDue, courtList, gaz: gazette.slice(0, 40), navy, captives, stats, morale: Math.round(morale), officers, foul: +foul.toFixed(2), fouling, rivals,
     p: { x: Math.round(p.x), y: Math.round(p.y), h: +p.h.toFixed(3), hull: Math.round(p.hull), sails: Math.round(p.sails) },
     wind: { dir: +wind.dir.toFixed(3), str: +wind.str.toFixed(2) }, fleetLeg: fleet ? fleet.leg : null,
     mission: m ? { type: m.type, nk: m.nk, title: m.title, reward: m.reward, rep: m.rep, port: m.port && m.port.name, foe: m.foe, need: m.need, have: m.have, cls: m.cls, until: m.until, svc: m.svc,
@@ -45,6 +45,8 @@ const ERAS = { 0:'January 1750. The long peace: trade, smuggle, hunt the last pi
 const STARTS = { Kingston:'Kingston, Jamaica: the sugar islands, Spanish trade to windward, the plate fleet to leeward.', Charleston:'Charleston, Carolina: rice and indigo, with Spanish Florida a day\'s sail south.', 'New York':'New York: flour for the islands, and more privateers than any port in America.', Boston:'Boston: rum, fish and masts, with Louisbourg and the French fishery to the north.' };
 function setStart(v){ startName = STARTS[v] ? v : 'Kingston'; document.querySelectorAll('[data-start]').forEach(b => b.setAttribute('aria-pressed', b.dataset.start === startName)); $('startNote').textContent = STARTS[startName]; }
 document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => setStart(b.dataset.start))); setStart('Kingston');
+function setFoul(v){ fouling = !!v; store('foul', fouling ? '1' : '0'); const b = $('foulBtn'); b.setAttribute('aria-pressed', fouling); b.textContent = 'Hull fouling: ' + (fouling ? 'on' : 'off'); }
+$('foulBtn').addEventListener('click', () => setFoul(!fouling)); setFoul(recall('foul') === '1');
 function setEra(v){ startCal = ERAS[v] ? +v : 72; document.querySelectorAll('[data-era]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.era === startCal)); $('eraNote').textContent = ERAS[startCal]; }
 document.querySelectorAll('[data-era]').forEach(b => b.addEventListener('click', () => setEra(b.dataset.era))); setEra(72);
 $('menuBtn').addEventListener('click', e => { openMenu(); e.currentTarget.blur(); });

@@ -6,7 +6,8 @@ function act(name){
   else if (melee) return;
   else if (name === 'both'){ for (const sd of [-1, 1]) if (!aimSide(sd, true).hit) fire(p, sd); } // never rakes a struck ship by accident
   else if (name === 'dock'){ if (!nearPort) return;
-    if (hostile(nearPort.nk) && !nearPort.spec.free && !nearPort.spec.land) say('The ' + nearPort.nation.adj + ' guns at ' + nearPort.name + ' warn you off. This port is closed to you until you buy a pardon elsewhere.');
+    if (iced(nearPort) && nearPort.name !== homeName) say(nearPort.name + ' is shut in by ice and winter gales. The harbour opens again in April.');
+    else if (hostile(nearPort.nk) && !nearPort.spec.free && !nearPort.spec.land) shoreAction(nearPort);
     else openPort(nearPort); }
 }
 function setChart(on){ if (on && !chartOpen){ chartV.z = 3; chartV.cx = p.x; chartV.cy = p.y; } /* the chart opens on your own waters; zoom out for the whole of it */ chartOpen = !!on && state === 'play'; held.left = held.right = false; $('chartTools').hidden = !(!!on && state === 'play'); $('hud').style.visibility = $('toast').style.visibility = chartOpen ? 'hidden' : ''; }
@@ -40,7 +41,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyG' && !e.repeat) cycleForm();
   else if (e.code === 'KeyH' && !e.repeat) cycleOrders();
   else if ((e.code === 'Escape' || e.code === 'KeyL') && !e.repeat) openMenu();
-  else if (/^Digit[12345]$/.test(e.code)) setPace(+e.code.slice(5) - 1);
+  else if (/^Digit[123456]$/.test(e.code)) setPace(+e.code.slice(5) - 1);
   else if (e.code === 'Minus' || e.code === 'NumpadSubtract') setZoom(zoomMul/1.15);
   else if (e.code === 'Equal' || e.code === 'NumpadAdd') setZoom(zoomMul*1.15);
 });

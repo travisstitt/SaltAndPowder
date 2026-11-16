@@ -139,8 +139,13 @@ function fleetAI(s, dt){
 }
 function laneBears(s, side){ for (const o of ships){ if (!threat(o)) continue; const dx = o.x-s.x, dy = o.y-s.y; if (Math.hypot(dx, dy) > RANGE) continue;
   const rel = angd(Math.atan2(dy, dx), s.h); if ((rel > 0 ? 1 : -1) === side && Math.abs(Math.abs(rel) - Math.PI/2) < .3) return true; } return false; }
-const price = (q, g) => Math.max(2, Math.round(GOODS[g][1]*(q.spec.mk.indexOf(g) >= 0 ? .7 : q.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && q.home === 'es' || q.name === 'Monte Cristi' && (g === 'flour' || g === 'fish') ? 1.55 : 1.35) : 1)*(1 + .1*Math.sin(clock*.011 + q.x*.01 + g.length*2.1))));
+const price = (q, g) => Math.max(2, Math.round(GOODS[g][1]*(q.spec.mk.indexOf(g) >= 0 ? .7 : q.spec.dm.indexOf(g) >= 0 ? (g === 'cloth' && q.home === 'es' || q.name === 'Monte Cristi' && (g === 'flour' || g === 'fish') ? 1.7 : g === 'flour' || g === 'fish' ? 1.6 : 1.35) : 1)*(1 + .1*Math.sin(clock*.011 + q.x*.01 + g.length*2.1))));
 let gazette = [], courtList = [], courtTok = 0;
+const OFFICERS = { master:['Sailing master', 'Half a knot more out of her on every point of sailing.'], gunner:['Gunner', 'The guns are served a tenth faster.'], surgeon:['Surgeon', 'Some of the wounded come back to duty each month.'], bosun:['Boatswain', 'Sails are knotted and spliced at sea.'] };
+let morale = 70, officers = {}, foul = 0, fouling = false, lastCall = 0, rivals = [];
+const moraleWord = () => morale >= 85 ? 'in high spirits' : morale >= 60 ? 'content' : morale >= 40 ? 'grumbling' : morale >= 25 ? 'sullen' : 'near mutiny';
+const cheer = d => { morale = clamp(morale + d, 0, 100); };
+const pMul = () => (officers.master ? 1.04 : 1)*(1 - .18*foul);
 const NAVY = [[0, 'Privateer'], [6, 'Lieutenant'], [16, 'Commander'], [32, 'Post-captain'], [60, 'Commodore']];
 let navy = { k: null, pts: 0, rank: 0 }, captives = { en:0, es:0, fr:0, nl:0, dk:0 }, stats = { taken:0, sunk:0, lawful:0, unlawful:0 }, customsT = 0, askDefault = null;
 const inService = () => !!marque && navy.k === marque;

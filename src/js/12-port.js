@@ -1,4 +1,4 @@
-function openPort(port){ port.greased = false; payCourt(port); setChart(false); state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
+function openPort(port){ port.greased = false; { const m = Math.floor(clock/MONTH); if (m > lastCall || lastCall === 0) cheer(3); lastCall = m; } payCourt(port); setChart(false); state = 'port'; curPort = port; held.left = held.right = false; portTab = 'yard';
   p.x = port.ox; p.y = port.oy; p.h = port.out; p.speed = 0; p.sail = 0; // riding at anchor, bow to the open sea
   if (mission && mission.type === 'deliver' && mission.port === port) complete();
   if (course === port){ course = null; autoHelm = false; routeLine = null; } setPaused(false);
@@ -28,6 +28,7 @@ function renderPort(focusId){
   if (portTab === 'yard'){
     const all = [p].concat(squad().filter(inCompany)), total = all.reduce((n, s) => n + hurt(s), 0), pay = Math.min(total, gold);
     T('sec', 'Shipwright');
+    if (fouling){ const c = 20 + Math.round(p.t.len*.5); R('Careen and scrape her bottom', foul > .05 ? 'Weed and barnacle cost her ' + Math.round(foul*18) + ' per cent of her speed.' : 'Her bottom is clean.', c + ' gold', [['careen', 'Careen', gold >= c && foul > .05, () => { gold -= c; foul = 0; ashore(40); }]]); }
     R('Repair ' + (all.length > 1 ? 'the whole fleet' : 'your ' + p.t.cname), total ? total + ' points of damage to hulls and sails' + (pay < total ? ', and you can pay for ' + pay : '') + '. The work takes time, and the world sails on.' : 'Every plank and sail is sound.', '',
       [['rAll', total ? 'Repair: ' + pay + ' gold' : 'No need', total > 0 && gold > 0, () => { let c = pay; gold -= pay; all.forEach(s => { c = mend(s, c); }); ashore(4 + pay*.1); }]]);
     R('Refit and manage your ships', 'Guns, timbers, sailcloth and gun drill for each ship, crew transfers, captains, selling and laying up.', '', [['toFleet', 'Open the fleet', true, () => openFleet('F')]]);
@@ -49,6 +50,10 @@ function renderPort(focusId){
     if (curPort.home === 'es' && curPort.nk === 'es' && hold.cloth > 0 && !curPort.greased){ const c = 20 + hold.cloth*3; R('Grease the customs officer', 'Landing foreign cloth and hardware here is smuggling. Paid, he will be looking the other way this visit; unpaid, he may seize the lot.', c + ' gold', [['grease', 'Pay him', gold >= c, () => { gold -= c; curPort.greased = true; }]]); }
   } else if (portTab === 'tavern'){
     const need = p.t.crew - p.crew, hire = Math.min(10, need, Math.floor(gold/8));
+    T('sec', 'The ship\'s company');
+    T('txt', 'The hands are ' + moraleWord() + '. Prize money, pay and a run ashore lift them; long cruises, lost fights and unpaid wages do not.');
+    { const c = Math.max(10, p.crew*2); R('Stand the hands a run ashore', 'Rum, music and a day\'s liberty.', c + ' gold', [['liberty', 'Pay for it', gold >= c && morale < 95, () => { gold -= c; cheer(14); ashore(20); }]]); }
+    if (curPort.spec.sz >= 2 && !curPort.spec.land) Object.keys(OFFICERS).forEach(k => { if (!officers[k]) R(OFFICERS[k][0] + ' seeking a berth', OFFICERS[k][1], '250 gold', [['of_' + k, 'Sign him', gold >= 250, () => { gold -= 250; officers[k] = true; }]]); });
     T('sec', 'Hands for hire');
     R('Sign on hands for your flagship', 'Guns reload slowly below half strength, and boarding is decided by numbers. Hire for your consorts in the fleet screen.', p.crew + ' of ' + p.t.crew,
       [['crew', hire > 0 ? 'Hire ' + hire + ': ' + hire*8 + ' gold' : need ? '8 gold a hand' : 'Full crew', hire > 0, () => { gold -= hire*8; p.crew += hire; ashore(4); }]]);

@@ -226,7 +226,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     <div class="tools">
       <button id="shotBtn" type="button" title="Shot loaded (R)">Round shot</button>
       <button id="aimBtn" type="button" aria-pressed="true" title="Aim assist (T)">Aim: on</button>
-      <button id="paceBtn" type="button" title="Game pace (1 to 4)">Pace: Steady</button>
+      <button id="paceBtn" type="button" title="Game pace (1 to 6)">Pace: Steady</button>
       <span class="sep"></span>
       <button id="chartBtn" type="button" title="Chart (C)">Chart</button>
       <button id="fleetBtn" type="button" title="Fleet management (V)">Fleet</button>
@@ -289,6 +289,7 @@ button.primary:hover:not(:disabled){background:linear-gradient(180deg,#f6d48c,#d
     <p class="note" id="startNote"></p>
     <div class="seg" role="group" aria-label="Starting year"><button type="button" data-era="0">1750</button><button type="button" data-era="72">1756</button><button type="button" data-era="108">1759</button></div>
     <p class="note" id="eraNote"></p>
+    <div class="seg" role="group" aria-label="Options"><button type="button" id="foulBtn" aria-pressed="false" title="Weed slows your ship until you careen her in port">Hull fouling: off</button></div>
     <button class="primary" id="startBtn" type="button">Set sail on a new voyage</button>
     <button id="contBtn" type="button" hidden>Continue</button>
     <button id="titleLoad" type="button">Load a saved voyage</button>

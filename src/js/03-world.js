@@ -9,11 +9,11 @@ const Land = k => NAT[k].land.replace(/^t/, 'T');
 /* towns of the 1750s: name, a point just off the harbour, founding nation, and what makes the place itself.
    sz town size, roof style, forts, ch church (2 = cathedral), walls, yard = shipyard, dock = royal dockyard (ships of the line), free = free port, mk = goods made here (cheap), dm = goods wanted (dear) */
 const TOWNS = [
-  ['Kingston', -76.84, 17.88, 'en', { sz:3, roof:'slate', forts:['star', 'battery'], ch:1, yard:1, mk:['sugar', 'rum', 'cloth'], dm:['indigo', 'cocoa', 'tobacco'] }],
+  ['Kingston', -76.84, 17.88, 'en', { sz:3, roof:'slate', forts:['star', 'battery'], ch:1, yard:1, mk:['sugar', 'rum', 'cloth'], dm:['indigo', 'cocoa', 'tobacco', 'flour', 'fish'] }],
   ['Havana', -82.36, 23.2, 'es', { sz:3, roof:'tile', forts:['castle', 'tower'], ch:2, walls:1, yard:1, dock:1, mk:['tobacco', 'sugar'], dm:['cloth', 'coffee'] }],
   ['Santiago de Cuba', -75.87, 19.92, 'es', { sz:2, roof:'tile', forts:['castle'], ch:1, mk:['tobacco'], dm:['cloth'] }],
-  ['Cap-Français', -72.2, 19.85, 'fr', { sz:3, roof:'slate', forts:['star', 'battery'], ch:2, yard:1, mk:['sugar', 'coffee', 'indigo'], dm:['cloth', 'cocoa'] }],
-  ['Port-au-Prince', -72.45, 18.6, 'fr', { sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'indigo', 'molasses'], dm:['cloth', 'rum'] }],
+  ['Cap-Français', -72.2, 19.85, 'fr', { sz:3, roof:'slate', forts:['star', 'battery'], ch:2, yard:1, mk:['sugar', 'coffee', 'indigo'], dm:['cloth', 'cocoa', 'flour', 'fish'] }],
+  ['Port-au-Prince', -72.45, 18.6, 'fr', { sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'indigo', 'molasses'], dm:['cloth', 'rum', 'flour', 'fish'] }],
   ['Santo Domingo', -69.89, 18.42, 'es', { sz:3, roof:'tile', forts:['tower', 'battery'], ch:2, walls:1, mk:['sugar'], dm:['cloth', 'rum'] }],
   ['San Juan', -66.12, 18.52, 'es', { sz:3, roof:'tile', forts:['castle'], ch:1, walls:1, mk:['sugar', 'coffee'], dm:['cloth'] }],
   ['Nassau', -77.35, 25.3, 'en', { sz:1, roof:'slate', forts:['star'], ch:1, mk:[], dm:['rum', 'cloth', 'sugar', 'molasses'] }],
@@ -27,13 +27,13 @@ const TOWNS = [
   ['Willemstad', -68.95, 12.07, 'nl', { sz:2, roof:'dutch', forts:['star'], ch:1, mk:['cloth'], dm:['cocoa', 'tobacco', 'indigo'] }],
   ['La Guaira', -66.93, 10.66, 'es', { sz:2, roof:'tile', forts:['battery', 'battery'], ch:1, mk:['cocoa'], dm:['cloth'] }],
   ['Cumaná', -64.2, 10.5, 'es', { sz:1, roof:'tile', forts:['castle'], ch:1, mk:['cocoa', 'tobacco'], dm:['cloth', 'rum'] }],
-  ['Bridgetown', -59.68, 13.08, 'en', { sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'rum', 'molasses'], dm:['tobacco', 'cocoa', 'coffee'] }],
-  ['Fort-Royal', -61.1, 14.58, 'fr', { sz:2, roof:'slate', forts:['star'], ch:1, mk:['sugar', 'coffee', 'molasses'], dm:['tobacco', 'cloth'] }],
-  ['Basseterre', -62.74, 17.25, 'en', { la:-1.2, sz:1, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'molasses'], dm:['cocoa', 'tobacco'] }],
+  ['Bridgetown', -59.68, 13.08, 'en', { sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'rum', 'molasses'], dm:['tobacco', 'cocoa', 'coffee', 'flour', 'fish'] }],
+  ['Fort-Royal', -61.1, 14.58, 'fr', { sz:2, roof:'slate', forts:['star'], ch:1, mk:['sugar', 'coffee', 'molasses'], dm:['tobacco', 'cloth', 'flour', 'fish'] }],
+  ['Basseterre', -62.74, 17.25, 'en', { la:-1.2, sz:1, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'molasses'], dm:['cocoa', 'tobacco', 'flour', 'fish'] }],
   ['English Harbour', -61.78, 16.92, 'en', { la:1.57, sz:2, roof:'slate', forts:['battery', 'battery'], ch:0, yard:1, dock:1, mk:[], dm:['rum', 'tobacco', 'coffee'] }],
-  ['St Eustatius', -63.36, 17.62, 'nl', { sz:1, roof:'dutch', forts:['battery'], ch:1, free:1, mk:['cloth'], dm:['sugar', 'tobacco', 'coffee', 'molasses'] }],
-  ['Basse-Terre', -61.8, 16.0, 'fr', { la:2.6, sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'coffee'], dm:['cloth', 'tobacco'] }],
-  ['Saint-Pierre', -61.26, 14.8, 'fr', { la:3.3, sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'rum', 'molasses'], dm:['cloth', 'cocoa'] }],
+  ['St Eustatius', -63.22, 17.58, 'nl', { sz:1, roof:'dutch', forts:['battery'], ch:1, free:1, mk:['cloth'], dm:['sugar', 'tobacco', 'coffee', 'molasses'] }],
+  ['Basse-Terre', -61.8, 16.0, 'fr', { la:2.6, sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'coffee'], dm:['cloth', 'tobacco', 'flour', 'fish'] }],
+  ['Saint-Pierre', -61.26, 14.8, 'fr', { la:3.3, sz:2, roof:'slate', forts:['battery'], ch:1, mk:['sugar', 'rum', 'molasses'], dm:['cloth', 'cocoa', 'flour', 'fish'] }],
   ['Louisbourg', -59.95, 45.88, 'fr', { sz:2, roof:'slate', forts:['castle','battery'], ch:1, walls:1, mk:['fish'], dm:['flour', 'rum', 'molasses'] }],
   ['Halifax', -63.52, 44.6, 'en', { sz:2, roof:'slate', forts:['star','battery'], ch:1, yard:1, dock:1, mk:['fish', 'naval'], dm:['rum', 'molasses', 'sugar'] }],
   ['Canso', -60.95, 45.3, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['fish'], dm:['rum', 'flour'] }],
@@ -47,10 +47,12 @@ const TOWNS = [
   ['Newport', -71.33, 41.45, 'en', { sz:2, roof:'slate', forts:['battery'], ch:1, yard:1, mk:['rum'], dm:['molasses', 'sugar'] }],
   ['New London', -72.08, 41.28, 'en', { sz:1, roof:'slate', forts:['battery'], ch:1, mk:['flour'], dm:['rum', 'molasses'] }],
   ['New York', -73.95, 40.5, 'en', { sz:3, roof:'slate', forts:['star','battery'], ch:2, yard:1, mk:['flour', 'naval'], dm:['sugar', 'rum', 'molasses'] }],
-  ['Philadelphia', -74.7, 39.0, 'en', { sz:3, roof:'slate', forts:['battery'], ch:2, yard:1, mk:['flour', 'cloth'], dm:['sugar', 'molasses', 'coffee'] }],
+  ['Philadelphia', -75.42, 39.36, 'en', { sz:3, roof:'slate', forts:['battery'], ch:2, yard:1, mk:['flour', 'cloth'], dm:['sugar', 'molasses', 'coffee'] }],
   ['Lewes', -75.08, 38.78, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['flour'], dm:['rum'] }],
+  ['Yorktown', -76.45, 37.24, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['tobacco'], dm:['rum', 'cloth'] }],
+  ['Annapolis', -76.36, 38.93, 'en', { sz:1, roof:'slate', forts:['battery'], ch:1, mk:['tobacco', 'flour'], dm:['rum', 'sugar'] }],
   ['Chincoteague', -75.3, 37.9, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['tobacco'], dm:['rum', 'cloth'] }],
-  ['Norfolk', -75.93, 36.85, 'en', { sz:2, roof:'slate', forts:['battery'], ch:1, yard:1, mk:['tobacco', 'naval'], dm:['rum', 'sugar', 'molasses'] }],
+  ['Norfolk', -76.3, 36.93, 'en', { sz:2, roof:'slate', forts:['battery'], ch:1, yard:1, mk:['tobacco', 'naval'], dm:['rum', 'sugar', 'molasses'] }],
   ['Ocracoke', -75.95, 35.08, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['naval'], dm:['rum'] }],
   ['Wilmington', -77.95, 33.88, 'en', { sz:1, roof:'slate', forts:['battery'], ch:1, mk:['naval', 'rice'], dm:['rum', 'cloth'] }],
   ['Georgetown', -79.18, 33.28, 'en', { sz:1, roof:'thatch', land:1, forts:[], ch:0, mk:['rice', 'indigo'], dm:['rum'] }],
@@ -145,6 +147,11 @@ const nearM = buildMask(g => { fillAll(g); g.strokeStyle = '#fff'; g.lineWidth =
 const deepM = buildMask(g => { fillAll(g); g.strokeStyle = '#000'; g.lineWidth = 76; lands.forEach(l => g.stroke(l.path)); });
 const at = (m, x, y) => x < 0 || y < 0 || x >= W || y >= H ? 1 : m[(y/RES|0)*MW + (x/RES|0)];
 const isLand = (x, y) => at(landM, x, y), isNear = (x, y) => at(nearM, x, y);
+/* at this scale the mouths of the great bays close up, so pilot channels are kept clear through them */
+const CHANNELS = [[[-75.75, 36.95], [-76.0, 36.97], [-76.12, 37.05], [-76.14, 37.6], [-76.22, 38.3], [-76.36, 38.85], [-76.4, 39.15]], [[-76.05, 36.97], [-76.3, 36.96]], [[-76.14, 37.2], [-76.42, 37.24]], [[-74.8, 38.75], [-75.03, 38.87], [-75.2, 39.1], [-75.4, 39.33]]];
+const onChannel = (x, y, r) => { for (const ch of CHANNELS) for (let i = 0; i < ch.length - 1; i++){ const ax = X(ch[i][0]), ay = Y(ch[i][1]), bx = X(ch[i+1][0]), by = Y(ch[i+1][1]), dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax)*dx + (y - ay)*dy)/(dx*dx + dy*dy))); if (Math.hypot(x - ax - dx*t, y - ay - dy*t) < r) return true; } return false; };
+{ let x0 = 1e9, y0 = 1e9, x1 = 0, y1 = 0; CHANNELS.forEach(ch => ch.forEach(v => { x0 = Math.min(x0, X(v[0])); x1 = Math.max(x1, X(v[0])); y0 = Math.min(y0, Y(v[1])); y1 = Math.max(y1, Y(v[1])); }));
+  for (let j = Math.floor((y0 - 100)/RES); j <= (y1 + 100)/RES; j++) for (let i = Math.floor((x0 - 100)/RES); i <= (x1 + 100)/RES; i++){ const k = j*MW + i; if (nearM[k] && !landM[k] && onChannel((i + .5)*RES, (j + .5)*RES, 80)) nearM[k] = 0; } }
 const shore = (x, y) => at(landM, x, y) || at(landM, x+26, y) || at(landM, x-26, y) || at(landM, x, y+26) || at(landM, x, y-26);
 
 /* ports: snap each town to the nearest coast and face it out to sea */
@@ -167,7 +174,7 @@ TOWNS.forEach(t => {
 
 /* navigation grid for the other ships */
 const CELL = 160, GW = Math.ceil(W/CELL), GH = Math.ceil(H/CELL), water = new Uint8Array(GW*GH), prev = new Int32Array(GW*GH), queue = new Int32Array(GW*GH);
-for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) water[j*GW+i] = isNear((i+.5)*CELL, (j+.5)*CELL) ? 0 : 1;
+for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) water[j*GW+i] = isNear((i+.5)*CELL, (j+.5)*CELL) && !(onChannel((i+.5)*CELL, (j+.5)*CELL, 115) && !isLand((i+.5)*CELL, (j+.5)*CELL)) ? 0 : 1;
 const DX = [1,-1,0,0,1,1,-1,-1], DY = [0,0,1,-1,1,-1,1,-1];
 function cellNear(x, y){
   const ci = clamp(x/CELL|0, 0, GW-1), cj = clamp(y/CELL|0, 0, GH-1); if (water[cj*GW+ci]) return cj*GW+ci;

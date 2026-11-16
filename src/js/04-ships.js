@@ -90,6 +90,10 @@ function voidMarque(){ marque = null; }
 function calendarTick(){ while (calDone < EVENTS.length && EVENTS[calDone][0] <= calIdx()){ const e = EVENTS[calDone++]; if (e[2]) e[2](); gazDate = MONTHS[e[0] % 12] + ' ' + (1750 + Math.floor(e[0]/12)); news(e[1]); gazDate = null; if (curPort && state === 'port') renderPort(); }
   if (marque && !foesOf(marque).length){ marque = null; say('Peace: your letter of marque is void. Any ship you take now is piracy.'); } }
 function monthTick(m){ payWages(m); calendarTick();
+  if (m - lastCall >= 2) cheer(-3); /* long at sea */ if (fouling && state === 'play') foul = Math.min(1, foul + .04);
+  if (officers.surgeon && p.crew < p.t.crew) p.crew = Math.min(p.t.crew, p.crew + 2);
+  if (morale < 25 && p.crew > 12){ const n = Math.max(1, Math.round(p.crew*.08)); p.crew -= n; say('The hands are ' + moraleWord() + '. ' + n + ' have run.'); }
+  rivalTick();
   if (mission && mission.until && calIdx() > mission.until){ say('Too late: the commission "' + mission.title + '" has lapsed.'); if (mission.ships) mission.ships.forEach(t => { t.transport = false; }); mission = null; }
   if (!fleet && calIdx() >= 48) spawnFleet(false);
   const mo = calMon(); if (mo >= 5 && mo <= 10 && !calm && !hurr && hurrYear !== calYear() && rnd() < .3) startHurricane(); }

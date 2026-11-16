@@ -140,7 +140,8 @@ function drawFort(q, f){
     cx.beginPath(); cx.moveTo(x, y); cx.quadraticCurveTo(x + Math.cos(wd)*9 - Math.sin(wd)*fw, y + Math.sin(wd)*9 + Math.cos(wd)*fw, x + Math.cos(wd)*19, y + Math.sin(wd)*19); cx.stroke(); }
   cx.lineCap = 'butt'; cx.fillStyle = '#2a1c10'; circle(cx, x, y, 2); cx.fill();
 }
-function drawPort(q){
+function drawPort(q){ if (!q.spec.land){ drawPort0(q); return; } cx.save(); cx.translate(q.x, q.y); cx.scale(.72, .72); cx.translate(-q.x, -q.y); try { drawPort0(q); } finally { cx.restore(); } }
+function drawPort0(q){
   if (!q.b) buildTown(q);
   const P = q.P, sp = q.spec, span = q.span, roofs = ROOFS[sp.roof];
   const seg = (A, B, w, col) => { cx.strokeStyle = col; cx.lineWidth = w; cx.beginPath(); cx.moveTo(A[0], A[1]); cx.lineTo(B[0], B[1]); cx.stroke(); };

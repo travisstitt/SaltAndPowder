@@ -15,7 +15,9 @@ function update(dt){ tick++;
   const sailing = state === 'play';
   clock += dt; weatherTick(dt); polT -= dt; if (polT <= 0){ polT = rand(220, 380); if (calIdx() > 166) politics(); }
 
+  if (sailing && officers.bosun && p.sails < 100 && p.sails > 8 && !tracked) p.sails = Math.min(100, p.sails + dt*.12);
   if (sailing && clock > 150 && clock - dt <= 150 && recall('keys') == null) setKeys(false); /* by now the keys are learned; the legend folds itself away */
+  if (paceIdx === 5 && sailing){ const why = !course || !autoHelm ? 'The helmsman needs a course to make a passage.' : weather.kind === 'storm' || hurr ? 'Weather coming on. Back to a brisk pace.' : ships.some(o => o.owner !== 'player' && !o.released && o.sinking == null && (Math.hypot(o.x - p.x, o.y - p.y) < 380 || (o.owner === 'pirate' || hostile(o.nation) || o.provoked) && warship(o) && Math.hypot(o.x - p.x, o.y - p.y) < 1700)) ? 'Sail in sight. Back to a brisk pace.' : Math.hypot(course.ox - p.x, course.oy - p.y) < 900 ? 'Landfall. Back to a brisk pace.' : ''; if (why){ setPace(2); say(why); } }
   if (paceIdx === 4 && sailing && ships.some(o => o.owner !== 'player' && o.announced && !o.surrendered && !o.released && Math.hypot(o.x - p.x, o.y - p.y) < 1100)){ setPace(1); say('Enemy in sight. Back to a steady pace.'); }
   const day = Math.floor(clock/MONTH); if (day > lastDay){ lastDay = day; monthTick(day); }
   if (fleetTarget && (fleetTarget.sinking != null || fleetTarget.released || fleetTarget.surrendered || fleetTarget.gone || ships.indexOf(fleetTarget) < 0)) fleetTarget = null;
@@ -36,13 +38,13 @@ function update(dt){ tick++;
   for (let i = ships.length-1; i >= 0; i--){ const s = ships[i];
     if (s.sinking != null){ s.sinking -= dt; if (s.sinking <= 0) ships.splice(i, 1); continue; }
     if (s.gone){ ships.splice(i, 1); continue; }
-    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
+    if ((s.role === 'merchant' || s.role === 'patrol' || s.role === 'fisher') && s.rival == null && !s.hitByPlayer && !s.fleet && !s.transport && s !== tracked && !(mission && mission.ship === s) && (Math.abs(s.x - p.x) > FAR || Math.abs(s.y - p.y) > FAR) && !squad().some(o => o.task && o.task.prey === s)){ s.gone = true; ships.splice(i, 1); continue; } /* hull down and gone */
     if (s.role === 'rover' && !s.surrendered){ s.ttl -= dt; if (s.ttl <= 0 && Math.hypot(s.x - p.x, s.y - p.y) > 1500) s.gone = true; }
     if (s.role === 'fleet'){ if (!s.task || s.task.type === 'fleet') s.slot = ++slotN; } else if (s.released){ } else if (s.role === 'merchant') merchants++; else if (s.role === 'fisher') fishers++; else if (s.role === 'hunter') hunters++; else if (s.role === 'patrol') pat[s.nation] = (pat[s.nation] || 0) + 1;
     ai(s, dt);
   }
   trafT -= dt; if (trafT <= 0){ trafT = .35; let np = 0, small = 0; for (const q of ports){ const d = dP(q); if (d < BUBBLE){ np += q.spec.land ? .6 : q.spec.sz >= 2 ? 1.6 : 1; if (q.spec.sz < 2 && d < 4200) small++; } }
-    trafWant = Math.round(clamp(4 + np*1.7, 4, 32)); if (merchants < trafWant) spawnMerchant(false); if (fishers < Math.min(7, small)) spawnFisher(); }
+    spawnRival(); trafWant = Math.round(clamp(4 + np*1.7, 4, 32)); if (merchants < trafWant) spawnMerchant(false); if (fishers < Math.min(7, small)) spawnFisher(); }
   patrolT -= dt; if (patrolT <= 0){ patrolT = 10; NKEYS.forEach(k => { let n = 0; for (const q of ports) if (q.nk === k && !q.spec.land && dP(q) < BUBBLE) n++; if ((pat[k] || 0) < Math.min(3, Math.ceil(n/3))) spawnPatrol(k, false); }); }
   driftT -= dt; if (driftT <= 0){ driftT = 40; NKEYS.forEach(k => { if (standing[k] < 0) repute(k, 1); }); }
   fleetTick(dt);

@@ -4,7 +4,7 @@ function newGame(saved){ voyage++; dirty();
   gold = D().purse; plunder = 0; shot = 'round'; up = { guns:0, hull:0, sail:0, drill:0 }; hunterT = 30*D().hunt; curPort = null;
   mission = null; offers = []; tracked = null; fleet = null; standing = { en:10, es:-5, fr:0, nl:0, dk:5 };
   prizePolicy = 'plunder'; roverT = rand(170, 280); formation = 'column'; orders = 'line'; spares = []; laidUp = []; homeName = startName; tavern = []; course = null; autoHelm = false; routeLine = null; fleetTarget = null; paused = false; lastDay = 0;
-  hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; gsTold = false; marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = []; courtList = []; navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 }; stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
+  hold = emptyHold(); wars = new Set(); polT = rand(200, 320); cal0 = startCal; gsTold = false; marque = null; courtDue = 0; hurr = null; hurrYear = -1; newsLog = []; gazette = []; courtList = []; morale = 70; officers = {}; foul = 0; lastCall = 0; rivals = RIVALS.map(() => ({ alive: true, wins: 0 })); navy = { k: null, pts: 0, rank: 0 }; captives = { en:0, es:0, fr:0, nl:0, dk:0 }; stats = { taken:0, sunk:0, lawful:0, unlawful:0 }; customsT = 0; clock = 0; melee = null; prizeShip = null;
   weather = { kind:'clear', k:0, left: rand(90, 180), next:null };
   ports.forEach(q => { q.nk = q.home; q.nation = NAT[q.home]; });
   if (saved && saved.p){
@@ -13,6 +13,8 @@ function newGame(saved){ voyage++; dirty();
       if (Array.isArray(saved.gaz)) gazette = saved.gaz.slice(0, 40).filter(v => v && v.t).map(v => ({ d: String(v.d).slice(0, 20), t: String(v.t).slice(0, 300), k: v.k === 'you' ? 'you' : 'news' }));
       if (saved.navy && NAT[saved.navy.k]) navy = { k: saved.navy.k, pts: clamp(saved.navy.pts|0, 0, 999), rank: clamp(saved.navy.rank|0, 0, NAVY.length - 1) };
       if (saved.captives) NKEYS.forEach(k => { captives[k] = clamp(saved.captives[k]|0, 0, 9); }); if (saved.stats) for (const k in stats) stats[k] = clamp(saved.stats[k]|0, 0, 99999);
+      if (saved.morale != null) morale = clamp(+saved.morale || 0, 0, 100); if (saved.officers) Object.keys(OFFICERS).forEach(k => { officers[k] = !!saved.officers[k]; }); foul = clamp(+saved.foul || 0, 0, 1); if (saved.fouling != null) fouling = !!saved.fouling;
+      if (Array.isArray(saved.rivals)) saved.rivals.slice(0, RIVALS.length).forEach((v, i) => { if (v) rivals[i] = { alive: !!v.alive, wins: clamp(v.wins|0, 0, 6) }; });
       if (Array.isArray(saved.courtList)) courtList = saved.courtList.slice(0, 30).filter(v => v && v.n).map(v => ({ n: String(v.n).slice(0, 60), v: v.v|0 })); }
     if (Array.isArray(saved.wars) && saved.cal0 != null) wars = new Set(saved.wars.filter(w => /^(en|es|fr|nl)-(en|es|fr|nl)$/.test(w)));
     if (saved.owners && saved.cal0 != null) ports.forEach(q => { const k = saved.owners[q.name]; if (NAT[k]){ q.nk = k; q.nation = NAT[k]; } });
@@ -51,6 +53,8 @@ function newGame(saved){ voyage++; dirty();
   $('shotBtn').textContent = SHOTN[shot];
 }
 const cargoRoll = () => Math.round(rand(120, 300) + Math.min(400, plunder*.04));
+const latOf = q => LAT1 - q.y/DEG, winter = () => calMon() >= 11 || calMon() <= 2;
+const iced = q => winter() && latOf(q) > 44.2; /* Louisbourg, Canso, Halifax and Fundy are shut by ice and gales from December to March */
 const BUBBLE = 6500, FAR = 8600; /* the sea is peopled around you: ships are raised within the bubble and forgotten beyond it */
 const dP = q => Math.hypot(q.ox - p.x, q.oy - p.y);
 function pickDest(from, short){ const c = ports.filter(q => q !== from).sort((a, b) => Math.hypot(a.ox-from.ox, a.oy-from.oy) - Math.hypot(b.ox-from.ox, b.oy-from.oy)).slice(0, 6);
@@ -59,7 +63,7 @@ function pickDest(from, short){ const c = ports.filter(q => q !== from).sort((a,
 function spawnMerchant(first){
   let cands = ports.filter(q => { const d = dP(q); return d < BUBBLE && (first || d > 1100); });
   if (!cands.length) cands = ports.slice().sort((a, b) => dP(a) - dP(b)).slice(0, 3);
-  let tw = 0; const wt = q => q.spec.land ? 1 : q.spec.sz*q.spec.sz + 1; cands.forEach(q => { tw += wt(q); }); let r = rnd()*tw, a = cands[0]; for (const q of cands){ r -= wt(q); if (r <= 0){ a = q; break; } }
+  let tw = 0; const wt = q => (q.spec.land ? 1 : q.spec.sz*q.spec.sz + 1)*(winter() && latOf(q) > 40 ? (iced(q) ? .05 : .35) : 1); /* the northern trade lies up for the winter */ cands.forEach(q => { tw += wt(q); }); let r = rnd()*tw, a = cands[0]; for (const q of cands){ r -= wt(q); if (r <= 0){ a = q; break; } }
   const coaster = a.spec.land || a.spec.sz < 2 && rnd() < .55, packet = !coaster && a.spec.sz >= 2 && rnd() < .07;
   const s = makeShip(packet ? 'bermuda' : coaster ? ['schooner', 'sloop', 'snow'][rnd()*3|0] : rnd() < .3 ? 'snow' : 'merchant', a.nk, 'merchant', a.ox, a.oy, a.ang);
   s.cargo = cargoRoll(); s.dest = pickDest(a, coaster); s.goods = {}; a.spec.mk.forEach(g => { if (rnd() < .8) s.goods[g] = 15 + (rnd()*45|0); }); if (rnd() < .5){ const g = GK[rnd()*GK.length|0]; s.goods[g] = (s.goods[g] || 0) + 5 + (rnd()*20|0); }
@@ -72,6 +76,31 @@ function spawnMerchant(first){
 }
 function spawnFisher(){ const c = ports.filter(q => q.spec.sz < 2 && dP(q) < 4200 && dP(q) > 700); if (!c.length) return; const q = c[rnd()*c.length|0], w = waterNear(q.ox, q.oy, 520);
   if (Math.hypot(w[0]-p.x, w[1]-p.y) < 900) return; const s = makeShip('boat', q.nk, 'fisher', w[0], w[1], rnd()*TAU); s.home = [q.ox, q.oy]; s.t.name = NAT[q.nk].adj + ' fishing boat'; s.goods = { fish: 2 + (rnd()*5|0) }; s.cargo = 0; ships.push(s); }
+function navyStop(s){ customsT = clock + 170; const n = hold.flour + hold.fish, fine = Math.min(gold, 30 + n*5), bribe = 40 + n*7;
+  ask('A British cruiser fires a gun to bring you to', 'Her lieutenant has orders to stop the provision trade with the French islands. You have ' + n + ' tons of flour and fish below, and French and neutral ports under your lee.', [
+    ['n_bribe', 'A purse for the lieutenant', bribe + ' gold, and your papers say Jamaica.', gold >= bribe, () => { gold -= bribe; say('The boat pulls back to the cruiser. You are bound for Jamaica, if anyone asks.'); }],
+    ['n_run', 'Crowd on sail and run', 'She will fire into you, and the Admiralty will hear of it.', true, () => { s.provoked = true; repute('en', -8); if (p.sail < 1) p.sail = 1; say('You run. The cruiser opens fire.'); }],
+    ['n_submit', 'Heave to and be searched', 'The provisions are seized and you are fined ' + fine + ' gold.', true, () => { hold.flour = 0; hold.fish = 0; gold -= fine; repute('en', -2); cheer(-4); say('The prize agent takes ' + n + ' tons of provisions and ' + fine + ' gold.'); }]]); }
+function shoreAction(port){ const sp = port.spec, k = port.nk, guard = sp.forts.length*18 + sp.sz*10 + (sp.land ? 0 : 14), law = !!marque && atWar(marque, k), night = darkness() > .25, thick = weather.kind === 'fog' || weather.kind === 'rain';
+  const men = p.crew + squad().filter(inCompany).reduce((n, o) => n + o.crew*.5, 0), odds = (base, need) => clamp(base + (men - need)/130 + (night ? .12 : 0) + (thick ? .1 : 0) + (morale - 60)/400, .08, .9);
+  const fail = what => { const lost = Math.min(p.crew - 5, 6 + (rnd()*9|0)); p.crew -= Math.max(0, lost); damage(p, p.maxHull*.2, 12); cheer(-10); repute(k, -6); say(what + ' ' + Math.max(0, lost) + ' of your people do not come back, and the batteries find your range as you haul off.'); };
+  const cut = odds(.3, guard), raid = odds(.32, guard*1.6), recent = port.raided != null && calIdx() - port.raided < 6;
+  ask('The guns at ' + port.name + ' warn you off', 'The port is closed to you. ' + (night ? 'It is dark, and the anchorage is full of shipping.' : 'In daylight the batteries command the anchorage; a boat attack wants darkness.') + (recent ? ' The place is alert after the last attempt.' : ''), [
+    ['sa_cut', 'Cut out a ship from the anchorage', night && !recent ? 'Boats away under muffled oars. About ' + Math.round(cut*100) + ' chances in a hundred.' : recent ? 'They are waiting for you.' : 'Only at night.', night && !recent && p.crew > 14, () => { port.raided = calIdx();
+      if (rnd() < cut){ const coin = Math.round(rand(220, 520)*(1 + sp.sz*.4)), g = sp.mk.length ? sp.mk[rnd()*sp.mk.length|0] : 'rum', tons = Math.min(20 + (rnd()*25|0), Math.max(0, holdCap() - holdUsed())), lost = 1 + (rnd()*4|0); p.crew = Math.max(5, p.crew - lost); hold[g] += tons; earn(coin, p.x, p.y); if (law){ svc(2); repute(marque, 3); repute(k, -5); } else { repute(k, -12); NKEYS.forEach(o => { if (o !== k) repute(o, -3); }); } stats.taken++; law ? stats.lawful++ : stats.unlawful++;
+        gaz('Boats from the ' + p.name + ' cut a laden merchantman out of the anchorage at ' + port.name + ' under the guns of the fort.', 'you'); say('Your boats bring out a merchantman: ' + coin + ' gold and ' + tons + ' tons of ' + GOODS[g][0].toLowerCase() + ', for ' + lost + ' men.'); }
+      else fail('The alarm is raised before your boats are alongside.'); }],
+    ['sa_raid', 'Land and raid the place', sp.sz <= 1 && !recent ? 'Take the battery from behind and sack the warehouses. About ' + Math.round(raid*100) + ' chances in a hundred.' : recent ? 'They are waiting for you.' : 'Too strong to storm from boats.', sp.sz <= 1 && !recent && p.crew > 20, () => { port.raided = calIdx();
+      if (rnd() < raid){ const coin = Math.round(rand(180, 380)*(sp.land ? 1 : 1.8)), lost = 2 + (rnd()*6|0); p.crew = Math.max(5, p.crew - lost); earn(coin, p.x, p.y); if (law){ svc(2); repute(marque, 2); repute(k, -8); } else { repute(k, -16); NKEYS.forEach(o => { if (o !== k) repute(o, -5); }); }
+        gaz('A landing party from the ' + p.name + ' took the battery at ' + port.name + ' and carried off what the warehouses held.', 'you'); say('The place is yours for an hour: ' + coin + ' gold, for ' + lost + ' men.'); }
+      else fail('The militia are under arms when your boats ground.'); }],
+    ['sa_off', 'Stand off', 'There will be other nights.', true, () => {}]]); }
+/* rivals: a few named captains who cruise their own waters, grow with their luck, and can be hunted */
+const RIVALS = [{ name:'Capitaine Étienne Marchais', ship:'Vengeur', nk:'fr', home:'Cap-Français' }, { name:'Don Rodrigo de Sotomayor', ship:'Santa Bárbara', nk:'es', home:'Havana' }, { name:'Captain Josiah Harland', ship:'Tartar', nk:'en', home:'English Harbour' }, { name:'Ned Corrigan, called the Kingfisher', ship:'Kingfisher', nk:'pirate', home:'Nassau' }];
+function rivalTick(){ RIVALS.forEach((R0, i) => { const v = rivals[i]; if (!v || !v.alive) return; if (rnd() < .22 && v.wins < 6){ v.wins++; const near = ports.find(q => q.name === R0.home); news(R0.name + ', in the ' + R0.ship + ', has taken another prize off ' + near.name + '. That makes ' + v.wins + '.'); } }); }
+function spawnRival(){ RIVALS.forEach((R0, i) => { const v = rivals[i]; if (!v || !v.alive || ships.some(s => s.rival === i)) return; const q = ports.find(q => q.name === R0.home), d = dP(q); if (d > BUBBLE || d < 1500) return;
+  const w = waterNear(q.ox, q.oy, 800); if (Math.hypot(w[0] - p.x, w[1] - p.y) < 1400) return; const cls = ['brig', 'frigate', 'frigate', 'fifty'][Math.min(3, Math.floor(v.wins/2))], pir = R0.nk === 'pirate', s = makeShip(cls, R0.nk, pir ? 'rover' : 'patrol', w[0], w[1], rnd()*TAU);
+  s.rival = i; s.home = [q.ox, q.oy]; s.ttl = 1e9; s.t.name = R0.ship + ', ' + R0.name; s.t.tag = '#ff9a85'; s.reload0 = .8; s.cargo = 300 + v.wins*200; if (!pir && marque && atWar(marque, R0.nk)) s.provoked = true; ships.push(s); }); }
 const curPort_busy = () => state !== 'play' || chartOpen || paused;
 function customs(s){ customsT = clock + 170; const n = hold.cloth, fine = Math.min(gold, 20 + n*6), bribe = 30 + n*9;
   ask('A Spanish guarda-costa signals you to heave to', 'Her officer means to search you for contraband. You have ' + n + ' tons of cloth and hardware below, which Spain forbids any foreigner to land in her colonies.', [
